@@ -77,6 +77,7 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
           window.__appInitialized=true;
         }
         unlockAudioSoftly();
+        try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(remoteErr){ console.warn('Direct enter remote attach skipped',remoteErr); }
         return;
       }catch(err){
         window.__lastStartupError=err;
@@ -105,6 +106,18 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
       window.__HID_DIRECT_ENTER(ev);
     }
   },{capture:true});
+})();
+</script>
+
+<script id="hid-remote-open-shim">
+(function(){
+  if(window.HID_OPEN_REMOTE) return;
+  window.HID_OPEN_REMOTE=function(ev){
+    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
+    try{ if(typeof window.HID_INSTALL_REMOTE==='function'){ window.HID_INSTALL_REMOTE(); if(window.WIN&&WIN.remote&&typeof toggleWindow==='function') toggleWindow('remote',true); return false; } }catch(e){}
+    setTimeout(function(){ try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); if(window.WIN&&WIN.remote&&typeof toggleWindow==='function') toggleWindow('remote',true); }catch(e){} },250);
+    return false;
+  };
 })();
 </script>
 
@@ -1237,6 +1250,11 @@ body.remote-fullscreen .desktop{position:fixed!important;inset:0!important;z-ind
 html.hid-entered #launch, body.hid-entered #launch{display:none!important;pointer-events:none!important}
 html.hid-entered #app, body.hid-entered #app{display:flex!important;visibility:visible!important;opacity:1!important}
 
+
+/* Remote visibility failsafe: this button only appears if dynamic remote launchers fail. */
+#hid-remote-emergency{position:fixed;right:10px;bottom:10px;z-index:120000;display:none;font-family:'Press Start 2P',monospace;font-size:9px;padding:10px 12px;border:2px solid var(--neon3);background:#000;color:var(--neon3);box-shadow:0 0 16px rgba(255,230,0,.45);letter-spacing:.08em}
+body.hid-entered.remote-missing #hid-remote-emergency{display:block}
+
 </style>
 </head>
 <body>
@@ -1433,6 +1451,7 @@ html.hid-entered #app, body.hid-entered #app{display:flex!important;visibility:v
       <span class="arp-tb-led"></span><span class="arp-tb-txt">ARP</span>
     </button>
     <button class="btn-perf" id="btn-perf">▣ PERFORMANCE</button>
+    <button class="btn gold" id="btn-remote-top-static" title="Open Remote Control" onclick="if(window.HID_OPEN_REMOTE)return window.HID_OPEN_REMOTE(event);">↔ REMOTE</button>
     <button class="btn" id="btn-help">?</button>
     <div class="stereo-block">
       <button class="stereo-enhance-btn ${''}" id="btn-stereo-enhance">◉ BIGGER</button>
@@ -1465,7 +1484,7 @@ html.hid-entered #app, body.hid-entered #app{display:flex!important;visibility:v
     </div>
 
     <!-- Window launchers -->
-    <div class="pb-row2" id="launcher-bar"></div>
+    <div class="pb-row2" id="launcher-bar"><button class="launcher-btn" data-w="remote" id="launcher-remote-static" onclick="if(window.HID_OPEN_REMOTE)return window.HID_OPEN_REMOTE(event);">REMOTE</button></div>
 
     <!-- Piano host (collapsible) -->
     <div class="piano-host" id="piano-host">
@@ -1482,6 +1501,7 @@ html.hid-entered #app, body.hid-entered #app{display:flex!important;visibility:v
     </div>
   </div>
 </div>
+<button id="hid-remote-emergency" onclick="if(window.HID_OPEN_REMOTE)return window.HID_OPEN_REMOTE(event);">↔ REMOTE</button>
 
 <!-- Color modal -->
 <div class="modal" id="color-modal"><div class="modal-box">
@@ -6603,7 +6623,57 @@ document.addEventListener('keydown',e=>{
       console.warn('Remote panel startup skipped instead of blocking app launch',remoteErr);
     }
   };
-  window.HID_REMOTE={startHostPairing,startControllerPairing,close:closeRemoteConnection,send:cmd};
+  function ensureRemoteLaunchers(){
+    try{
+      const lb=$('#launcher-bar');
+      if(lb && !lb.querySelector('[data-w="remote"]')){
+        const b=document.createElement('button');
+        b.className='launcher-btn';b.dataset.w='remote';b.id='launcher-remote-dynamic';b.textContent='REMOTE';
+        b.onclick=(e)=>{e.preventDefault();window.HID_OPEN_REMOTE&&window.HID_OPEN_REMOTE(e);};
+        lb.appendChild(b);
+      }
+      const top=$('.topbar');
+      const help=$('#btn-help');
+      if(top && !$('#btn-remote-top') && !$('#btn-remote-top-static')){
+        const b=document.createElement('button');
+        b.className='btn gold';b.id='btn-remote-top';b.textContent='↔ REMOTE';
+        b.onclick=(e)=>{e.preventDefault();window.HID_OPEN_REMOTE&&window.HID_OPEN_REMOTE(e);};
+        top.insertBefore(b,help||null);
+      }
+    }catch(e){console.warn('Remote launcher restore skipped',e)}
+  }
+  window.HID_INSTALL_REMOTE=function(){
+    try{ installRemoteControl(); }
+    catch(e){ console.warn('Primary remote installer recovered',e); }
+    try{ ensureRemoteLaunchers(); }catch(e){}
+    try{
+      const missing=!WIN.remote;
+      document.body.classList.toggle('remote-missing',!!missing);
+    }catch(e){}
+    return !!(WIN&&WIN.remote);
+  };
+  window.HID_OPEN_REMOTE=function(ev){
+    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
+    try{ showToast&&showToast('Opening Remote Control'); }catch(e){}
+    try{ window.HID_INSTALL_REMOTE(); }catch(e){ console.warn('Remote open install recovered',e); }
+    try{ if(WIN.remote){ toggleWindow('remote',true); buildRemoteWindow(); bringToFront('remote'); document.body.classList.remove('remote-missing'); return false; } }catch(e){ console.warn('Remote open recovered',e); }
+    try{ document.body.classList.add('remote-missing'); }catch(e){}
+    alert('Remote Control could not fully initialize yet. Enter the app first, then tap REMOTE again.');
+    return false;
+  };
+  window.HID_REMOTE={startHostPairing,startControllerPairing,close:closeRemoteConnection,send:cmd,open:window.HID_OPEN_REMOTE,install:window.HID_INSTALL_REMOTE};
+  // If the launch bypass already opened the app before this patch installed,
+  // attach the Remote window/buttons immediately and keep a short failsafe watcher.
+  try{ setTimeout(()=>{ if(document.body.classList.contains('hid-entered')||window.__appInitialized) window.HID_INSTALL_REMOTE(); },0); }catch(e){}
+  try{
+    let checks=0;
+    const remoteWatch=setInterval(()=>{
+      checks++;
+      const app=document.getElementById('app');
+      if(app && (app.classList.contains('active') || document.body.classList.contains('hid-entered'))){ window.HID_INSTALL_REMOTE(); }
+      if((WIN&&WIN.remote) || checks>20) clearInterval(remoteWatch);
+    },700);
+  }catch(e){}
 })();
 
 
