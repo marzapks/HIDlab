@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-title" content="Hold It Down">
 <meta name="theme-color" content="#000000">
 <title>HOLD IT DOWN — Mario Garcia</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preload" as="style" href="https://fonts.googleapis.com?display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com?display=swap" rel="stylesheet"></noscript>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script id="hid-optional-three-loader">
@@ -34,13 +35,46 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
 </script>
 
 <script id="hid-direct-enter-harness">
-/* HOLD IT DOWN — independent launch bypass.
-   This runs before the large app script, so the home screen can never trap the user
-   just because a later module fails during startup. */
+/* HOLD IT DOWN — fast boot + explicit launch only.
+   Heavy app scripts are lazy-loaded after the Launch button is pressed so GitHub Pages
+   can render the home screen immediately instead of blocking on every repair module. */
 (function(){
   if(window.__HID_DIRECT_ENTER_INSTALLED) return;
   window.__HID_DIRECT_ENTER_INSTALLED=true;
-  let bootTimer=null;
+  let bootPromise=null;
+
+  function setLaunchStatus(msg){
+    try{
+      const btn=document.getElementById('launch-btn');
+      if(btn){
+        btn.dataset.originalText=btn.dataset.originalText||btn.textContent;
+        btn.textContent=msg||'LOADING...';
+        btn.setAttribute('aria-busy','true');
+        btn.style.pointerEvents='none';
+        btn.style.opacity='.85';
+      }
+      let line=document.getElementById('hid-launch-status');
+      const holder=document.querySelector('.launch-actions')||document.getElementById('launch');
+      if(holder && !line){
+        line=document.createElement('div');
+        line.id='hid-launch-status';
+        line.style.cssText='width:100%;margin-top:10px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.12em;color:var(--neon);text-shadow:0 0 6px var(--neon);position:relative;z-index:7;';
+        holder.appendChild(line);
+      }
+      if(line) line.textContent=msg||'LOADING APP ENGINE...';
+    }catch(e){}
+  }
+  function clearLaunchStatus(){
+    try{
+      const btn=document.getElementById('launch-btn');
+      if(btn){
+        btn.textContent=btn.dataset.originalText||'▶ LAUNCH';
+        btn.removeAttribute('aria-busy');
+        btn.style.pointerEvents='auto';
+        btn.style.opacity='';
+      }
+    }catch(e){}
+  }
   function showMain(){
     try{
       const modal=document.getElementById('prelaunch-modal');
@@ -57,39 +91,68 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
       }
       document.documentElement.classList.add('hid-entered');
       document.body && document.body.classList.add('hid-entered');
-    }catch(err){ console.warn('Direct enter visual handoff recovered',err); }
+    }catch(err){ console.warn('Visual handoff recovered',err); }
   }
   function unlockAudioSoftly(){
     try{
       if(typeof window.initAudio==='function') window.initAudio();
       if(window.ctx && window.ctx.state && window.ctx.state!=='running') window.ctx.resume().catch(function(){});
-    }catch(err){ console.warn('Direct enter audio unlock skipped',err); }
+    }catch(err){ console.warn('Audio unlock skipped',err); }
   }
+  window.__HID_LOAD_APP_SCRIPTS=function(){
+    if(window.__HID_APP_SCRIPTS_LOADED) return Promise.resolve();
+    if(window.__HID_APP_SCRIPT_PROMISE) return window.__HID_APP_SCRIPT_PROMISE;
+    const scripts=Array.from(document.querySelectorAll('script[type="text/hid-lazy-js"]'));
+    window.__HID_APP_SCRIPT_PROMISE=new Promise(function(resolve,reject){
+      let i=0;
+      function next(){
+        if(i>=scripts.length){window.__HID_APP_SCRIPTS_LOADED=true;resolve();return;}
+        const old=scripts[i++];
+        try{
+          setLaunchStatus('LOADING ENGINE '+i+'/'+scripts.length+'...');
+          const sc=document.createElement('script');
+          // Preserve script id for debugging without colliding with the inert original node.
+          if(old.id) sc.id=old.id+'-live';
+          sc.text=old.textContent||'';
+          document.body.appendChild(sc);
+          // Yield every few scripts so Safari can breathe and update the launch status.
+          if(i%3===0) setTimeout(next,0); else next();
+        }catch(err){reject(err);}
+      }
+      setTimeout(next,0);
+    });
+    return window.__HID_APP_SCRIPT_PROMISE;
+  };
   function bootWhenReady(){
-    if(bootTimer) return;
-    let tries=0;
-    const attempt=function(){
-      tries++;
-      showMain();
-      try{
-        if(typeof window.initApp==='function' && !window.__appInitialized){
-          window.initApp();
-          window.__appInitialized=true;
+    if(bootPromise) return bootPromise;
+    setLaunchStatus('PREPARING APP...');
+    bootPromise=(window.__HID_LOAD_APP_SCRIPTS?window.__HID_LOAD_APP_SCRIPTS():Promise.resolve())
+      .then(function(){
+        setLaunchStatus('OPENING...');
+        showMain();
+        try{
+          if(typeof window.initApp==='function' && !window.__appInitialized){
+            window.initApp();
+            window.__appInitialized=true;
+          }
+        }catch(err){
+          window.__lastStartupError=err;
+          console.error('Startup recovered; keeping main screen open.',err);
         }
         unlockAudioSoftly();
-        try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(remoteErr){ console.warn('Direct enter remote attach skipped',remoteErr); }
-        return;
-      }catch(err){
+        try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(remoteErr){ console.warn('Remote attach skipped',remoteErr); }
+        clearLaunchStatus();
+      })
+      .catch(function(err){
         window.__lastStartupError=err;
-        console.error('Direct enter startup recovered; keeping main screen open.',err);
-      }
-      if(tries<80) bootTimer=setTimeout(attempt,150);
-    };
-    bootTimer=setTimeout(attempt,0);
+        console.error('Lazy boot failed; showing interface anyway.',err);
+        showMain();
+        clearLaunchStatus();
+      });
+    return bootPromise;
   }
   window.__HID_DIRECT_ENTER=function(ev){
     try{ ev && ev.preventDefault && ev.preventDefault(); ev && ev.stopPropagation && ev.stopPropagation(); }catch(e){}
-    showMain();
     bootWhenReady();
     return false;
   };
@@ -103,7 +166,8 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
   });
   document.addEventListener('keydown',function(ev){
     if((ev.code==='Enter'||ev.key==='Enter') && document.getElementById('launch') && getComputedStyle(document.getElementById('launch')).display!=='none'){
-      window.__HID_DIRECT_ENTER(ev);
+      const active=document.activeElement;
+      if(active && active.closest && active.closest('#launch')) window.__HID_DIRECT_ENTER(ev);
     }
   },{capture:true});
 })();
@@ -1257,6 +1321,11 @@ html.hid-entered #app, body.hid-entered #app{display:flex!important;visibility:v
 body.hid-entered.remote-missing #hid-remote-emergency{display:block}
 
 </style>
+
+<style id="hid-fast-boot-css">
+#launch{visibility:visible;}
+#launch-btn[aria-busy="true"]{animation:none!important;filter:brightness(1.2);}
+</style>
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -1561,7 +1630,7 @@ body.hid-entered.remote-missing #hid-remote-emergency{display:block}
 <!-- Performance-mode return circle -->
 <button class="perf-return" id="perf-return" title="Exit performance mode">×</button>
 
-<script>
+<script type="text/hid-lazy-js" data-hid-lazy="1">
 /* ============ HOLD IT DOWN — engine ============ */
 const $=q=>document.querySelector(q);
 const $$=q=>Array.from(document.querySelectorAll(q));
@@ -6786,7 +6855,7 @@ body.hrf-wheel-lock{touch-action:none!important;overflow:hidden!important;oversc
 @media (orientation:landscape) and (max-height:650px){.hrf-top{padding-top:6px;padding-bottom:6px}.hrf-body{padding-top:8px}.hrf-wheel{height:96px}.hrf-pad button.trigger{min-height:44px}.hrf-note{min-height:46px}.hrf-param{min-height:38px}}
 </style>
 
-<script id="hid-final-remote-repair">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-final-remote-repair">
 (function(){
   if(window.__HID_FINAL_REMOTE_REPAIR) return;
   window.__HID_FINAL_REMOTE_REPAIR=true;
@@ -6937,7 +7006,7 @@ body.hrf-wheel-lock{touch-action:none!important;overflow:hidden!important;oversc
 @media(min-width:700px){.hrv4-top{padding-left:18px;padding-right:18px}.hrv4-title{font-size:11px}.hrv4-body{width:min(1360px,100%);margin:0 auto;padding:14px 18px calc(28px + env(safe-area-inset-bottom));gap:12px}.hrv4-pair{grid-template-columns:1fr 1fr}.hrv4-board{grid-template-columns:repeat(2,minmax(300px,1fr));gap:12px}.hrv4-card{padding:12px}.hrv4-card.wide{grid-column:1/-1}.hrv4-mini-title{font-size:9px}.hrv4-pad-grid{grid-template-columns:repeat(4,minmax(92px,1fr));gap:8px}.hrv4-pad{min-height:112px;padding:8px}.hrv4-param{grid-template-columns:104px minmax(170px,1fr) 62px;min-height:52px;font-size:16px}.hrv4-param input[type=range]{height:14px!important}.hrv4-slot-grid{grid-template-columns:repeat(5,minmax(80px,1fr))}.hrv4-window-grid{grid-template-columns:repeat(4,1fr)}.hrv4-note-grid{grid-template-columns:repeat(12,minmax(42px,1fr));gap:5px}.hrv4-note{min-height:64px}.hrv4-wheel{height:146px}.hrv4-row .btn{min-height:42px;padding-left:14px;padding-right:14px}#hid-remote-v4 textarea{font-size:12px;min-height:112px}}
 @media(min-width:1050px){.hrv4-board{grid-template-columns:repeat(3,minmax(300px,1fr))}.hrv4-card.wide{grid-column:span 3}.hrv4-pad-grid{grid-template-columns:repeat(4,minmax(104px,1fr))}.hrv4-wheel{height:160px}.hrv4-body{font-size:18px}}
 </style>
-<script id="hid-remote-v4-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-remote-v4-script">
 (function(){
   if(window.__HID_REMOTE_V4_INSTALLED) return; window.__HID_REMOTE_V4_INSTALLED=true;
   const Q=(s,r=document)=>r.querySelector(s), QA=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -7083,7 +7152,7 @@ body.hid-remote-v5-open #hid-remote-v4,body.hid-remote-v5-open #hid-remote-fallb
 @media(max-width:620px){.rv5-head{height:68px}.rv5-work{top:68px}.rv5-brand{font-size:7px}.rv5-status{font-size:12px}.rv5-head .btn{font-size:11px;min-height:32px}.rv5-win{min-width:210px}.rv5-control{grid-template-columns:64px 1fr 40px}.rv5-pad-grid{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}.rv5-tabs{height:58px}.rv5-work{bottom:58px}.rv5-piano{grid-template-columns:repeat(6,minmax(42px,1fr))}.rv5-key{min-height:58px}.rv5-wheel{height:92px}}
 </style>
 
-<script id="hid-remote-v5-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-remote-v5-script">
 (function(){
   if(window.HID_REMOTE_V5 && window.HID_REMOTE_V5.__installed) return;
   const qs=(s,r=document)=>r.querySelector(s), qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -7196,7 +7265,7 @@ body.hid-remote-v5-open #hid-remote-v4,body.hid-remote-v5-open #hid-remote-fallb
 .rv6-arp-monitor{display:grid;grid-template-columns:repeat(16,minmax(12px,1fr));gap:3px;margin:8px 0}.rv6-arp-monitor span{height:18px;border:1px solid rgba(0,255,213,.24);background:rgba(0,255,213,.05);box-shadow:inset 0 0 8px rgba(0,0,0,.7)}.rv6-arp-help{font-family:'VT323',monospace;font-size:13px;color:var(--rv6-dim);line-height:1.35;border-top:1px dotted rgba(0,255,213,.25);padding-top:7px}.rv6-piano-tools{position:sticky;top:-9px;z-index:5;background:linear-gradient(180deg,rgba(3,3,9,.98),rgba(3,3,9,.82));border-bottom:1px solid rgba(0,255,213,.22);padding-bottom:7px;margin-bottom:8px}.rv6-piano .rv6-key{font-size:15px;min-height:82px}.rv6-win[data-rv6-win="piano"] .rv6-body{overflow:auto}.rv6-narrow .rv6-control{grid-template-columns:1fr}.rv6-narrow .rv6-control .v{text-align:left}.rv6-narrow .rv6-pad-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.rv6-short .rv6-pad-main{min-height:58px}.rv6-short .rv6-control{min-height:44px}
 @media(max-width:720px){#hid-remote-v6 .rv6-head{height:60px}.rv6-work{top:60px}.rv6-control{grid-template-columns:1fr}.rv6-control .v{text-align:left}.rv6-mini{grid-template-columns:36px 1fr 40px}.rv6-pad-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
 </style>
-<script>
+<script type="text/hid-lazy-js" data-hid-lazy="1">
 /* ===== REMOTE V6: mirrored, customizable, real-time control panel ===== */
 (function(){
   'use strict';
@@ -7317,7 +7386,7 @@ body.hid-remote-v8-open{overflow:hidden!important}
 .rv8-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:7px}.rv8-grid.tight{grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:5px}.rv8-row,.rv8-slider,.rv8-fieldline{display:flex;align-items:center;gap:7px;min-width:0}.rv8-row.wrap{flex-wrap:wrap}.rv8-fieldline{border:1px solid var(--stroke);background:rgba(0,255,213,.04);padding:5px 7px;border-radius:2px}.rv8-fieldline label,.rv8-slider label{font-family:'VT323',monospace;font-size:12px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;min-width:58px}.rv8-slider{border:1px solid var(--stroke);background:rgba(0,255,213,.035);padding:6px;border-radius:2px}.rv8-slider input[type=range]{flex:1;min-width:72px;height:18px;touch-action:none}.rv8-slider .v,.rv8-fieldline .v{font-family:'VT323',monospace;font-size:13px;color:var(--neon3);text-shadow:0 0 4px var(--neon3);min-width:48px;text-align:right}.rv8-note{font-family:'VT323',monospace;font-size:12px;color:var(--dim);line-height:1.35;letter-spacing:.04em}.rv8-section{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--neon);text-shadow:0 0 5px var(--neon);letter-spacing:.15em;text-transform:uppercase;border-bottom:1px dashed var(--stroke);padding:5px 2px;margin:5px 0 7px}.rv8-code{width:100%;min-height:72px;background:#03040b;border:1px solid var(--stroke);color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:10px;resize:vertical;padding:6px;user-select:text;-webkit-user-select:text}.rv8-padgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px}.rv8-spad{position:relative;min-height:78px;border:1px solid var(--stroke);background:radial-gradient(circle at 50% 0,rgba(0,255,213,.16),rgba(0,0,0,.86));box-shadow:inset 0 0 18px rgba(0,255,213,.08);padding:7px;border-radius:4px;cursor:pointer;overflow:hidden}.rv8-spad.sel{border-color:var(--neon3);box-shadow:0 0 12px var(--neon3),inset 0 0 14px rgba(255,230,0,.12)}.rv8-spad.empty{opacity:.65}.rv8-spad.hit{transform:scale(.985);background:radial-gradient(circle at center,var(--neon),#041613)}.rv8-spad .k{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--neon3)}.rv8-spad .n{display:block;margin-top:8px;font-family:'VT323',monospace;font-size:16px;color:var(--text);line-height:1}.rv8-spad .s{font-family:'VT323',monospace;font-size:11px;color:var(--dim)}.rv8-pad-tools{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}.rv8-pad-tools input{width:100%}.rv8-slotgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px}.rv8-slot{min-height:54px;border:1px solid var(--stroke);background:rgba(0,255,213,.05);font-family:'VT323',monospace;font-size:14px;color:var(--text);padding:6px;text-align:left}.rv8-slot.on{border-color:var(--neon3);color:var(--neon3);box-shadow:0 0 10px rgba(255,230,0,.35)}.rv8-wheel{height:82px;border:1px solid var(--stroke);background:linear-gradient(90deg,rgba(255,0,170,.16),rgba(0,255,213,.10),rgba(255,230,0,.16));position:relative;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:5px;overflow:hidden}.rv8-wheel::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--neon3);box-shadow:0 0 8px var(--neon3)}.rv8-wheel .thumb{position:absolute;top:4px;bottom:4px;width:16px;margin-left:-8px;left:50%;background:#fff;border:2px solid #000;box-shadow:0 0 14px var(--neon3);border-radius:4px}.rv8-wheel.active{box-shadow:0 0 18px var(--neon)}body.rv8-wheel-lock{touch-action:none!important;overflow:hidden!important}.rv8-keys{height:156px;position:relative;background:#000;border:1px solid var(--stroke);overflow:hidden;touch-action:none}.rv8-keys.compact{display:grid;grid-template-columns:repeat(12,1fr);height:auto;gap:4px;border:none;background:transparent}.rv8-key{border:1px solid #000;background:linear-gradient(180deg,var(--white-key,#fafbf2),#9ca59b);color:#111;font-family:'VT323',monospace;font-size:12px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;min-height:64px;touch-action:none}.rv8-key.black{position:absolute;top:0;height:62%;background:linear-gradient(180deg,var(--black-key,#111),#000);color:var(--neon);z-index:2;border-color:#333;border-radius:0 0 3px 3px}.rv8-keys.compact .rv8-key.black{position:relative;top:auto;height:auto;z-index:1;min-height:54px}.rv8-key.down{background:linear-gradient(180deg,#fff,var(--neon));box-shadow:inset 0 0 20px var(--neon),0 0 14px var(--neon)}.rv8-bank-strip{border:1px solid var(--stroke);padding:5px;margin-bottom:6px;background:rgba(0,255,213,.04)}.rv8-patch-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:4px;max-height:130px;overflow:auto;margin-top:5px}.rv8-color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.rv8-color-grid input[type=color]{width:56px;height:34px;border:1px solid var(--stroke);background:#000}.rv8-display-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}.rv8-display-grid button{text-align:left}.rv8-win.rv8-narrow .rv8-grid,.rv8-win.rv8-narrow .rv8-grid.tight{grid-template-columns:1fr}.rv8-win.rv8-narrow .rv8-padgrid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}.rv8-win.rv8-narrow .btn{font-size:12px;padding:5px 7px}.rv8-win.rv8-short .rv8-patch-strip{max-height:82px}.rv8-win.rv8-short .rv8-keys{height:110px}
 @media (min-width:900px){#hid-remote-v8 .rv8-win .win-title{min-height:34px}.rv8-slider input[type=range]{height:22px}.rv8-padgrid{grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}.rv8-keys{height:190px}}
 </style>
-<script id="hid-remote-v8-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-remote-v8-script">
 (function(){
   if(window.HID_REMOTE_V8_INSTALLED) return; window.HID_REMOTE_V8_INSTALLED=true;
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -7431,7 +7500,7 @@ body.hid-remote-v8-open{overflow:hidden!important}
 </style>
 
 
-<script id="hid-remote-v9-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-remote-v9-script">
 (function(){
 'use strict';
 const VERSION='REMOTE V9';
@@ -7755,7 +7824,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #hid-qr-v11-toast.show{display:block}
 @media(max-width:720px){#hid-qr-v11-dock{top:calc(env(safe-area-inset-top) + 6px);padding:7px}#hid-qr-v11-dock .qr11-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#hid-qr-v11-dock .qr11-btn{font-size:15px;min-height:42px;padding:7px}.qr11-close{grid-column:span 2}#hid-qr-v11-dock .qr11-title{font-size:9px}.qr11-sub{display:none}}
 </style>
-<script id="hid-remote-v11-qr-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-remote-v11-qr-script">
 (function(){
   'use strict';
   if(window.HID_REMOTE_V11_QR_VISIBLE_INSTALLED) return;
@@ -7901,7 +7970,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #hid-v12-toast.show{display:block}
   @media(max-width:760px){#hid-v12-qr-overlay .v12-body{grid-template-columns:1fr}#hid-v12-qr-overlay .v12-qrbox{grid-template-columns:130px 1fr}#hid-v12-qr-overlay .v12-qrbox img,#hid-v12-qr-overlay .v12-qrbox canvas{width:130px;height:130px}#hid-v12-qr-overlay .v12-title{font-size:9px}.btn{min-height:34px}}
 </style>
-<script id="hid-v12-fix-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v12-fix-script">
 (function(){
   'use strict';
   if(window.HID_V12_QR_TRANSPOSE_PADNAMES_INSTALLED) return;
@@ -8299,7 +8368,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #viz-controls .hid-v13-scene-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:7px 0}
 #viz-controls .hid-v13-scene-grid button{min-height:30px}
 </style>
-<script id="hid-v13-core-repair">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v13-core-repair">
 (function(){
   'use strict';
   const q=(s,r=document)=>r.querySelector(s);
@@ -8667,7 +8736,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     text-align:center;position:relative;z-index:3;
   }
 </style>
-<script id="hid-v14-qr-camera-layer-script">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v14-qr-camera-layer-script">
 (function(){
   'use strict';
   if(window.HID_V14_QR_CAMERA_LAYER_INSTALLED) return;
@@ -8774,7 +8843,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 
-<script id="hid-bigger-v15">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-bigger-v15">
 /* H.I.D. BIGGER V15 — real-time full-bus enhancer: bass weight + air + safety limiting */
 (function(){
   'use strict';
@@ -8985,7 +9054,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
 </style>
 
 
-<script id="hid-keyboard-pitchbend-v16">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-keyboard-pitchbend-v16">
 /* H.I.D. V16 — wireless keyboard pitch-bend safety layer
    Fixes stuck upward bends by owning bracket-key bend events, refreshing repeats,
    releasing on keyup/blur/visibility loss, and temporarily speeding spring-back. */
@@ -9156,7 +9225,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
 .remote-note:not(.hit),.rv9-key:not(.down),.rv8-key:not(.down),.rv6-key:not(.hit){background:var(--white-key)!important;color:#111!important}.remote-note.black:not(.hit),.rv9-key.black:not(.down),.rv8-key.black:not(.down),.rv6-key.black:not(.hit){background:var(--black-key)!important;color:var(--neon)!important}
 #btn-3d-sound.on{background:linear-gradient(180deg,var(--neon3),var(--ui-glow))!important;color:#000!important;border-color:#fff!important;box-shadow:0 0 16px var(--ui-glow),0 0 28px var(--neon3)!important}
 </style>
-<script id="hid-v17-3d-glide-color-fix">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v17-3d-glide-color-fix">
 /* H.I.D. V17 — 3D Sound close/reopen safety, symmetric pitch-glide, UI glow + solid key colors. */
 (function(){
   'use strict';
@@ -9353,7 +9422,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   .hid-v18-layout-enabled .wkey-nm,.hid-v18-layout-enabled .chroma-nm{font-size:clamp(10px,1.6vw,14px)}
   @media(max-width:700px){.hid-v18-control-strip{gap:4px;padding:4px}.hid-v18-control-strip input[type=range]{width:72px}.hid-v18-control-strip .hid-v18-mini-field{padding:3px 5px}.hid-v18-control-strip label{font-size:11px}}
 </style>
-<script id="hid-v18-lead-voice-keylayout">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v18-lead-voice-keylayout">
 /* H.I.D. V18
    - clearer/resonant lead bank tuning for solo playing
    - POLY / MONO / LEGATO performance modes
@@ -9749,7 +9818,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   @keyframes hidV19BarFade{0%{filter:brightness(1.35) saturate(1.5);box-shadow:0 0 20px hsla(var(--bar-hue,180),100%,62%,.9),0 0 42px hsla(var(--bar-hue,180),100%,50%,.42),inset 0 0 16px rgba(255,255,255,.16)}100%{filter:brightness(1) saturate(1);box-shadow:inset 0 0 12px rgba(0,0,0,.75),0 0 5px rgba(0,0,0,.3)}}
   @media(max-width:700px){.hid-v19-chroma-panel{left:auto;right:0;width:94vw}.hid-v19-chroma-bars .chroma-key{min-height:102px!important}.hid-v19-chroma-bars .chroma-key .chroma-nm{font-size:12px}.hid-v19-chroma-bars .chroma-key::after{font-size:10px}}
 </style>
-<script id="hid-v19-chromatic-bars-scales">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v19-chromatic-bars-scales">
 (function(){
   'use strict';
   if(window.__HID_V19_CHROMATIC_BARS__) return;
@@ -9905,7 +9974,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
 </script>
 
 
-<script id="hid-v19b-chroma-refresh-hooks">
+<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v19b-chroma-refresh-hooks">
 (function(){
   'use strict';
   if(window.__HID_V19B_CHROMA_HOOKS__) return;
