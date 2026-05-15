@@ -7731,5 +7731,140 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+
+
+<!-- ===== REMOTE V11 — ALWAYS-VISIBLE QR PAIRING DOCK ===== -->
+<style id="hid-remote-v11-qr-style">
+#hid-qr-v11-topbtn{display:inline-flex!important;align-items:center;gap:4px;border-color:var(--neon3)!important;color:var(--neon3)!important;box-shadow:0 0 10px rgba(255,230,0,.35),inset 0 0 7px rgba(255,230,0,.18)!important}
+#hid-qr-v11-launcher{display:inline-flex!important;align-items:center;gap:4px;border-color:var(--neon3)!important;color:var(--neon3)!important}
+#hid-qr-v11-dock{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 10px);transform:translateX(-50%);z-index:2147483646;display:none;width:min(960px,calc(100vw - 18px));background:linear-gradient(180deg,rgba(12,8,24,.98),rgba(0,0,0,.97));border:2px solid var(--neon3);box-shadow:0 0 22px rgba(255,230,0,.42),0 10px 30px rgba(0,0,0,.85),inset 0 0 24px rgba(0,255,213,.08);padding:8px;border-radius:7px;color:var(--text);touch-action:manipulation}
+#hid-qr-v11-dock.show{display:block!important}
+#hid-qr-v11-dock .qr11-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;min-height:26px}
+#hid-qr-v11-dock .qr11-title{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--neon3);text-shadow:0 0 7px var(--neon3);letter-spacing:.08em;line-height:1.35;flex:1}
+#hid-qr-v11-dock .qr11-sub{font-family:'VT323',monospace;font-size:14px;color:var(--dim);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+#hid-qr-v11-dock .qr11-row{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:7px}
+#hid-qr-v11-dock .qr11-btn{font-family:'VT323',monospace;font-size:16px;letter-spacing:.08em;text-transform:uppercase;min-height:44px;padding:8px 10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(0,255,213,.12),rgba(0,0,0,.82));color:var(--text);border-radius:5px;box-shadow:inset 0 0 9px rgba(0,0,0,.55);touch-action:manipulation}
+#hid-qr-v11-dock .qr11-btn.gold{border-color:var(--neon3);color:var(--neon3);box-shadow:0 0 8px rgba(255,230,0,.25),inset 0 0 8px rgba(255,230,0,.12)}
+#hid-qr-v11-dock .qr11-btn.mag{border-color:var(--neon2);color:var(--neon2)}
+#hid-qr-v11-dock .qr11-btn.warn{border-color:#ff2255;color:#ff6688}
+#hid-qr-v11-dock .qr11-btn:active,#hid-qr-v11-dock .qr11-btn.on{background:linear-gradient(180deg,var(--neon3),rgba(255,230,0,.55));color:#000;transform:translateY(1px)}
+#hid-qr-v11-dock .qr11-note{font-family:'VT323',monospace;font-size:13px;color:var(--dim);letter-spacing:.05em;margin-top:6px;line-height:1.25}
+#hid-qr-v11-toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 18px);transform:translateX(-50%);z-index:2147483647;display:none;background:rgba(0,0,0,.92);border:1px solid var(--neon3);color:var(--neon3);padding:8px 12px;border-radius:5px;font-family:'VT323',monospace;font-size:16px;letter-spacing:.06em;box-shadow:0 0 12px rgba(255,230,0,.36)}
+#hid-qr-v11-toast.show{display:block}
+@media(max-width:720px){#hid-qr-v11-dock{top:calc(env(safe-area-inset-top) + 6px);padding:7px}#hid-qr-v11-dock .qr11-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#hid-qr-v11-dock .qr11-btn{font-size:15px;min-height:42px;padding:7px}.qr11-close{grid-column:span 2}#hid-qr-v11-dock .qr11-title{font-size:9px}.qr11-sub{display:none}}
+</style>
+<script id="hid-remote-v11-qr-script">
+(function(){
+  'use strict';
+  if(window.HID_REMOTE_V11_QR_VISIBLE_INSTALLED) return;
+  window.HID_REMOTE_V11_QR_VISIBLE_INSTALLED=true;
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  let toastTimer=0;
+  function toast(msg){
+    let t=$('#hid-qr-v11-toast');
+    if(!t){t=document.createElement('div');t.id='hid-qr-v11-toast';document.body.appendChild(t)}
+    t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2300);
+    try{ if(typeof window.toast==='function') window.toast(msg); }catch(_){}
+  }
+  function call(fn){ try{ if(typeof fn==='function') return fn(); }catch(e){ console.warn('QR V11 call failed', e); } }
+  function visibleRemoteRoot(){return $('#hid-remote-v9.show')||$('#hid-remote-v8.show')||$('#hid-remote-v5.show')||$('#hid-remote-v4.show')||$('#hid-remote-panel.show')||$('.remote-fullscreen')}
+  function openRemote(){
+    try{
+      if(typeof window.HID_REMOTE_V9_OPEN==='function') window.HID_REMOTE_V9_OPEN();
+      else if(typeof window.HID_OPEN_REMOTE==='function') window.HID_OPEN_REMOTE();
+    }catch(e){console.warn('QR V11 open remote failed',e)}
+    setTimeout(()=>{ensureDock(true); forcePairVisible();},80);
+  }
+  function forcePairVisible(){
+    try{
+      if(typeof window.HID_REMOTE_V9_QR==='function') window.HID_REMOTE_V9_QR();
+    }catch(e){console.warn(e)}
+    setTimeout(()=>{
+      const root=$('#hid-remote-v9');
+      if(root){
+        const pair=root.querySelector('[data-rv9-win="pair"],.rv9-window[data-rv9-win="pair"],.rv8-win[data-rv8-win="pair"]');
+        if(pair){
+          pair.classList.remove('rv9-min','rv8-min','hidden');
+          pair.style.display='flex'; pair.style.left='8px'; pair.style.top='64px'; pair.style.width='min(560px, calc(100vw - 20px))'; pair.style.height='min(600px, calc(100vh - 140px))'; pair.style.zIndex='2147483000';
+        }
+      }
+    },160);
+  }
+  function ensureTopButtons(){
+    const top=$('#btn-remote-top-static')||$('#btn-remote-top');
+    if(top && !$('#hid-qr-v11-topbtn')){
+      const b=document.createElement('button'); b.id='hid-qr-v11-topbtn'; b.className='btn tiny gold'; b.type='button'; b.textContent='▣ QR PAIR'; b.title='Generate or scan remote-control QR codes';
+      top.insertAdjacentElement('afterend',b);
+    }
+    const launch=$('#launcher-remote-static')||$('#launcher-remote-dynamic')||$('.launcher-btn[data-w="remote"]');
+    if(launch && !$('#hid-qr-v11-launcher')){
+      const b=document.createElement('button'); b.id='hid-qr-v11-launcher'; b.className='launcher-btn'; b.type='button'; b.textContent='▣ QR PAIRING'; b.title='Generate or scan remote-control QR codes';
+      launch.insertAdjacentElement('afterend',b);
+    }
+    ['#hid-qr-v11-topbtn','#hid-qr-v11-launcher'].forEach(sel=>{
+      const b=$(sel); if(b&&!b.__qr11){b.__qr11=true;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openRemote();ensureDock(true);toast('QR pairing controls opened');},{capture:true});b.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'){e.preventDefault();e.stopPropagation();openRemote();ensureDock(true);}}, {capture:true,passive:false});}
+    });
+  }
+  function ensureDock(show=false){
+    let d=$('#hid-qr-v11-dock');
+    if(!d){
+      d=document.createElement('div'); d.id='hid-qr-v11-dock';
+      d.innerHTML=`<div class="qr11-head"><div class="qr11-title">▣ QR REMOTE PAIRING<div class="qr11-sub">Camera pairing for iPad host ↔ iPhone controller</div></div><button class="qr11-btn warn qr11-close" data-qr11="hide">HIDE QR BAR</button></div><div class="qr11-row"><button class="qr11-btn gold" data-qr11="open">OPEN PAIR WINDOW</button><button class="qr11-btn gold" data-qr11="host">GENERATE HOST QR</button><button class="qr11-btn" data-qr11="scanOffer">SCAN IPAD QR</button><button class="qr11-btn mag" data-qr11="answer">SHOW ANSWER QR</button><button class="qr11-btn" data-qr11="scanAnswer">SCAN ANSWER QR</button></div><div class="qr11-note"><b>Use this:</b> iPad → IPAD HOST → GENERATE HOST QR. iPhone → REMOTE CONTROL → SCAN IPAD QR. Then iPad → SCAN ANSWER QR. Copy/paste still works as backup.</div>`;
+      document.body.appendChild(d);
+      d.addEventListener('click',e=>{const b=e.target.closest('[data-qr11]'); if(!b)return; e.preventDefault(); e.stopPropagation(); action(b.dataset.qr11);},{capture:true});
+      d.addEventListener('pointerdown',e=>{e.stopPropagation();},{capture:true});
+    }
+    if(show) d.classList.add('show');
+    return d;
+  }
+  function action(a){
+    ensureDock(true);
+    if(a==='hide'){ $('#hid-qr-v11-dock')?.classList.remove('show'); return; }
+    if(a==='open'){ openRemote(); forcePairVisible(); toast('Pair window opened'); return; }
+    // Prefer V9 public helpers when available, then fall back to clicking the visible V9 controls.
+    openRemote();
+    setTimeout(()=>{
+      try{
+        if(a==='host'){
+          if(typeof window.HID_REMOTE_V9_HOST_QR==='function') window.HID_REMOTE_V9_HOST_QR();
+          setTimeout(()=>{ const b=$('[data-rv9-pair="host"]'); if(b) b.click(); const q=$('[data-rv9-qr="offer"]'); if(q) q.click(); },220);
+          toast('Host QR requested');
+        } else if(a==='scanOffer'){
+          if(typeof window.HID_REMOTE_V9_SCAN_QR==='function') window.HID_REMOTE_V9_SCAN_QR();
+          setTimeout(()=>{ const b=$('[data-rv9-scan="offer"]'); if(b) b.click(); },220);
+          toast('Opening camera to scan iPad QR');
+        } else if(a==='answer'){
+          if(typeof window.HID_REMOTE_V9_QR==='function') window.HID_REMOTE_V9_QR();
+          setTimeout(()=>{ const q=$('[data-rv9-qr="answer"]'); if(q) q.click(); else toast('Connect as controller first, then show Answer QR'); },220);
+          toast('Answer QR requested');
+        } else if(a==='scanAnswer'){
+          if(typeof window.HID_REMOTE_V9_QR==='function') window.HID_REMOTE_V9_QR();
+          setTimeout(()=>{ const b=$('[data-rv9-scan="answer"]'); if(b) b.click(); },220);
+          toast('Opening camera to scan Answer QR');
+        }
+      }catch(e){console.warn(e);toast('QR control error — use the Pair window copy/paste fallback')}
+      ensureDock(true); forcePairVisible();
+    },120);
+  }
+  // Override the public remote opener to always show QR controls whenever Remote opens.
+  const previousOpen = window.HID_REMOTE_V9_OPEN || window.HID_OPEN_REMOTE;
+  window.HID_OPEN_REMOTE=function(ev){
+    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(_){}
+    if(typeof previousOpen==='function') call(()=>previousOpen(ev));
+    else try{ if(typeof window.HID_REMOTE_V9_OPEN==='function') window.HID_REMOTE_V9_OPEN(); }catch(_){}
+    setTimeout(()=>ensureDock(true),120);
+    return false;
+  };
+  window.HID_QR_PAIRING=function(){openRemote();ensureDock(true);forcePairVisible();};
+  window.HID_QR_HOST=function(){action('host')};
+  window.HID_QR_SCAN_IPAD=function(){action('scanOffer')};
+  window.HID_QR_SCAN_ANSWER=function(){action('scanAnswer')};
+  document.addEventListener('click',e=>{const t=e.target;if(t&&t.closest&&t.closest('#btn-remote-top-static,#launcher-remote-static,#btn-remote-top,#launcher-remote-dynamic,.launcher-btn[data-w="remote"],#hid-remote-emergency')){setTimeout(()=>ensureDock(true),80)}},true);
+  setInterval(()=>{ensureTopButtons(); const d=$('#hid-qr-v11-dock'); if(d && visibleRemoteRoot()) d.classList.add('show');},700);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureTopButtons();ensureDock(false)}); else {ensureTopButtons();ensureDock(false)}
+})();
+</script>
+
 </body>
 </html>
