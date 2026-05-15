@@ -185,6 +185,186 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
 })();
 </script>
 
+
+<script id="hid-v21-staged-launch-and-home-manifest">
+/* V21: staged launch repair + restored homepage patch manifest.
+   Shows the app immediately, loads only the core engine first, then optional repair modules in small idle chunks. */
+(function(){
+  if(window.__HID_V21_STAGED_BOOT_INSTALLED) return;
+  window.__HID_V21_STAGED_BOOT_INSTALLED=true;
+
+  const PATCH_BANKS = [
+    ['ELECTRIC PIANO',['Velvet Suitcase','Warm Tines','Glass Rhodes','Midnight EP','Phaser Keys','Dusty Stage','Neo Soul Keys','Sparkle Bell EP','Tape EP','Dyno Bite']],
+    ['SYNTH LEADS',['Solar Lead','Resonant Mono','Silk Glide','Neon Solo','Fusion Square','Crystal Sync','Desert Whistle','Talk Lead','Bit Prophet','Afterglow Lead']],
+    ['PADS',['Desert Air','Analog Choir','Soft Horizon','Glass Cloud','Warm Motion','Slow Bloom','Purple Mist','Dream Stack','Wide Halo','Night Wash']],
+    ['SYNTH BASS',['Round Sub','Funk Moog','Rubber Bass','Deep Square','808 Bloom','Pulse Bass','Low Velvet','Analog Bite','Warm Growl','Palm Drive']],
+    ['STRINGS',['Tape Strings','Cinema Warmth','Small Ensemble','Air Strings','Slow Bow','Vintage Mellotron','Pad Strings','Bright Section','Soft Octaves','Wide Chamber']]
+  ];
+
+  function ready(fn){
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true});
+    else fn();
+  }
+
+  function restoreHomeManifest(){
+    try{
+      const box=document.getElementById('lh-patches-inner');
+      if(!box || box.__hidV21Manifest) return;
+      box.__hidV21Manifest=true;
+      let html='';
+      PATCH_BANKS.forEach((bank,bi)=>{
+        html += `<div class="lh-bank-header">BANK ${String(bi+1).padStart(2,'0')} · ${bank[0]}</div>`;
+        bank[1].forEach((name,pi)=>{
+          const cls = pi%3===1 ? 'm' : (pi%3===2 ? 'y' : '');
+          html += `<div class="lh-patch-line"><span class="pn ${cls}">${name}</span><span class="pi">${String(pi+1).padStart(2,'0')}</span></div>`;
+        });
+      });
+      box.innerHTML = html + html;
+    }catch(e){ console.warn('home manifest restore skipped',e); }
+  }
+
+  function setStatus(msg, appMsg){
+    try{
+      const btn=document.getElementById('launch-btn');
+      if(btn && document.getElementById('launch') && getComputedStyle(document.getElementById('launch')).display!=='none'){
+        btn.dataset.originalText=btn.dataset.originalText||btn.textContent;
+        btn.textContent=msg || 'LOADING...';
+        btn.setAttribute('aria-busy','true');
+        btn.style.opacity='.86';
+      }
+      let line=document.getElementById('hid-launch-status');
+      const holder=document.querySelector('.launch-actions')||document.getElementById('launch');
+      if(holder && !line){
+        line=document.createElement('div');
+        line.id='hid-launch-status';
+        line.style.cssText='width:100%;margin-top:10px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.12em;color:var(--neon);text-shadow:0 0 6px var(--neon);position:relative;z-index:7;';
+        holder.appendChild(line);
+      }
+      if(line) line.textContent=msg||'';
+      let appLine=document.getElementById('hid-app-boot-ribbon');
+      const app=document.getElementById('app');
+      if(app && app.classList.contains('active')){
+        if(!appLine){
+          appLine=document.createElement('div');
+          appLine.id='hid-app-boot-ribbon';
+          appLine.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:999999;padding:7px 12px;border:1px solid var(--stroke);background:rgba(0,0,0,.82);color:var(--neon);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.1em;text-shadow:0 0 5px var(--neon);border-radius:6px;pointer-events:none;box-shadow:0 0 16px rgba(0,255,213,.22);';
+          app.appendChild(appLine);
+        }
+        appLine.textContent=appMsg || msg || 'LOADING...';
+      }
+    }catch(e){}
+  }
+
+  function clearStatus(){
+    try{
+      const btn=document.getElementById('launch-btn');
+      if(btn){
+        btn.textContent=btn.dataset.originalText||'▶ LAUNCH';
+        btn.removeAttribute('aria-busy');
+        btn.style.pointerEvents='auto';
+        btn.style.opacity='';
+      }
+      setTimeout(()=>{try{document.getElementById('hid-app-boot-ribbon')?.remove()}catch{}},900);
+    }catch(e){}
+  }
+
+  function showMainNow(){
+    try{
+      const modal=document.getElementById('prelaunch-modal');
+      if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');modal.style.pointerEvents='none';modal.style.display='none';}
+      const launch=document.getElementById('launch');
+      if(launch){launch.style.display='none';launch.style.pointerEvents='none';launch.setAttribute('aria-hidden','true');}
+      const app=document.getElementById('app');
+      if(app){app.style.display='flex';app.style.visibility='visible';app.style.opacity='1';app.classList.add('active');app.removeAttribute('aria-hidden');}
+      document.documentElement.classList.add('hid-entered');
+      document.body && document.body.classList.add('hid-entered');
+    }catch(err){console.warn('show main recovered',err)}
+  }
+
+  function lazyScripts(){ return Array.from(document.querySelectorAll('script[type="text/hid-lazy-js"]')); }
+
+  function runLazyScript(old, suffix){
+    if(!old || old.__hidV21Loaded) return;
+    old.__hidV21Loaded=true;
+    try{
+      const sc=document.createElement('script');
+      if(old.id) sc.id=old.id+'-'+(suffix||'v21live');
+      sc.text = old.textContent || '';
+      document.body.appendChild(sc);
+    }catch(err){
+      console.error('V21 module load recovered', old && old.id, err);
+    }
+  }
+
+  function afterCoreInit(){
+    try{
+      if(typeof window.initApp==='function' && !window.__appInitialized){
+        window.__appInitialized=true;
+        window.initApp();
+      }
+    }catch(err){
+      window.__lastStartupError=err;
+      console.error('Core init recovered; app remains visible.',err);
+    }
+    try{
+      if(typeof window.initAudio==='function') window.initAudio();
+      if(window.ctx && window.ctx.state && window.ctx.state!=='running') window.ctx.resume().catch(()=>{});
+    }catch(audioErr){ console.warn('Audio unlock deferred',audioErr); }
+  }
+
+  function loadOptionalModulesGradually(startIndex){
+    const scripts=lazyScripts();
+    let i=startIndex||1;
+    function step(deadline){
+      if(i>=scripts.length){
+        try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(e){}
+        clearStatus();
+        return;
+      }
+      const old=scripts[i++];
+      setStatus('OPENING APP...', 'LOADING MODULE '+i+'/'+scripts.length);
+      runLazyScript(old,'v21opt');
+      // Give Safari/iPad breathing room between large remote/visualizer patches.
+      if('requestIdleCallback' in window) requestIdleCallback(step,{timeout:700});
+      else setTimeout(step,90);
+    }
+    if('requestIdleCallback' in window) requestIdleCallback(step,{timeout:500});
+    else setTimeout(step,120);
+  }
+
+  let booting=false;
+  window.__HID_DIRECT_ENTER=function(ev){
+    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
+    if(booting) return false;
+    booting=true;
+    showMainNow();
+    setStatus('OPENING...', 'LOADING CORE ENGINE...');
+    // Let the browser paint the app screen before running the large core script.
+    setTimeout(function(){
+      const scripts=lazyScripts();
+      if(!scripts.length){ clearStatus(); return; }
+      try{
+        runLazyScript(scripts[0],'v21core');
+        afterCoreInit();
+      }catch(err){
+        window.__lastStartupError=err;
+        console.error('V21 launch recovered',err);
+      }
+      setStatus('APP OPENED', 'FINISHING OPTIONAL MODULES...');
+      loadOptionalModulesGradually(1);
+    },60);
+    return false;
+  };
+
+  window.__HID_V21_RESTORE_HOME_MANIFEST=restoreHomeManifest;
+  ready(function(){
+    restoreHomeManifest();
+    // Re-run once after the original launch UI scripts if they load later.
+    setTimeout(restoreHomeManifest,700);
+  });
+})();
+</script>
+
 <style>
 :root{
   --bg:#000;--neon:#00ffd5;--neon2:#ff00aa;--neon3:#ffe600;
@@ -1325,6 +1505,35 @@ body.hid-entered.remote-missing #hid-remote-emergency{display:block}
 <style id="hid-fast-boot-css">
 #launch{visibility:visible;}
 #launch-btn[aria-busy="true"]{animation:none!important;filter:brightness(1.2);}
+
+
+/* V21: keep the animated Patch Manifest visible on iPad/tablet portrait without blocking launch. */
+@media(max-width:900px){
+  #launch .lh-stage-cols{display:flex!important;flex-direction:column!important;align-items:center!important;gap:8px!important;}
+  #launch .lh-side{display:none!important;}
+  #launch .lh-stage-cols > .lh-side:last-child{
+    display:flex!important;
+    width:min(94vw,560px)!important;
+    max-height:132px!important;
+    min-height:92px!important;
+    padding:7px 9px!important;
+    order:3!important;
+    overflow:hidden!important;
+  }
+  #launch .lh-stage-cols > .lh-side:last-child .lh-side-title:nth-of-type(n+2),
+  #launch .lh-stage-cols > .lh-side:last-child .lh-spec{display:none!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patches{min-height:0!important;height:92px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patches-list{height:88px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patches-inner{font-size:12px!important;line-height:1.35!important;}
+}
+@media(max-width:520px), (max-height:680px){
+  #launch .lh-stage-cols > .lh-side:last-child{max-height:86px!important;min-height:70px!important;padding:5px 7px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patches{height:56px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patches-list{height:54px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-bank-header{font-size:6px!important;padding:3px 2px 1px!important;}
+  #launch .lh-stage-cols > .lh-side:last-child .lh-patch-line{font-size:11px!important;padding:0 3px!important;}
+}
+
 </style>
 </head>
 <body>
