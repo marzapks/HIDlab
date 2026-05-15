@@ -127,6 +127,7 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
   --white-key:#fafbf2;--black-key:#05050d;
   --panel:#06050f;--stroke:rgba(0,255,213,.28);--text:#cfeefb;--dim:#5a7a86;
   --brightness:1;
+  --ui-glow:#00ffd5;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{height:100%;width:100%;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;touch-action:manipulation;overscroll-behavior:none;filter:brightness(var(--brightness))}
@@ -1511,6 +1512,7 @@ body.hid-entered.remote-missing #hid-remote-emergency{display:block}
   <div class="cc-row"><label>NEON PRIMARY</label><input type="color" data-cv="--neon" value="#00ffd5"></div>
   <div class="cc-row"><label>NEON SECONDARY</label><input type="color" data-cv="--neon2" value="#ff00aa"></div>
   <div class="cc-row"><label>NEON ACCENT</label><input type="color" data-cv="--neon3" value="#ffe600"></div>
+  <div class="cc-row"><label>WINDOW GLOW</label><input type="color" data-cv="--ui-glow" value="#00ffd5"></div>
   <div class="cc-row"><label>WHITE KEYS</label><input type="color" data-cv="--white-key" value="#fafbf2"></div>
   <div class="cc-row"><label>BLACK KEYS</label><input type="color" data-cv="--black-key" value="#000000"></div>
   <div class="cc-row"><label>UI TEXT</label><input type="color" data-cv="--text" value="#cfeefb"></div>
@@ -7262,7 +7264,7 @@ body.hid-remote-v5-open #hid-remote-v4,body.hid-remote-v5-open #hid-remote-fallb
   function bindBody(body,id){qsa('textarea',body).forEach(t=>{t.addEventListener('focus',()=>{R.copyFocus=true;try{t.select()}catch(_){}});t.addEventListener('blur',()=>{R.copyFocus=false})});qsa('[data-rv6-range]',body).forEach(r=>{const doSend=(fast=true)=>{const val=+r.value,type=r.dataset.type||'';const out=r.nextElementSibling;if(out)out.textContent=fmt(val,type);const cmd=r.dataset.cmd,key=r.dataset.key;if(cmd==='fx')command('fx',{key,value:val},fast);else if(cmd==='sound')command('sound',{key,value:val,scope:r.dataset.scope,padIdx:+r.dataset.padIdx},fast);else if(cmd==='arp')command('arp',{key,value:key==='octaves'?Math.round(val):val},fast);else if(cmd==='vizParam')command('vizParam',{key,value:val},fast);else if(cmd==='wheelParam')command('wheelParam',{key,value:val},fast);else if(cmd==='color')applyColorCommand(key,val,fast);else command(cmd,{value:val},fast)};r.addEventListener('pointerdown',e=>{R.activeControl=true;try{r.setPointerCapture(e.pointerId)}catch(_){}});r.addEventListener('pointerup',e=>{doSend(false);setTimeout(()=>{R.activeControl=false},120);try{r.releasePointerCapture(e.pointerId)}catch(_){}});r.addEventListener('pointercancel',()=>{setTimeout(()=>{R.activeControl=false},80)});r.addEventListener('input',()=>doSend(true));r.addEventListener('change',()=>doSend(false))});qsa('[data-rv6-padvol]',body).forEach(r=>{const send=(fast=true)=>{r.nextElementSibling.textContent=Math.round(+r.value*100);command('padVol',{idx:+r.dataset.rv6Padvol,value:+r.value},fast)};r.addEventListener('pointerdown',()=>{R.activeControl=true});r.addEventListener('pointerup',()=>{send(false);setTimeout(()=>R.activeControl=false,120)});r.addEventListener('input',()=>send(true));r.addEventListener('change',()=>send(false))});qsa('[data-rv6-padfx]',body).forEach(r=>{const send=(fast=true)=>{r.nextElementSibling.textContent=Math.round(+r.value*100);command('padFx',{idx:+r.dataset.rv6Padfx,value:+r.value},fast)};r.addEventListener('pointerdown',()=>{R.activeControl=true});r.addEventListener('pointerup',()=>{send(false);setTimeout(()=>R.activeControl=false,120)});r.addEventListener('input',()=>send(true));r.addEventListener('change',()=>send(false))});qsa('[data-rv6-padtrn]',body).forEach(r=>{const send=(fast=true)=>{r.nextElementSibling.textContent=Math.round(+r.value);command('padTranspose',{idx:+r.dataset.rv6Padtrn,value:+r.value},fast)};r.addEventListener('pointerdown',()=>{R.activeControl=true});r.addEventListener('pointerup',()=>{send(false);setTimeout(()=>R.activeControl=false,120)});r.addEventListener('input',()=>send(true));r.addEventListener('change',()=>send(false))});qsa('[data-rv6-color]',body).forEach(c=>c.oninput=e=>applyColorCommand(e.target.dataset.rv6Color,e.target.value,true));const sp=qs('#rv6-sound-pad',body);if(sp)sp.onchange=e=>{R.selectedPad=+e.target.value;command('padSelect',{idx:R.selectedPad});scheduleRender()};qsa('[data-rv6-bank]',body).forEach(s=>s.onchange=e=>command('bank',{bank:e.target.value}));qsa('[data-rv6-arp-select]',body).forEach(s=>s.onchange=e=>command('arp',{key:e.target.dataset.rv6ArpSelect,value:e.target.value}));qsa('[data-rv6-arp-rate]',body).forEach(b=>b.onclick=()=>{command('arp',{key:'rate',value:b.dataset.rv6ArpRate});scheduleRender()});qsa('[data-rv6-arp-dir]',body).forEach(b=>b.onclick=()=>{command('arp',{key:'direction',value:b.dataset.rv6ArpDir});scheduleRender()});const wheel=qs('#rv6-wheel',body);if(wheel)bindWheel(wheel);qsa('[data-rv6-note]',body).forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.classList.add('hit');try{b.setPointerCapture(e.pointerId)}catch(_){ }command('noteOn',{midi:+b.dataset.rv6Note},true)};const off=e=>{b.classList.remove('hit');command('noteOff',{midi:+b.dataset.rv6Note},true);try{b.releasePointerCapture(e.pointerId)}catch(_){ }};b.onpointerup=off;b.onpointercancel=off;b.onlostpointercapture=off})}
   function applyRemoteColors(){const root=qs('#hid-remote-v6');if(!root)return;const c=R.remoteColors||{};const map={'--bg':'--rv6-bg','--neon':'--rv6-neon','--neon2':'--rv6-neon2','--neon3':'--rv6-neon3','--text':'--rv6-text','--white-key':'--rv6-white-key','--black-key':'--rv6-black-key'};for(const [k,v] of Object.entries(c)){if(k==='--brightness')root.style.filter='brightness('+v+')';else if(map[k])root.style.setProperty(map[k],v)}}
   function resetColors(){const def={};for(const [,k,d] of COLOR_VARS)def[k]=d;def['--brightness']='1';return def}
-  function applyHostColor(k,v){try{document.documentElement.style.setProperty(k,String(v));const inp=qs('#color-modal input[data-cv="'+String(k).replace(/"/g,\'\\"\')+'"]');if(inp)inp.value=String(v);if(k==='--brightness'){document.documentElement.style.setProperty('--brightness',String(v));const br=qs('#cc-brightness');if(br)br.value=String(v);const bv=qs('#cc-brightness-v');if(bv)bv.textContent=Math.round(parseFloat(v)*100)+'%'}}catch(e){console.warn('Host color failed',k,v,e)}}
+  function applyHostColor(k,v){try{document.documentElement.style.setProperty(k,String(v));const inp=qs('#color-modal input[data-cv="'+String(k).replace(/"/g,'\\"')+'"]');if(inp)inp.value=String(v);if(k==='--brightness'){document.documentElement.style.setProperty('--brightness',String(v));const br=qs('#cc-brightness');if(br)br.value=String(v);const bv=qs('#cc-brightness-v');if(bv)bv.textContent=Math.round(parseFloat(v)*100)+'%'}}catch(e){console.warn('Host color failed',k,v,e)}}
   function applyColorCommand(k,v,fast=false){if(R.colorScope==='remote'||R.colorScope==='both'){R.remoteColors[k]=String(v);applyRemoteColors();saveLayout()}if(R.colorScope==='host'||R.colorScope==='both')command('color',{key:k,value:String(v)},fast)}
   async function startHost(){closeConn(false);R.role='host';R.pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});setupDC(R.pc.createDataChannel('hid-v6-fast',{ordered:false,maxRetransmits:0}));const offer=await R.pc.createOffer();await R.pc.setLocalDescription(offer);await waitIce(R.pc);R.offer=enc(R.pc.localDescription);scheduleRender()}
   async function startController(){closeConn(false);R.role='controller';R.pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});R.pc.ondatachannel=e=>setupDC(e.channel);const offerText=qs('#rv6-offer')?.value||R.offer;if(!offerText.trim()){toastSafe('Paste the iPad host code first');return}await R.pc.setRemoteDescription(dec(offerText));const answer=await R.pc.createAnswer();await R.pc.setLocalDescription(answer);await waitIce(R.pc);R.answer=enc(R.pc.localDescription);scheduleRender()}
@@ -7339,7 +7341,7 @@ body.hid-remote-v8-open{overflow:hidden!important}
   function load(){try{R.layout=JSON.parse(localStorage.getItem('hidRemoteV8Layout')||'null')||defaults();R.min=JSON.parse(localStorage.getItem('hidRemoteV8Min')||'{}')||{};R.colorRemote=JSON.parse(localStorage.getItem('hidRemoteV8RemoteColors')||'{}')||{}}catch(_){R.layout=defaults();R.min={}}}
   function save(){try{localStorage.setItem('hidRemoteV8Layout',JSON.stringify(R.layout));localStorage.setItem('hidRemoteV8Min',JSON.stringify(R.min));localStorage.setItem('hidRemoteV8RemoteColors',JSON.stringify(R.colorRemote))}catch(_){}}
   function fitLayout(){const work=$('#hid-remote-v8 .rv8-work');if(!work)return;const ww=work.clientWidth||900, wh=work.clientHeight||620;for(const id of WINS){const d=defaults()[id], l=R.layout[id]=Object.assign({},d,R.layout[id]||{});if(ww<760){const idx=WINS.indexOf(id);l.w=Math.max(260,ww-20);l.x=10;l.y=10+idx*24;if(id==='pair'){l.y=10;l.h=Math.min(380,wh-30)}if(id==='top'){l.y=70;l.h=260}if(id==='piano'){l.y=Math.min(340,wh-340);l.h=320}}l.w=clamp(l.w,240,Math.max(250,ww-l.x-8));l.h=clamp(l.h,155,Math.max(165,wh-l.y-8));l.x=clamp(l.x,0,Math.max(0,ww-80));l.y=clamp(l.y,0,Math.max(0,wh-70));}}
-  function colors(){let cs={};try{const r=getComputedStyle(document.documentElement);['--bg','--neon','--neon2','--neon3','--text','--white-key','--black-key','--brightness'].forEach(k=>cs[k]=r.getPropertyValue(k).trim())}catch(_){}return cs}
+  function colors(){let cs={};try{const r=getComputedStyle(document.documentElement);['--bg','--neon','--neon2','--neon3','--ui-glow','--text','--white-key','--black-key','--brightness'].forEach(k=>cs[k]=r.getPropertyValue(k).trim())}catch(_){}return cs}
   function padInfo(i){const S=st(),p=S.pads&&S.pads[i];return p?{i,name:p.name||('PAD '+(i+1)),kind:p.kind||'pad',source:p.sourceLabel||p.kind||'PAD',empty:false,disabled:!!p.disabled,wheel:p.wheelEnabled!==false,vol:p.volume??1,fx:p.fxSend??1,transpose:p.transpose??0,octave:p.octaveShift??0,sustain:p.sustain!==false,selected:S.padEditingIdx===i}:{i,name:'EMPTY',kind:'empty',source:'EMPTY',empty:true,disabled:false,wheel:false,vol:0,fx:0,transpose:0,octave:0,sustain:false,selected:false}}
   function slotInfo(i){const S=st(),s=S.slots&&S.slots[i];return s?{i,name:s.name||('SLOT '+(i+1)),empty:false,disabled:!!s.disabled,active:S.slotIdx===i}:{i,name:'EMPTY',empty:true,disabled:false,active:false}}
   function snapshot(){const S=st();let bankData={};try{for(const [k,b] of Object.entries(banks())) bankData[k]={name:b.name||k,patches:(b.patches||[]).map(p=>p.n||'PATCH')}}catch(_){}return {bpm:S.bpm||120,bank:S.bank||'EP',patchIdx:S.patchIdx||0,patch:patchName(),octave:S.octave||0,transpose:S.transpose||0,sustain:!!S.sustain,build:!!S.build,chromatic:!!S.chromatic,keyboardPiano:S.keyboardPiano!==false,padSustainMode:S.padSustainMode!==false,padSoloMode:S.padSoloMode!==false,padCycleMode:S.padCycleMode||'loop',padsOrderMode:!!S.padsOrderMode,padEditingIdx:S.padEditingIdx??-1,slotCycleMode:S.slotCycleMode||'loop',pads:Array.from({length:Math.max(16,Math.min(32,(S.pads||[]).length||16))},(_,i)=>padInfo(i)),slots:Array.from({length:Math.max(10,(S.slots||[]).length||10)},(_,i)=>slotInfo(i)),fx:Object.assign({},S.fx||{}),sound:JSON.parse(JSON.stringify({amp:S.amp||{},filt:S.filt||{},mod:S.mod||{}})),arp:Object.assign({},S.arp||{}),viz:Object.assign({},S.viz||{}),modWheel:Object.assign({},S.modWheel||{}),spatial:(typeof spatialFX==='object'&&spatialFX)?JSON.parse(JSON.stringify({enabled:spatialFX.enabled,mode:spatialFX.mode,mix:spatialFX.mix,delay:spatialFX.delay,feedback:spatialFX.feedback,spread:spatialFX.spread,depth:spatialFX.depth,points:(spatialFX.points||[]).map(p=>({id:p.id,name:p.name,x:p.x,y:p.y,mix:p.mix,delay:p.delay,feedback:p.feedback,spread:p.spread,depth:p.depth,cosmic:p.cosmic,glitter:p.glitter,lead:p.lead,shimmer:p.shimmer,breath:p.breath,character:p.character,enabled:p.enabled,selected:p.selected})),selectedPointId:spatialFX.selectedPointId})):null,colors:colors(),banks:bankData};}
@@ -7454,7 +7456,7 @@ function defaultLayout(){return {pair:{x:10,y:10,w:420,h:420},top:{x:444,y:10,w:
 function load(){try{R.layout=JSON.parse(localStorage.getItem('hidRemoteV9Layout')||'null')||defaultLayout()}catch(_){R.layout=defaultLayout()}try{R.min=JSON.parse(localStorage.getItem('hidRemoteV9Min')||'{}')||{}}catch(_){R.min={}}try{R.remoteColors=JSON.parse(localStorage.getItem('hidRemoteV9Colors')||'{}')||{}}catch(_){R.remoteColors={}}}
 function save(){try{localStorage.setItem('hidRemoteV9Layout',JSON.stringify(R.layout));localStorage.setItem('hidRemoteV9Min',JSON.stringify(R.min));localStorage.setItem('hidRemoteV9Colors',JSON.stringify(R.remoteColors))}catch(_){}}
 function currentPatch(){try{const s=S(), b=B();return (b[s.bank]?.patches?.[s.patchIdx]?.n)||'PATCH'}catch(_){return 'PATCH'}}
-function colorsSnap(){const out={};try{const cs=getComputedStyle(document.documentElement);['--bg','--neon','--neon2','--neon3','--text','--white-key','--black-key','--brightness'].forEach(k=>out[k]=(cs.getPropertyValue(k)||'').trim())}catch(_){}return out}
+function colorsSnap(){const out={};try{const cs=getComputedStyle(document.documentElement);['--bg','--neon','--neon2','--neon3','--ui-glow','--text','--white-key','--black-key','--brightness'].forEach(k=>out[k]=(cs.getPropertyValue(k)||'').trim())}catch(_){}return out}
 function padInfo(i){const s=S(),p=s.pads&&s.pads[i];if(!p)return {i,empty:true,name:'EMPTY',kind:'empty',source:'EMPTY',vol:0,fx:0,transpose:0,octave:0,wheel:false,disabled:false,selected:s.padEditingIdx===i};return {i,empty:false,name:p.name||('PAD '+(i+1)),kind:p.kind||'pad',source:p.sourceLabel||p.kind||'PAD',vol:p.volume??1,fx:p.fxSend??1,transpose:p.transpose||0,octave:p.octaveShift||0,wheel:p.wheelEnabled!==false,disabled:!!p.disabled,selected:s.padEditingIdx===i,arpLoop:!!p.arpLoop,sustain:p.sustain!==false}}
 function slotInfo(i){const s=S(),sl=s.slots&&s.slots[i];return sl?{i,empty:false,name:sl.name||('SLOT '+(i+1)),active:s.slotIdx===i,disabled:!!sl.disabled}:{i,empty:true,name:'EMPTY',active:s.slotIdx===i,disabled:false}}
 function snapshot(){const s=S(),b=B();let banks=[];try{banks=Object.keys(b).map(k=>({id:k,name:b[k].name||k,patches:(b[k].patches||[]).map((p,i)=>({i,n:p.n||('Patch '+(i+1))}))}))}catch(_){}let chords=[];try{chords=CATS().slice(0,120).map((c,i)=>({i,id:c.id,name:c.name,full:c.full,root:c.root,sym:c.sym,tags:c.tags||[]}))}catch(_){}return {patch:currentPatch(),bank:s.bank||'EP',patchIdx:s.patchIdx||0,bpm:s.bpm||120,delayDiv:s.delayDiv||.5,octave:s.octave||0,transpose:s.transpose||0,transposeTarget:s.transposeTarget||'keys',build:!!s.build,chromatic:!!s.chromatic,keyboardPiano:s.keyboardPiano!==false,sustain:!!s.sustain,master:get(s,'mod.vol',.7),padSustainMode:!!s.padSustainMode,padSoloMode:s.padSoloMode!==false,padCycleMode:s.padCycleMode||'loop',padsOrderMode:!!s.padsOrderMode,padArmedRec:Number.isFinite(s.padArmedRec)?s.padArmedRec:-1,padEditingIdx:Number.isFinite(s.padEditingIdx)?s.padEditingIdx:-1,slotCycleMode:s.slotCycleMode||'loop',slotsOrderMode:!!s.slotsOrderMode,shapeCount:s.shapeNotes&&s.shapeNotes.size?s.shapeNotes.size:0,pads:Array.from({length:Math.max(16,(s.pads||[]).length||16)},(_,i)=>padInfo(i)),slots:Array.from({length:Math.max(10,(s.slots||[]).length||10)},(_,i)=>slotInfo(i)),fx:Object.assign({},s.fx||{}),sound:JSON.parse(JSON.stringify({amp:s.amp||{},filt:s.filt||{},mod:s.mod||{}})),arp:Object.assign({},s.arp||{}),wheel:{rangeUp:get(s,'modWheel.rangeUp',2),rangeDown:get(s,'modWheel.rangeDown',2),glide:get(s,'modWheel.glide',.06),hold:get(s,'modWheel.holdMode',false),active:get(s,'modWheel.active',0)},spatial:Object.assign({},SF()||{}),viz:Object.assign({},s.viz||{}),banks,chords,colors:colorsSnap()}}
@@ -7489,7 +7491,7 @@ function renderWin(id){const root=ensure(),body=$(`[data-rv9-win="${id}"] .win-b
  if(id==='modwheel'){body.innerHTML=`<div class="rv9-wheel" id="rv9-wheel"><div class="rv9-wheel-thumb" id="rv9-wheel-thumb"></div><div class="rv9-wheel-read" id="rv9-wheel-read">0.00 ST</div></div><div class="rv9-row" style="margin-top:8px"><button class="btn tiny ${R.wheelHold?'on':''}" data-rv9-action="wheelHold">HOLD ${R.wheelHold?'ON':'OFF'}</button><button class="btn tiny gold" data-rv9-action="wheelCenter">CENTER</button><span class="target-pill"><span>RANGE:</span><b>+${fmt(get(u,'wheel.rangeUp',2),'')} / -${fmt(get(u,'wheel.rangeDown',2),'')} ST</b></span></div><div class="rv9-grid" style="margin-top:8px">${field('RANGE UP','wheelParam','rangeUp',get(u,'wheel.rangeUp',2),0,24,.1,'')}${field('RANGE DOWN','wheelParam','rangeDown',get(u,'wheel.rangeDown',2),0,24,.1,'')}${field('GLIDE','wheelParam','glide',get(u,'wheel.glide',.06),0,.6,.001,'s')}</div>`;setTimeout(()=>{const w=$('#rv9-wheel');if(w)bindWheel(w)},0);return}
  if(id==='spatial'){const sp=u.spatial||{};body.innerHTML=`<div class="rv9-row">${btn('3D SOUND '+(sp.enabled?'ON':'OFF'),'spatialToggle',sp.enabled,'gold')} ${['headphones','stage','universal'].map(m=>`<button class="btn tiny ${sp.mode===m?'on':''}" data-rv9-spatial-mode="${m}">${m==='headphones'?'HEAD':m==='stage'?'STAGE':'UNI'}</button>`).join('')} ${btn('RANDOM POINTS','spatialRandom',false,'warn')}</div><div class="rv9-grid" style="margin-top:8px">${field('MIX','spatialParam','mix',sp.mix??.28,0,1,.01,'pct')}${field('DELAY','spatialParam','delay',sp.delay??.22,.02,.8,.01,'s')}${field('FEEDBACK','spatialParam','feedback',sp.feedback??.25,0,.85,.01,'pct')}${field('SPREAD','spatialParam','spread',sp.spread??.35,0,1,.01,'pct')}${field('MOTION','spatialParam','depth',sp.depth??.35,0,1,.01,'pct')}${field('FOCUS X','spatialParam','focusX',sp.focusX??0,-1,1,.01,'pan')}${field('FOCUS Y','spatialParam','focusY',sp.focusY??0,-1,1,.01,'pan')}</div><div class="rv9-note">This mirrors the host 3D Sound parameters and mode buttons. Detailed point placement still uses the host canvas.</div>`;return}
  if(id==='visualizer'){const v=u.viz||{},scenes=['cosmos','desert','grid','orbital','tunnel','city'];body.innerHTML=`<div class="rv9-row">${btn('VISUALIZER '+(v.active?'ON':'OFF'),'vizToggle',v.active)} ${btn('AUTO-PAN '+(v.autoPan?'ON':'OFF'),'vizAuto',v.autoPan,'gold')} ${btn('LIVE MIC '+(v.liveMic?'ON':'OFF'),'vizMic',v.liveMic)} ${btn('RANDOM','vizRandom',false,'warn')}</div><div class="bank-tabs" style="margin-top:7px">${scenes.map(sc=>`<button class="bank-tab ${v.scene===sc?'active':''}" data-rv9-viz-scene="${sc}">${sc.toUpperCase()}</button>`).join('')}</div><div class="rv9-grid" style="margin-top:8px">${field('SENS','vizParam','sensitivity',v.sensitivity??1.2,.1,5,.01,'')}${field('PARTICLES','vizParam','particleCount',v.particleCount??1,.1,3,.01,'')}${field('MOTION','vizParam','motion',v.motion??1,0,5,.01,'')}${field('COLOR','vizParam','colorShift',v.colorShift??0,0,360,1,'int')}${field('BLOOM','vizParam','bloom',v.bloom??1,0,5,.01,'')}${field('FOG','vizParam','fog',v.fog??.5,0,1,.01,'pct')}${field('AUTO SPEED','vizParam','autoSpeed',v.autoSpeed??1,.1,8,.01,'')}${field('MIC SENS','vizParam','micSensitivity',v.micSensitivity??2.4,.1,10,.01,'')}</div>`;return}
- if(id==='colors'){const c=Object.assign({},u.colors||{},R.remoteColors||{}),rows=[['Background','--bg','#000000'],['Neon Primary','--neon','#00ffd5'],['Neon Secondary','--neon2','#ff00aa'],['Gold Accent','--neon3','#ffe600'],['Text','--text','#cfeefb'],['White Keys','--white-key','#fafbf2'],['Black Keys','--black-key','#05050d']];body.innerHTML=`<div class="rv9-row"><button class="btn tiny ${R.colorScope==='host'?'on':''}" data-rv9-color-scope="host">HOST ONLY</button><button class="btn tiny ${R.colorScope==='remote'?'on':''}" data-rv9-color-scope="remote">REMOTE ONLY</button><button class="btn tiny ${R.colorScope==='both'?'on':''}" data-rv9-color-scope="both">BOTH</button><button class="btn tiny gold" data-rv9-action="matchHostColors">MATCH HOST</button><button class="btn tiny warn" data-rv9-action="resetColors">RESET</button></div><div class="rv9-colorgrid" style="margin-top:8px">${rows.map(r=>`<div class="rv9-colorline"><label>${r[0]}</label><input type="color" value="${colorVal(c[r[1]]||r[2])}" data-rv9-color="${r[1]}"><span class="v">${r[1]}</span></div>`).join('')}</div><div class="rv9-grid" style="margin-top:8px">${field('BRIGHTNESS','uiColor','--brightness',parseFloat(c['--brightness']||1),.3,1.6,.01,'')}</div><div class="rv9-note">HOST ONLY changes the iPad app. REMOTE ONLY changes this controller. BOTH keeps them matched. White/black key colors update the actual piano keys.</div>`;return}
+ if(id==='colors'){const c=Object.assign({},u.colors||{},R.remoteColors||{}),rows=[['Background','--bg','#000000'],['Neon Primary','--neon','#00ffd5'],['Neon Secondary','--neon2','#ff00aa'],['Gold Accent','--neon3','#ffe600'],['Window Glow','--ui-glow','#00ffd5'],['Text','--text','#cfeefb'],['White Keys','--white-key','#fafbf2'],['Black Keys','--black-key','#05050d']];body.innerHTML=`<div class="rv9-row"><button class="btn tiny ${R.colorScope==='host'?'on':''}" data-rv9-color-scope="host">HOST ONLY</button><button class="btn tiny ${R.colorScope==='remote'?'on':''}" data-rv9-color-scope="remote">REMOTE ONLY</button><button class="btn tiny ${R.colorScope==='both'?'on':''}" data-rv9-color-scope="both">BOTH</button><button class="btn tiny gold" data-rv9-action="matchHostColors">MATCH HOST</button><button class="btn tiny warn" data-rv9-action="resetColors">RESET</button></div><div class="rv9-colorgrid" style="margin-top:8px">${rows.map(r=>`<div class="rv9-colorline"><label>${r[0]}</label><input type="color" value="${colorVal(c[r[1]]||r[2])}" data-rv9-color="${r[1]}"><span class="v">${r[1]}</span></div>`).join('')}</div><div class="rv9-grid" style="margin-top:8px">${field('BRIGHTNESS','uiColor','--brightness',parseFloat(c['--brightness']||1),.3,1.6,.01,'')}</div><div class="rv9-note">HOST ONLY changes the iPad app. REMOTE ONLY changes this controller. BOTH keeps them matched. White/black key colors update the actual piano keys.</div>`;return}
  if(id==='display'){body.innerHTML=`<div class="rv9-row">${btn('SHOW ALL','showAll',false,'gold')} ${btn('HIDE MOST','hideMost',false,'warn')} ${btn('RESET LAYOUT','resetLayout')}</div><div class="rv9-display-grid" style="margin-top:8px">${WINS.map(w=>`<button class="btn tiny ${!R.min[w]?'on':''}" data-rv9-toggle-win="${w}">${TITLES[w].replace('▣ ','')}</button>`).join('')}</div>`;return}
 }
 function colorVal(v){v=String(v||'').trim();if(/^#[0-9a-f]{6}$/i.test(v))return v;if(/^#[0-9a-f]{3}$/i.test(v))return '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3];return '#00ffd5'}
@@ -8607,6 +8609,1319 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function boot(){installPianoMode(); try{buildVizControls()}catch(_){} try{updateTransposeUI()}catch(_){} try{decoratePadPitchRanges()}catch(_){} }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
   setInterval(()=>{try{installPianoMode();decoratePadPitchRanges();}catch(_){}},1200);
+})();
+</script>
+
+
+
+<!-- ===== V14 QR CLOSE + CAMERA LAYER FIX ===== -->
+<style id="hid-v14-qr-camera-layer-style">
+  /* When the QR bar is dismissed, older QR modules are not allowed to reopen it automatically. */
+  body.hid-v14-qr-dismissed #hid-qr-v11-dock,
+  body.hid-v14-scanning #hid-qr-v11-dock{
+    display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important;
+  }
+  body.hid-v14-scanning .rv9-window,
+  body.hid-v14-scanning .window{
+    pointer-events:none!important;
+  }
+  /* Force every QR camera viewer above every remote/app window. */
+  #rv9-scan-overlay,
+  #hrv4-scan-overlay,
+  #hid-v12-scan,
+  #hid-v12-qr-overlay .v12-scan{
+    position:fixed!important;inset:0!important;left:0!important;top:0!important;right:0!important;bottom:0!important;
+    width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;
+    z-index:2147483647!important;transform:none!important;margin:0!important;
+    background:#000!important;color:var(--text)!important;box-sizing:border-box!important;
+  }
+  #rv9-scan-overlay.hid-v14-front,
+  #hrv4-scan-overlay.hid-v14-front{
+    display:flex!important;flex-direction:column!important;gap:10px!important;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))!important;
+    overflow:hidden!important;touch-action:none!important;overscroll-behavior:none!important;
+  }
+  #hid-v12-scan.show,
+  #hid-v12-qr-overlay .v12-scan.show{
+    display:flex!important;flex-direction:column!important;gap:10px!important;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))!important;
+    overflow:hidden!important;touch-action:none!important;overscroll-behavior:none!important;
+  }
+  #rv9-scan-overlay video,
+  #hrv4-scan-overlay video,
+  #hid-v12-scan video,
+  #hid-v12-qr-overlay .v12-scan video{
+    display:block!important;flex:1 1 auto!important;width:100%!important;min-height:0!important;height:auto!important;
+    object-fit:cover!important;border:2px solid var(--neon)!important;border-radius:10px!important;background:#000!important;
+    box-shadow:0 0 28px rgba(0,255,213,.55)!important;z-index:2!important;
+  }
+  #rv9-scan-overlay .rv9-row,
+  #hrv4-scan-overlay .hrv4-scan-head,
+  #hid-v12-scan .v12-row,
+  #hid-v12-scan .v12-scan-msg{
+    position:relative!important;z-index:3!important;pointer-events:auto!important;
+  }
+  .hid-v14-scan-badge{
+    font-family:'VT323',monospace;font-size:16px;color:var(--neon3);letter-spacing:.05em;
+    border:1px dashed rgba(255,230,0,.38);padding:6px 8px;border-radius:6px;background:rgba(255,230,0,.045);
+    text-align:center;position:relative;z-index:3;
+  }
+</style>
+<script id="hid-v14-qr-camera-layer-script">
+(function(){
+  'use strict';
+  if(window.HID_V14_QR_CAMERA_LAYER_INSTALLED) return;
+  window.HID_V14_QR_CAMERA_LAYER_INSTALLED=true;
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  let intentionallyOpeningQR=false;
+  function toast(msg){try{(window.toast||console.log)(msg)}catch(_){console.log(msg)}}
+  function dismissQRBar(){
+    document.body.classList.add('hid-v14-qr-dismissed');
+    const d=$('#hid-qr-v11-dock');
+    if(d){d.classList.remove('show');d.style.display='none';d.setAttribute('aria-hidden','true');}
+  }
+  function allowQRBar(){
+    document.body.classList.remove('hid-v14-qr-dismissed');
+    const d=$('#hid-qr-v11-dock');
+    if(d){d.style.display='';d.removeAttribute('aria-hidden');}
+  }
+  function closeV12Overlay(){
+    try{ if(typeof window.HID_V12_STOP_QR_SCAN==='function') window.HID_V12_STOP_QR_SCAN(); }catch(_){ }
+    const o=$('#hid-v12-qr-overlay');
+    if(o)o.classList.remove('show');
+    dismissQRBar();
+  }
+  function putScannerInFront(){
+    const scanners=$$('#rv9-scan-overlay,#hrv4-scan-overlay');
+    const v12=$('#hid-v12-scan');
+    const activeV12=v12&&v12.classList.contains('show');
+    const active=scanners.filter(Boolean).concat(activeV12?[v12]:[]);
+    if(active.length){
+      document.body.classList.add('hid-v14-scanning');
+      active.forEach(sc=>{
+        try{
+          sc.classList.add('hid-v14-front');
+          sc.style.zIndex='2147483647';
+          sc.style.position='fixed';
+          sc.style.inset='0';
+          if(sc.parentElement!==document.body && (sc.id==='rv9-scan-overlay'||sc.id==='hrv4-scan-overlay')) document.body.appendChild(sc);
+          if(!sc.querySelector('.hid-v14-scan-badge')){
+            const badge=document.createElement('div');
+            badge.className='hid-v14-scan-badge';
+            badge.textContent='QR camera scanner is active — use CLOSE / STOP SCAN to exit.';
+            const vid=sc.querySelector('video');
+            if(vid) sc.insertBefore(badge, vid); else sc.appendChild(badge);
+          }
+        }catch(e){console.warn('V14 scanner front failed',e)}
+      });
+    }else{
+      document.body.classList.remove('hid-v14-scanning');
+    }
+  }
+  // Capture close/hide before older QR modules can immediately re-open the dock.
+  document.addEventListener('click',e=>{
+    const t=e.target;
+    if(!t||!t.closest)return;
+    const hide=t.closest('[data-qr11="hide"],#hid-qr-v11-dock .qr11-close');
+    if(hide){
+      e.preventDefault();e.stopImmediatePropagation();
+      dismissQRBar();
+      toast('QR bar hidden. Tap QR PAIR when you need it again.');
+      return;
+    }
+    const close=t.closest('#hid-v12-qr-overlay [data-v12="close"]');
+    if(close){
+      e.preventDefault();e.stopImmediatePropagation();
+      closeV12Overlay();
+      toast('QR pairing closed.');
+      return;
+    }
+    const open=t.closest('#hid-v12-qr-btn,#hid-qr-v11-topbtn,#hid-qr-v11-launcher,[data-v12="open"],[data-v12="hostQR"],[data-v12="scanOffer"],[data-v12="scanAnswer"],[data-v12="photoOffer"],[data-v12="photoAnswer"],[data-v12="makeAnswer"],[data-v12="acceptAnswer"]');
+    if(open){
+      intentionallyOpeningQR=true;allowQRBar();setTimeout(()=>{intentionallyOpeningQR=false;putScannerInFront();},250);
+    }
+  },true);
+  document.addEventListener('pointerdown',e=>{
+    const t=e.target;
+    if(t&&t.closest&&t.closest('[data-qr11="hide"],#hid-qr-v11-dock .qr11-close')){
+      e.preventDefault();e.stopImmediatePropagation();dismissQRBar();
+    }
+  },{capture:true,passive:false});
+  // Keep older auto-show intervals from reopening the top QR dock after the user dismissed it.
+  const mo=new MutationObserver(()=>{
+    if(document.body.classList.contains('hid-v14-qr-dismissed')){
+      const d=$('#hid-qr-v11-dock');
+      if(d){d.classList.remove('show');d.style.display='none';d.setAttribute('aria-hidden','true');}
+    }
+    putScannerInFront();
+  });
+  mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  // Wrap public QR openers so explicit QR buttons can still reopen the QR bar.
+  ['HID_QR_PAIRING','HID_QR_HOST','HID_QR_SCAN_IPAD','HID_QR_SCAN_ANSWER','HID_V12_QR_PAIR','HID_V12_GENERATE_HOST_QR','HID_V12_SCAN_HOST_QR','HID_V12_SCAN_ANSWER_QR'].forEach(name=>{
+    const old=window[name];
+    if(typeof old==='function'&&!old.__hidV14){
+      const wrapped=function(){allowQRBar();intentionallyOpeningQR=true;try{return old.apply(this,arguments)}finally{setTimeout(()=>{intentionallyOpeningQR=false;putScannerInFront();},250)}};
+      wrapped.__hidV14=true;window[name]=wrapped;
+    }
+  });
+  window.HID_V14_DISMISS_QR_BAR=dismissQRBar;
+  window.HID_V14_FRONT_QR_SCANNER=putScannerInFront;
+  // Prefer the newer V12 overlay for the always-visible QR button; do not auto-show the old V11 dock.
+  setTimeout(()=>{dismissQRBar();putScannerInFront();},500);
+  setInterval(putScannerInFront,450);
+})();
+</script>
+
+
+<script id="hid-bigger-v15">
+/* H.I.D. BIGGER V15 — real-time full-bus enhancer: bass weight + air + safety limiting */
+(function(){
+  'use strict';
+  if(window.__HID_BIGGER_V15_INSTALLED__) return;
+  window.__HID_BIGGER_V15_INSTALLED__=true;
+
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
+  const $id=id=>document.getElementById(id);
+  const ramp=(param,value,time=.035)=>{
+    try{
+      if(!param) return;
+      const t=ctx.currentTime;
+      param.cancelScheduledValues(t);
+      param.setTargetAtTime(value,t,Math.max(.003,time));
+    }catch(_){ try{param.value=value}catch(__){} }
+  };
+
+  function makeEnhanceCurve(amount){
+    const k=1+amount*28;
+    const n=2048;
+    const curve=new Float32Array(n);
+    for(let i=0;i<n;i++){
+      const x=(i/(n-1))*2-1;
+      // asymmetry-free soft saturation: adds harmonic fullness without harsh clipping
+      curve[i]=Math.tanh(k*x)/Math.tanh(k);
+    }
+    return curve;
+  }
+
+  function ensureBiggerChain(){
+    try{
+      if(!ctx || !spatialFX || !spatialFX.nodes || !spatialFX.nodes.stereoMerge || !kill) return null;
+      const existing=window.__HID_BIGGER_V15_CHAIN__;
+      if(existing && existing.ctx===ctx) return existing;
+
+      const input=ctx.createGain();
+      const dry=ctx.createGain();
+      const lowShelf=ctx.createBiquadFilter();
+      const lowPunch=ctx.createBiquadFilter();
+      const lowTight=ctx.createBiquadFilter();
+      const sat=ctx.createWaveShaper();
+      const lowComp=ctx.createDynamicsCompressor();
+      const lowWet=ctx.createGain();
+      const presence=ctx.createBiquadFilter();
+      const air=ctx.createBiquadFilter();
+      const airWet=ctx.createGain();
+      const glue=ctx.createDynamicsCompressor();
+      const outTrim=ctx.createGain();
+      const limiter=ctx.createDynamicsCompressor();
+      const output=ctx.createGain();
+
+      input.gain.value=1;
+      dry.gain.value=1;
+      lowShelf.type='lowshelf'; lowShelf.frequency.value=95; lowShelf.gain.value=0;
+      lowPunch.type='peaking'; lowPunch.frequency.value=78; lowPunch.Q.value=.85; lowPunch.gain.value=0;
+      // Very gentle sub cleanup so the beef stays tight instead of muddy.
+      lowTight.type='highpass'; lowTight.frequency.value=24; lowTight.Q.value=.7;
+      sat.oversample='4x'; sat.curve=makeEnhanceCurve(.08);
+      lowComp.threshold.value=-20; lowComp.knee.value=24; lowComp.ratio.value=2.6; lowComp.attack.value=.012; lowComp.release.value=.16;
+      lowWet.gain.value=0;
+      presence.type='peaking'; presence.frequency.value=2800; presence.Q.value=.9; presence.gain.value=0;
+      air.type='highshelf'; air.frequency.value=7600; air.gain.value=0;
+      airWet.gain.value=0;
+      glue.threshold.value=-18; glue.knee.value=22; glue.ratio.value=1.55; glue.attack.value=.008; glue.release.value=.19;
+      outTrim.gain.value=1;
+      // Final safety limiter: lets BIGGER feel large without screaming/clipping.
+      limiter.threshold.value=-3.2; limiter.knee.value=0; limiter.ratio.value=18; limiter.attack.value=.0015; limiter.release.value=.07;
+      output.gain.value=1;
+
+      input.connect(dry).connect(glue);
+      input.connect(lowShelf).connect(lowPunch).connect(lowTight).connect(sat).connect(lowComp).connect(lowWet).connect(glue);
+      input.connect(presence).connect(air).connect(airWet).connect(glue);
+      glue.connect(outTrim).connect(limiter).connect(output);
+
+      // Replace the previous direct stereoMerge -> kill line with stereoMerge -> BIGGER chain -> kill.
+      try{spatialFX.nodes.stereoMerge.disconnect(kill);}catch(_){
+        try{spatialFX.nodes.stereoMerge.disconnect();}catch(__){}
+      }
+      spatialFX.nodes.stereoMerge.connect(input);
+      output.connect(kill);
+
+      const chain={ctx,input,dry,lowShelf,lowPunch,lowTight,sat,lowComp,lowWet,presence,air,airWet,glue,outTrim,limiter,output};
+      window.__HID_BIGGER_V15_CHAIN__=chain;
+      return chain;
+    }catch(e){console.warn('BIGGER V15 chain setup failed',e); return null;}
+  }
+
+  function applyBiggerV15(){
+    try{
+      if(typeof STATE==='undefined' || !STATE.fx) return;
+      if(!ctx) return;
+      const chain=ensureBiggerChain();
+      if(!chain) return;
+      const amt=clamp(STATE.fx.stereoEnhanceAmt ?? .42,0,1);
+      const on=!!STATE.fx.stereoEnhanceOn && amt>.001;
+      const a=on?amt:0;
+      const shaped=Math.pow(a,.72);       // makes the slider noticeable earlier
+      const strong=Math.pow(a,.52);       // gives the upper half real punch
+
+      // Keep the original wide stage, but make it stronger and smoother.
+      if(typeof stereoLow!=='undefined' && stereoLow) ramp(stereoLow.gain, shaped*10.5,.045);
+      if(typeof stereoCrossL!=='undefined' && stereoCrossL) ramp(stereoCrossL.gain, -shaped*.24,.045);
+      if(typeof stereoCrossR!=='undefined' && stereoCrossR) ramp(stereoCrossR.gain, -shaped*.24,.045);
+
+      // Parallel low-end body + punch. Frequencies chosen to feel big on headphones and a L/R PA.
+      ramp(chain.lowShelf.frequency, 72 + shaped*35, .05);
+      ramp(chain.lowShelf.gain, shaped*13.5, .05);
+      ramp(chain.lowPunch.frequency, 88 + shaped*28, .05);
+      ramp(chain.lowPunch.Q, .75 + shaped*.7, .05);
+      ramp(chain.lowPunch.gain, shaped*6.5, .05);
+      chain.sat.curve=makeEnhanceCurve(.05 + shaped*.34);
+      ramp(chain.lowWet.gain, shaped*.62, .04);
+
+      // Crystalline high end without turning brittle.
+      ramp(chain.presence.frequency, 2400 + shaped*900, .05);
+      ramp(chain.presence.gain, shaped*3.8, .05);
+      ramp(chain.air.frequency, 6900 + shaped*1800, .05);
+      ramp(chain.air.gain, shaped*7.8, .05);
+      ramp(chain.airWet.gain, shaped*.34, .04);
+
+      // More intensity = slightly more glue and a tiny trim to avoid clipping.
+      ramp(chain.glue.threshold, -14 - strong*8, .04);
+      ramp(chain.glue.ratio, 1.25 + strong*1.7, .04);
+      ramp(chain.outTrim.gain, 1 - strong*.13, .04);
+      ramp(chain.output.gain, 1, .02);
+
+      const btn=$id('btn-stereo-enhance'), sl=$id('stereo-enhance-amt'), val=$id('stereo-enhance-val');
+      if(btn){
+        btn.classList.toggle('on',on);
+        btn.setAttribute('aria-pressed',on?'true':'false');
+        btn.title='BIGGER: full-bus low-end weight, crystalline air, saturation, compression, and limiter';
+        btn.textContent=on?'● BIGGER':'◉ BIGGER';
+      }
+      if(sl){
+        sl.value=amt;
+        sl.style.setProperty('--bigger-pct',(amt*100).toFixed(0)+'%');
+        sl.title='BIGGER amount — controls bass weight, air, saturation, and bus glue';
+      }
+      if(val) val.textContent=Math.round(amt*100);
+      document.documentElement.classList.toggle('bigger-engaged',on);
+    }catch(e){console.warn('BIGGER V15 apply failed',e);}
+  }
+
+  // Wrap the original audio init and FX apply so this layer survives future state changes.
+  try{
+    if(typeof initAudio==='function' && !initAudio.__hidBiggerWrapped){
+      const oldInit=initAudio;
+      initAudio=function(){
+        const r=oldInit.apply(this,arguments);
+        setTimeout(applyBiggerV15,0);
+        return r;
+      };
+      initAudio.__hidBiggerWrapped=true;
+    }
+  }catch(e){console.warn('BIGGER V15 init wrap failed',e);}
+
+  try{
+    if(typeof applyFXState==='function' && !applyFXState.__hidBiggerWrapped){
+      const oldApply=applyFXState;
+      applyFXState=function(){
+        const r=oldApply.apply(this,arguments);
+        applyBiggerV15();
+        return r;
+      };
+      applyFXState.__hidBiggerWrapped=true;
+    }
+  }catch(e){console.warn('BIGGER V15 FX wrap failed',e);}
+
+  function bindUI(){
+    const btn=$id('btn-stereo-enhance'), sl=$id('stereo-enhance-amt'), val=$id('stereo-enhance-val');
+    if(btn && !btn.__hidBiggerV15){
+      btn.__hidBiggerV15=true;
+      btn.addEventListener('click',()=>{ setTimeout(applyBiggerV15,0); });
+    }
+    if(sl && !sl.__hidBiggerV15){
+      sl.__hidBiggerV15=true;
+      sl.addEventListener('input',e=>{
+        try{
+          if(typeof STATE!=='undefined' && STATE.fx){
+            const amt=clamp(parseFloat(e.target.value),0,1);
+            STATE.fx.stereoEnhanceAmt=amt;
+            // The slider now turns BIGGER on so the user hears the enhancement immediately while adjusting.
+            STATE.fx.stereoEnhanceOn=amt>.001;
+            if(val) val.textContent=Math.round(amt*100);
+            if(typeof applyFXState==='function') applyFXState();
+            else applyBiggerV15();
+          }
+        }catch(err){console.warn(err)}
+      },{passive:true});
+      sl.addEventListener('change',applyBiggerV15,{passive:true});
+    }
+    applyBiggerV15();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindUI,{once:true});
+  else bindUI();
+  window.HID_APPLY_BIGGER_V15=applyBiggerV15;
+})();
+</script>
+<style id="hid-bigger-v15-css">
+.stereo-block{position:relative;box-shadow:0 0 10px rgba(255,230,0,.12),inset 0 0 10px rgba(255,230,0,.07)}
+.stereo-enhance-btn{min-width:86px!important;font-weight:bold!important;transition:filter .12s,box-shadow .12s,background .12s,color .12s!important}
+.stereo-enhance-btn.on{background:linear-gradient(180deg,#fff2a0,#ffe600 45%,#00ffd5)!important;color:#000!important;border-color:#fff!important;text-shadow:0 0 3px rgba(255,255,255,.65)!important;box-shadow:0 0 14px #ffe600,0 0 22px rgba(0,255,213,.35),inset 0 0 8px rgba(255,255,255,.65)!important;filter:saturate(1.22) brightness(1.06)}
+.stereo-slider{background:linear-gradient(90deg,#050505 0%,#ffe600 var(--bigger-pct,42%),rgba(0,255,213,.28) var(--bigger-pct,42%),#02040a 100%)!important;height:8px!important;border-color:rgba(255,230,0,.6)!important;box-shadow:inset 0 0 6px rgba(0,0,0,.75),0 0 8px rgba(255,230,0,.16)!important}
+.stereo-slider::-webkit-slider-thumb{width:18px!important;height:22px!important;background:linear-gradient(180deg,#fff,#ffe600 45%,#00ffd5)!important;box-shadow:0 0 10px #ffe600,0 0 18px rgba(0,255,213,.32)!important}
+.stereo-slider::-moz-range-thumb{width:18px!important;height:22px!important;background:linear-gradient(180deg,#fff,#ffe600 45%,#00ffd5)!important;box-shadow:0 0 10px #ffe600,0 0 18px rgba(0,255,213,.32)!important}
+html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;right:4px;bottom:-13px;font-family:'VT323',monospace;font-size:10px;color:var(--neon3);letter-spacing:.12em;text-shadow:0 0 5px var(--neon3);pointer-events:none}
+</style>
+
+
+<script id="hid-keyboard-pitchbend-v16">
+/* H.I.D. V16 — wireless keyboard pitch-bend safety layer
+   Fixes stuck upward bends by owning bracket-key bend events, refreshing repeats,
+   releasing on keyup/blur/visibility loss, and temporarily speeding spring-back. */
+(function(){
+  'use strict';
+  if(window.__HID_KEYBOARD_PITCHBEND_V16__) return;
+  window.__HID_KEYBOARD_PITCHBEND_V16__=true;
+
+  const BEND_KEYS=new Set(['BracketLeft','BracketRight']);
+  const HELPER_KEYS=new Set(['Quote','Backslash']);
+  const physical={BracketLeft:false,BracketRight:false};
+  let lastBendEvent=0;
+  let watchdogTimer=0;
+  let restoreTimer=0;
+  let restoreGlide=null;
+
+  function getState(){try{return (typeof STATE!=='undefined')?STATE:null}catch(_){return null}}
+  function getMW(){const S=getState();return S&&S.modWheel?S.modWheel:null}
+  function editingTarget(ev){
+    try{
+      const t=ev&&ev.target;
+      if(!t) return false;
+      if(t.closest&&t.closest('input,textarea,select,[contenteditable="true"]')) return true;
+      return false;
+    }catch(_){return false}
+  }
+  function cancelRestore(){
+    if(restoreTimer){clearInterval(restoreTimer);restoreTimer=0;}
+    const mw=getMW();
+    if(mw && restoreGlide!==null){mw.glide=restoreGlide;restoreGlide=null;}
+  }
+  function boostSpringBack(){
+    const mw=getMW();
+    if(!mw) return;
+    // V17: do NOT override mw.glide here. The user's Glide slider must control
+    // both the upward/downward bend and the return-to-center speed symmetrically.
+    if(restoreTimer) clearInterval(restoreTimer);
+    restoreTimer=setInterval(()=>{
+      const cur=getMW();
+      if(!cur){cancelRestore();return;}
+      if(cur.holdMode || physical.BracketLeft || physical.BracketRight){cancelRestore();return;}
+      cur.target=0;
+      if(Math.abs(Number(cur.active)||0)<0.025){
+        cur.active=0;
+        cur.target=0;
+        try{ if(typeof recordPadWheelIfNeeded==='function') recordPadWheelIfNeeded(0); }catch(_){ }
+        cancelRestore();
+      }
+    },24);
+  }
+  function setTarget(direction){
+    const mw=getMW();
+    if(!mw) return;
+    cancelRestore();
+    mw.target=direction;
+    lastBendEvent=Date.now();
+    try{
+      if(typeof recordPadWheelIfNeeded==='function'){
+        const range=direction>=0?(Number(mw.rangeUp)||2):(Number(mw.rangeDown)||2);
+        recordPadWheelIfNeeded(range*direction);
+      }
+    }catch(_){ }
+  }
+  function releaseIfNeeded(force){
+    const mw=getMW();
+    if(!mw) return;
+    if(force){physical.BracketLeft=false;physical.BracketRight=false;}
+    const dir=(physical.BracketRight?1:0)+(physical.BracketLeft?-1:0);
+    if(dir){
+      setTarget(dir>0?1:-1);
+      return;
+    }
+    if(!mw.holdMode || force){
+      mw.target=0;
+      try{ if(typeof recordPadWheelIfNeeded==='function') recordPadWheelIfNeeded(0); }catch(_){ }
+      boostSpringBack();
+    }
+  }
+  function armWatchdog(){
+    if(watchdogTimer) clearTimeout(watchdogTimer);
+    watchdogTimer=setTimeout(()=>{
+      const now=Date.now();
+      // Wireless keyboards can occasionally lose keyup. If no repeat/keyup refresh arrives,
+      // release the bend instead of leaving the synth detuned indefinitely.
+      if((physical.BracketLeft||physical.BracketRight) && now-lastBendEvent>850){
+        releaseIfNeeded(true);
+      }else if(physical.BracketLeft||physical.BracketRight){
+        armWatchdog();
+      }
+    },940);
+  }
+  function stopEvent(e){
+    try{e.preventDefault()}catch(_){ }
+    try{e.stopImmediatePropagation()}catch(_){ }
+    try{e.stopPropagation()}catch(_){ }
+  }
+
+  window.addEventListener('keydown',function(e){
+    if(editingTarget(e)) return;
+    if(!BEND_KEYS.has(e.code) && !HELPER_KEYS.has(e.code)) return;
+
+    if(e.code==='BracketLeft' || e.code==='BracketRight'){
+      stopEvent(e);
+      physical[e.code]=true;
+      const dir=physical.BracketRight && !physical.BracketLeft ? 1 : (physical.BracketLeft && !physical.BracketRight ? -1 : 0);
+      setTarget(dir);
+      armWatchdog();
+      return;
+    }
+
+    // Keep center / hold shortcuts reliable too, without letting older listeners double-fire.
+    if(e.code==='Quote'){
+      stopEvent(e);
+      physical.BracketLeft=false;physical.BracketRight=false;
+      try{ if(typeof modWheelRecenter==='function') modWheelRecenter(); }
+      catch(_){ const mw=getMW(); if(mw){mw.target=0;mw.active=0;} }
+      boostSpringBack();
+      return;
+    }
+    if(e.code==='Backslash'){
+      stopEvent(e);
+      try{ if(typeof modWheelToggleHold==='function') modWheelToggleHold(); }
+      catch(_){ const mw=getMW(); if(mw) mw.holdMode=!mw.holdMode; }
+      const mw=getMW();
+      if(mw && !mw.holdMode) releaseIfNeeded(true);
+    }
+  },{capture:true,passive:false});
+
+  window.addEventListener('keyup',function(e){
+    if(!BEND_KEYS.has(e.code)) return;
+    stopEvent(e);
+    physical[e.code]=false;
+    lastBendEvent=Date.now();
+    releaseIfNeeded(false);
+  },{capture:true,passive:false});
+
+  ['blur','pagehide'].forEach(evt=>window.addEventListener(evt,()=>releaseIfNeeded(true),{capture:true}));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseIfNeeded(true);},{capture:true});
+  window.addEventListener('focus',()=>{
+    // On return to the app, never preserve a spring-mode bracket bend that may have been left behind.
+    const mw=getMW();
+    if(mw && !mw.holdMode) releaseIfNeeded(true);
+  },{capture:true});
+
+  // Public emergency function for debugging from Safari console if needed.
+  window.HID_RELEASE_KEYBOARD_PITCH_BEND=function(){releaseIfNeeded(true);};
+})();
+</script>
+
+
+
+<style id="hid-v17-3d-glide-color-css">
+:root{--ui-glow:var(--neon)}
+/* User-selectable glow color throughout the interface. */
+.window{box-shadow:0 0 20px color-mix(in srgb,var(--ui-glow) 42%,transparent),0 8px 30px rgba(0,0,0,.72),inset 0 0 40px rgba(0,0,0,.45)!important}
+.window.focused{box-shadow:0 0 30px color-mix(in srgb,var(--ui-glow) 78%,transparent),0 0 72px color-mix(in srgb,var(--ui-glow) 28%,transparent),0 8px 30px rgba(0,0,0,.72),inset 0 0 40px rgba(0,0,0,.32)!important}
+.window::before,.window::after,.window.focused::before,.window.focused::after{box-shadow:0 0 10px var(--ui-glow)!important}
+.window.focused .win-corners-bot::before,.window.focused .win-corners-bot::after{box-shadow:0 0 10px var(--ui-glow)!important}
+.topbar,.piano-bar,.field,.master-block,.win-title{box-shadow:0 0 12px color-mix(in srgb,var(--ui-glow) 18%,transparent),inset 0 0 8px rgba(0,0,0,.35)}
+.btn.on,.launcher-btn.open{box-shadow:0 0 12px var(--ui-glow),inset 0 0 5px rgba(255,255,255,.35)!important}
+.desktop::after{background:radial-gradient(ellipse 60% 50% at 20% 110%,color-mix(in srgb,var(--ui-glow) 10%,transparent),transparent 70%),radial-gradient(ellipse 50% 40% at 80% 110%,rgba(0,255,213,.05),transparent 70%),radial-gradient(ellipse 70% 30% at 50% 0%,rgba(255,230,0,.04),transparent 70%)!important}
+/* Make key color selection truly solid in normal states. Lit/shape states still glow as performance feedback. */
+.wkey:not(.lit):not(.shape){background:var(--white-key)!important;color:#111!important;box-shadow:inset 1px 0 0 rgba(255,255,255,.22),inset -1px 0 0 rgba(0,0,0,.34),inset 0 -8px 18px rgba(0,0,0,.25)!important}
+.wkey:not(.lit):not(.shape)::after{display:none!important}
+.bkey:not(.lit):not(.shape){background:var(--black-key)!important;color:var(--neon)!important;box-shadow:inset 0 -8px 14px rgba(0,0,0,.58),0 3px 6px rgba(0,0,0,.6)!important}
+.bkey:not(.lit):not(.shape)::before{display:none!important}
+.chroma-key:not(.lit):not(.shape){background:var(--white-key)!important;color:#111!important}.chroma-key.s:not(.lit):not(.shape){background:var(--black-key)!important;color:var(--neon)!important}
+.remote-note:not(.hit),.rv9-key:not(.down),.rv8-key:not(.down),.rv6-key:not(.hit){background:var(--white-key)!important;color:#111!important}.remote-note.black:not(.hit),.rv9-key.black:not(.down),.rv8-key.black:not(.down),.rv6-key.black:not(.hit){background:var(--black-key)!important;color:var(--neon)!important}
+#btn-3d-sound.on{background:linear-gradient(180deg,var(--neon3),var(--ui-glow))!important;color:#000!important;border-color:#fff!important;box-shadow:0 0 16px var(--ui-glow),0 0 28px var(--neon3)!important}
+</style>
+<script id="hid-v17-3d-glide-color-fix">
+/* H.I.D. V17 — 3D Sound close/reopen safety, symmetric pitch-glide, UI glow + solid key colors. */
+(function(){
+  'use strict';
+  if(window.__HID_V17_3D_GLIDE_COLOR__) return;
+  window.__HID_V17_3D_GLIDE_COLOR__=true;
+  const qs=(s,r=document)=>r.querySelector(s);
+  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const clampV=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
+  function S(){try{return typeof STATE!=='undefined'?STATE:null}catch(_){return null}}
+  function sp(){try{return typeof spatialFX!=='undefined'?spatialFX:null}catch(_){return null}}
+  function toastSafe(m){try{if(typeof toast==='function')toast(m)}catch(_){}}
+
+  function fadeOutSpatialPoints(){
+    const fx=sp(); if(!fx) return;
+    try{fx.enabled=false;}catch(_){ }
+    try{
+      for(const pt of (fx.points||[])){
+        const n=pt&&pt.nodes;
+        if(n&&n.out&&n.out.gain&&typeof ctx!=='undefined'&&ctx){
+          n.out.gain.cancelScheduledValues(ctx.currentTime);
+          n.out.gain.setTargetAtTime(0,ctx.currentTime,0.035);
+        }
+      }
+      if(fx.nodes){
+        const n=fx.nodes;
+        if(n.spWet&&n.spWet.gain)n.spWet.gain.setTargetAtTime(0,ctx.currentTime,0.04);
+        if(n.spDry&&n.spDry.gain)n.spDry.gain.setTargetAtTime(1,ctx.currentTime,0.04);
+        if(n.spFb&&n.spFb.gain)n.spFb.gain.setTargetAtTime(0,ctx.currentTime,0.04);
+      }
+    }catch(e){console.warn('V17 spatial fade failed',e)}
+    try{ if(typeof applySpatialFX==='function') applySpatialFX(); }catch(_){ }
+    try{ const b=qs('#btn-3d-sound'); if(b)b.classList.remove('on'); }catch(_){ }
+  }
+  function prepareSpatialWindowOpen(){
+    try{ if(!sp() && typeof initAudio==='function') initAudio(); }catch(_){ }
+    try{ if(typeof buildSpatialWindow==='function') buildSpatialWindow(); }catch(e){ console.warn('V17 spatial rebuild failed',e); }
+    try{
+      const w=(typeof WIN!=='undefined'&&WIN.spatial)?WIN.spatial:null;
+      if(w&&w.el){
+        w.el.classList.remove('hidden','minimized');
+        w.el.style.display='flex';
+        w.el.style.visibility='visible';
+        w.el.style.opacity='1';
+        if(w.minimized)w.minimized=false;
+      }
+      if(typeof bringToFront==='function') bringToFront('spatial');
+      if(typeof ensureSpatialAnimating==='function') ensureSpatialAnimating();
+      const b=qs('#btn-3d-sound'); if(b)b.classList.toggle('on',!!(sp()&&sp().enabled));
+    }catch(e){console.warn('V17 spatial open prep failed',e)}
+  }
+  function bindSpatialButton(){
+    const btn=qs('#btn-3d-sound');
+    if(btn&&!btn.__hidV17Spatial){
+      btn.__hidV17Spatial=true;
+      btn.addEventListener('click',function(e){
+        try{e.preventDefault();e.stopPropagation();}catch(_){ }
+        const fx=sp();
+        const w=(typeof WIN!=='undefined'&&WIN.spatial)?WIN.spatial:null;
+        const visible=w&&w.el&&!w.el.classList.contains('hidden')&&getComputedStyle(w.el).display!=='none';
+        if(visible){
+          // If the window is open, use this button as a clean on/off toggle for the processing.
+          if(fx){fx.enabled=!fx.enabled; try{ if(typeof applySpatialFX==='function') applySpatialFX(); }catch(_){ }}
+          btn.classList.toggle('on',!!(fx&&fx.enabled));
+          try{ if(typeof buildSpatialWindow==='function') buildSpatialWindow(); }catch(_){ }
+        }else{
+          prepareSpatialWindowOpen();
+        }
+      },{capture:true});
+    }
+  }
+  function patchToggleWindow(){
+    try{
+      if(typeof toggleWindow!=='function'||toggleWindow.__hidV17Patched) return;
+      const old=toggleWindow;
+      window.toggleWindow=toggleWindow=function(id,force){
+        if(id==='spatial'){
+          const w=(typeof WIN!=='undefined'&&WIN.spatial)?WIN.spatial:null;
+          const currently=w&&w.el&&!w.el.classList.contains('hidden');
+          const want=force===undefined?!currently:!!force;
+          if(!want){
+            fadeOutSpatialPoints();
+            if(typeof __spatialAnimRaf!=='undefined'&&__spatialAnimRaf){try{cancelAnimationFrame(__spatialAnimRaf)}catch(_){}; __spatialAnimRaf=null;}
+          }
+          const r=old.apply(this,arguments);
+          if(want) prepareSpatialWindowOpen();
+          return r;
+        }
+        return old.apply(this,arguments);
+      };
+      toggleWindow.__hidV17Patched=true;
+    }catch(e){console.warn('V17 toggle patch failed',e)}
+  }
+  function patchSpatialCloseButton(){
+    try{
+      const w=(typeof WIN!=='undefined'&&WIN.spatial)?WIN.spatial.el:null;
+      if(!w||w.__hidV17Close) return;
+      w.__hidV17Close=true;
+      const close=w.querySelector('.win-btn.close');
+      if(close) close.addEventListener('click',()=>fadeOutSpatialPoints(),{capture:true});
+    }catch(_){ }
+  }
+
+  // Symmetric wheel glide helper: apply detune using the same glide time in every direction.
+  function applyWheelDetuneV17(){
+    const st=S(); if(!st||!st.modWheel||typeof ctx==='undefined'||!ctx) return;
+    const cents=(Number(st.modWheel.active)||0)*100;
+    const tau=clampV(st.modWheel.glide||0.06,0.005,0.5);
+    const apply=v=>{try{
+      if(!v||v.wheelEnabled===false) return;
+      for(const o of (v.oscs||[])){
+        o.osc.detune.cancelScheduledValues(ctx.currentTime);
+        o.osc.detune.setTargetAtTime(cents+(o.osc._origDetune||0),ctx.currentTime,tau);
+      }
+    }catch(_){ }};
+    try{for(const[,v]of st.activeNotes||[])apply(v)}catch(_){ }
+    try{for(const[,vs]of st.padPlayingVoices||[])for(const v of (vs.voices||[]))apply(v)}catch(_){ }
+    try{for(const[,seq]of st.padPlayingSequences||[])for(const v of (seq.allVoices||[]))apply(v)}catch(_){ }
+  }
+  function startWheelGlideWatcher(){
+    if(window.__hidV17WheelRaf) return;
+    let last=999;
+    const tick=()=>{
+      window.__hidV17WheelRaf=requestAnimationFrame(tick);
+      const st=S(); if(!st||!st.modWheel) return;
+      const cur=Number(st.modWheel.active)||0;
+      if(Math.abs(cur-last)>0.002){last=cur; applyWheelDetuneV17();}
+    };
+    tick();
+  }
+
+  function setCSSVar(k,v){
+    try{document.documentElement.style.setProperty(k,String(v));}catch(_){ }
+    try{localStorage.setItem('hidV17Color_'+k,String(v));}catch(_){ }
+  }
+  function loadSavedColors(){
+    ['--bg','--neon','--neon2','--neon3','--ui-glow','--white-key','--black-key','--text','--brightness'].forEach(k=>{
+      try{const v=localStorage.getItem('hidV17Color_'+k); if(v!==null){setCSSVar(k,v); const el=qs(`#color-modal [data-cv="${CSS.escape(k)}"]`); if(el)el.value=v;}}catch(_){ }
+    });
+  }
+  function installColorControl(){
+    const modal=qs('#color-modal'); if(!modal) return;
+    if(!qs('[data-cv="--ui-glow"]',modal)){
+      const row=document.createElement('div'); row.className='cc-row';
+      row.innerHTML='<label>WINDOW GLOW</label><input type="color" data-cv="--ui-glow" value="#00ffd5">';
+      const accent=qs('[data-cv="--neon3"]',modal)?.closest('.cc-row');
+      (accent&&accent.parentNode?accent.parentNode:modal).insertBefore(row,accent?accent.nextSibling:null);
+    }
+    qsa('input[type=color][data-cv]',modal).forEach(inp=>{
+      if(inp.__hidV17Color) return; inp.__hidV17Color=true;
+      inp.addEventListener('input',e=>{
+        const k=e.target.dataset.cv, v=e.target.value;
+        setCSSVar(k,v);
+        if(k==='--white-key'||k==='--black-key')document.body.classList.add('hid-solid-keys');
+        try{ if(typeof buildPiano==='function') buildPiano(); }catch(_){ }
+      },{passive:true});
+    });
+    const br=qs('#cc-brightness');
+    if(br&&!br.__hidV17Bright){br.__hidV17Bright=true;br.addEventListener('input',e=>setCSSVar('--brightness',e.target.value),{passive:true});}
+    const reset=qs('#cc-reset');
+    if(reset&&!reset.__hidV17Reset){reset.__hidV17Reset=true;reset.addEventListener('click',()=>setTimeout(()=>{setCSSVar('--ui-glow',getComputedStyle(document.documentElement).getPropertyValue('--neon').trim()||'#00ffd5');},0));}
+    document.body.classList.add('hid-solid-keys');
+    loadSavedColors();
+  }
+  function refreshBindings(){bindSpatialButton();patchToggleWindow();patchSpatialCloseButton();installColorControl();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshBindings,{once:true}); else refreshBindings();
+  setInterval(refreshBindings,1200);
+  startWheelGlideWatcher();
+  window.HID_DISABLE_3D_SOUND_V17=fadeOutSpatialPoints;
+  window.HID_REOPEN_3D_SOUND_V17=prepareSpatialWindowOpen;
+})();
+</script>
+
+
+
+<!-- H.I.D. V18 — lead clarity, voice modes, dynamic keyboard layout -->
+<style id="hid-v18-keyboard-layout-style">
+  .hid-v18-control-strip{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 8px;background:linear-gradient(180deg,rgba(0,255,213,.07),rgba(0,0,0,.92));border-top:1px solid var(--stroke);border-bottom:1px solid rgba(0,255,213,.12);font-family:'VT323',monospace;position:relative;z-index:7}
+  .hid-v18-control-strip .hid-v18-mini-field{display:flex;align-items:center;gap:5px;border:1px solid var(--stroke);background:rgba(0,255,213,.035);padding:3px 6px;border-radius:2px;min-height:28px}
+  .hid-v18-control-strip label{font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .hid-v18-control-strip .v{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--neon3);text-shadow:0 0 4px var(--neon3);min-width:34px;text-align:right}
+  .hid-v18-control-strip input[type=range]{width:88px;height:16px;touch-action:none}
+  .hid-v18-control-strip select{font-size:12px;min-height:22px;padding:2px 5px}
+  .hid-v18-layout-enabled .piano-wrap{overflow-x:auto;overflow-y:hidden;touch-action:pan-x}
+  .hid-v18-layout-enabled .piano-wrap.hid-key-glide-locked{overflow-x:hidden;touch-action:none}
+  .hid-v18-layout-enabled .piano{position:relative;inset:auto;height:100%;min-height:100%;display:flex;flex:0 0 auto;transform:translateZ(0)}
+  .hid-v18-layout-enabled .chroma{position:relative;inset:auto;height:100%;min-height:100%;flex:0 0 auto;transform:translateZ(0)}
+  .hid-v18-layout-enabled .chroma.active{display:flex!important}
+  .hid-v18-layout-enabled .wkey{flex:0 0 var(--hid-white-key-w,42px);min-width:var(--hid-white-key-w,42px)}
+  .hid-v18-layout-enabled .bkey{position:absolute;min-width:18px;z-index:4}
+  .hid-v18-layout-enabled .chroma-key{flex:0 0 var(--hid-chroma-key-w,34px);min-width:var(--hid-chroma-key-w,34px)}
+  .hid-v18-voice-badge{font-family:'VT323',monospace;color:var(--neon);border:1px solid var(--stroke);padding:2px 6px;background:rgba(0,0,0,.45);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .hid-v18-lead-enhanced .patch.active::after{content:' SOLO READY';margin-left:8px;color:var(--neon3);text-shadow:0 0 4px var(--neon3);font-size:10px}
+  .hid-v18-layout-enabled .wkey-sc,.hid-v18-layout-enabled .bkey-sc,.hid-v18-layout-enabled .chroma-sc{font-size:clamp(9px,1.4vw,13px)}
+  .hid-v18-layout-enabled .wkey-nm,.hid-v18-layout-enabled .chroma-nm{font-size:clamp(10px,1.6vw,14px)}
+  @media(max-width:700px){.hid-v18-control-strip{gap:4px;padding:4px}.hid-v18-control-strip input[type=range]{width:72px}.hid-v18-control-strip .hid-v18-mini-field{padding:3px 5px}.hid-v18-control-strip label{font-size:11px}}
+</style>
+<script id="hid-v18-lead-voice-keylayout">
+/* H.I.D. V18
+   - clearer/resonant lead bank tuning for solo playing
+   - POLY / MONO / LEGATO performance modes
+   - dynamic visible piano range that follows octave/transpose orientation
+   - key count and key thickness controls
+   - same Bluetooth keyboard letters stay aligned to the displayed octave/transpose range
+*/
+(function(){
+  'use strict';
+  if(window.__HID_V18_LEAD_VOICE_KEYLAYOUT__) return;
+  window.__HID_V18_LEAD_VOICE_KEYLAYOUT__=true;
+
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
+  const $id=id=>document.getElementById(id);
+  const qsa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const safeToast=msg=>{try{typeof toast==='function'?toast(msg):console.log(msg)}catch(_){}};
+  const getState=()=>{try{return (typeof STATE!=='undefined')?STATE:null}catch(_){return null}};
+  const getBanks=()=>{try{return (typeof BANKS!=='undefined')?BANKS:null}catch(_){return null}};
+
+  function ensureV18State(){
+    const S=getState(); if(!S) return null;
+    if(!S.voiceMode) S.voiceMode='poly';
+    if(!S.pianoView) S.pianoView={follow:true,keyCount:37,keyWidth:42,baseOffset:-2,keySlideMode:'scroll'};
+    S.pianoView.keyCount=clamp(S.pianoView.keyCount||37,12,61);
+    S.pianoView.keyWidth=clamp(S.pianoView.keyWidth||42,24,92);
+    if(typeof S.pianoView.follow!=='boolean') S.pianoView.follow=true;
+    if(!S._hidHeldDisplayNotes) S._hidHeldDisplayNotes=new Set();
+    return S;
+  }
+
+  function enhanceLeadPatches(){
+    const B=getBanks(); if(!B||!B.LEAD||!Array.isArray(B.LEAD.patches)||B.LEAD.__hidV18LeadEnhanced) return;
+    B.LEAD.patches.forEach((p,i)=>{
+      try{
+        p.__hidV18LeadEnhanced=true;
+        // Make lead patches more solo-ready: quicker attack, clearer cutoff, controlled resonance, safer drive.
+        if(p.env){
+          p.env.a=Math.min(p.env.a??0.01,0.012);
+          p.env.d=Math.max(p.env.d??0.35,0.28);
+          p.env.s=Math.max(p.env.s??0.65,0.68);
+          p.env.r=Math.max(p.env.r??0.35,0.36);
+        }
+        if(p.filt){
+          const current=p.filt.co??2800;
+          const target=[5200,5000,5600,4400,5200,4600,6100,6200,3600,6500,5200,7200,5900,5600,6400,5800,5200,5700,6200,6900][i]||5600;
+          p.filt.co=Math.max(current,target);
+          p.filt.Q=clamp(Math.max(p.filt.Q??2.5,2.4),1.2,7.5);
+        }
+        if(p.fEnv){
+          p.fEnv.amt=Math.max(p.fEnv.amt??1200,1700);
+          p.fEnv.s=Math.max(p.fEnv.s??0.35,0.42);
+        }
+        if(p.lfo && p.lfo.t==='pitch'){
+          // Keep musical motion but prevent woozy pitch drift on solo lines.
+          p.lfo.d=Math.min(p.lfo.d??0.015,0.022);
+        }
+        p.drive=clamp((p.drive??0.18)+0.04,0,0.58);
+        p.soloReady=true;
+      }catch(_){ }
+    });
+    B.LEAD.__hidV18LeadEnhanced=true;
+    document.documentElement.classList.add('hid-v18-lead-enhanced');
+  }
+
+  function physicalBounds(){
+    try{
+      const vals=Object.values(KB_NOTES||{}).map(Number).filter(Number.isFinite);
+      if(vals.length) return {lo:Math.min(...vals),hi:Math.max(...vals)};
+    }catch(_){ }
+    return {lo:48,hi:78};
+  }
+  function viewStartMidi(){
+    const S=ensureV18State(); if(!S) return 36;
+    const pv=S.pianoView;
+    if(!pv.follow) return clamp(pv.startMidi??36,12,108);
+    const b=physicalBounds();
+    return clamp(Math.round((b.lo||48)+(S.octave||0)*12+(S.transpose||0)+(pv.baseOffset||0)),12,115);
+  }
+  function visibleRange(){
+    const S=ensureV18State();
+    const count=clamp(S?.pianoView?.keyCount||37,12,61);
+    const start=viewStartMidi();
+    return {start,end:clamp(start+count-1,12,120),count};
+  }
+  function noteName(m){try{return nName(m)+octOf(m)}catch(_){const N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];return N[((m%12)+12)%12]+(Math.floor(m/12)-1)}}
+  function black(m){try{return isBlack(m)}catch(_){return [1,3,6,8,10].includes(((m%12)+12)%12)}}
+  function shortcut(m){try{return shortcutFor(m)||''}catch(_){return ''}}
+
+  function rebuildDynamicPiano(){
+    const S=ensureV18State(); if(!S) return;
+    const piano=$id('piano'); if(!piano) return;
+    const {start,end,count}=visibleRange();
+    const whiteMidis=[];
+    for(let m=start;m<=end;m++) if(!black(m)) whiteMidis.push(m);
+    const whiteW=clamp(S.pianoView.keyWidth||42,24,92);
+    const blackW=Math.max(18,Math.round(whiteW*.58));
+    const totalW=Math.max(whiteMidis.length*whiteW,320);
+    document.body.classList.add('hid-v18-layout-enabled');
+    piano.innerHTML='';
+    piano.style.width=totalW+'px';
+    piano.style.minWidth=totalW+'px';
+    piano.style.setProperty('--hid-white-key-w',whiteW+'px');
+    piano.style.setProperty('--hid-chroma-key-w',Math.max(24,Math.round(whiteW*.78))+'px');
+    whiteMidis.forEach(m=>{
+      const k=document.createElement('div');
+      k.className='wkey'; k.dataset.midi=m;
+      k.innerHTML=`<span class="wkey-sc">${shortcut(m)}</span><span class="wkey-nm">${noteName(m)}</span>`;
+      try{attachPlayableKeyEvents(k,m)}catch(_){ }
+      piano.appendChild(k);
+    });
+    for(let m=start;m<=end;m++){
+      if(!black(m)) continue;
+      // place black key between adjacent white notes, based on count of preceding whites.
+      let prevWhites=0;
+      for(let x=start;x<m;x++) if(!black(x)) prevWhites++;
+      const left=Math.max(0,(prevWhites*whiteW)-(blackW/2));
+      const b=document.createElement('div');
+      b.className='bkey'; b.dataset.midi=m;
+      b.style.left=left+'px'; b.style.width=blackW+'px';
+      b.innerHTML=`<span class="bkey-sc">${shortcut(m)}</span>`;
+      try{attachPlayableKeyEvents(b,m)}catch(_){ }
+      piano.appendChild(b);
+    }
+    rebuildDynamicChroma();
+    updateV18Controls();
+    centerKeyboardRangeSoon();
+  }
+
+  function rebuildDynamicChroma(){
+    const c=$id('chroma'); if(!c) return;
+    const S=ensureV18State(); if(!S) return;
+    const {start,end,count}=visibleRange();
+    const w=Math.max(24,Math.round((S.pianoView.keyWidth||42)*.78));
+    c.innerHTML='';
+    c.style.width=(count*w)+'px';
+    c.style.minWidth=(count*w)+'px';
+    c.style.setProperty('--hid-chroma-key-w',w+'px');
+    for(let m=start;m<=end;m++){
+      const n=((m%12)+12)%12; const isS=[1,3,6,8,10].includes(n);
+      const k=document.createElement('div');
+      k.className='chroma-key'+(isS?' s':''); k.dataset.midi=m;
+      k.innerHTML=`<span class="chroma-nm">${noteName(m)}</span><span class="chroma-sc">${shortcut(m)}</span>`;
+      try{attachPlayableKeyEvents(k,m)}catch(_){ }
+      c.appendChild(k);
+    }
+  }
+
+  let centerTimer=0;
+  function centerKeyboardRangeSoon(){
+    clearTimeout(centerTimer);
+    centerTimer=setTimeout(()=>{
+      try{
+        const wrap=document.querySelector('.piano-wrap');
+        const S=ensureV18State(); if(!wrap||!S?.pianoView?.follow) return;
+        const b=physicalBounds();
+        const target=(b.lo+(S.octave||0)*12+(S.transpose||0));
+        const el=wrap.querySelector(`[data-midi="${target}"]`);
+        if(el && typeof el.scrollIntoView==='function') el.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+      }catch(_){ }
+    },60);
+  }
+
+  function refreshShortcutLabelsV18(){
+    qsa('.wkey,.bkey,.chroma-key').forEach(el=>{
+      const m=+el.dataset.midi;
+      const sc=el.querySelector('.wkey-sc,.bkey-sc,.chroma-sc');
+      if(sc) sc.textContent=shortcut(m);
+      const nm=el.querySelector('.wkey-nm,.chroma-nm');
+      if(nm) nm.textContent=noteName(m);
+    });
+  }
+
+  const oldBuildPiano=(typeof buildPiano==='function')?buildPiano:null;
+  const oldBuildChroma=(typeof buildChroma==='function')?buildChroma:null;
+  const oldRefreshShortcuts=(typeof refreshShortcuts==='function')?refreshShortcuts:null;
+  try{
+    buildPiano=function(){try{return rebuildDynamicPiano()}catch(e){console.warn('V18 piano rebuild fallback',e);return oldBuildPiano&&oldBuildPiano.apply(this,arguments)}};
+    buildChroma=function(){try{return rebuildDynamicChroma()}catch(e){return oldBuildChroma&&oldBuildChroma.apply(this,arguments)}};
+    refreshShortcuts=function(){try{refreshShortcutLabelsV18();centerKeyboardRangeSoon()}catch(e){oldRefreshShortcuts&&oldRefreshShortcuts.apply(this,arguments)}};
+  }catch(e){console.warn('V18 keyboard override failed',e)}
+
+  function installControlStrip(){
+    const S=ensureV18State(); if(!S) return;
+    const host=$id('piano-host'); if(!host) return;
+    if($id('hid-v18-control-strip')){updateV18Controls();return;}
+    const strip=document.createElement('div');
+    strip.className='hid-v18-control-strip';
+    strip.id='hid-v18-control-strip';
+    strip.innerHTML=`
+      <div class="hid-v18-mini-field"><label>Voice</label><select id="hid-v18-voice-mode"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select><span class="hid-v18-voice-badge" id="hid-v18-voice-badge">POLY</span></div>
+      <div class="hid-v18-mini-field"><label>Key View</label><button class="btn tiny gold" id="hid-v18-follow">FOLLOW</button><button class="btn tiny" id="hid-v18-center">CENTER</button></div>
+      <div class="hid-v18-mini-field"><label>Shown</label><input type="range" id="hid-v18-key-count" min="12" max="61" step="1"><span class="v" id="hid-v18-key-count-v">37</span></div>
+      <div class="hid-v18-mini-field"><label>Thickness</label><input type="range" id="hid-v18-key-width" min="24" max="92" step="1"><span class="v" id="hid-v18-key-width-v">42</span></div>
+      <div class="hid-v18-mini-field"><label>Offset</label><button class="btn tiny" id="hid-v18-offset-down">−</button><span class="v" id="hid-v18-offset-v">0</span><button class="btn tiny" id="hid-v18-offset-up">+</button></div>
+      <div class="hid-v18-mini-field"><label>Slide</label><button class="btn tiny" id="hid-v18-slide-mode">SCROLL</button></div>
+    `;
+    const controls=host.querySelector('.piano-controls');
+    if(controls) controls.insertAdjacentElement('afterend',strip); else host.insertBefore(strip,host.firstChild);
+    const voice=$id('hid-v18-voice-mode');
+    voice.onchange=e=>{S.voiceMode=e.target.value;updateV18Controls();safeToast('Voice mode: '+S.voiceMode.toUpperCase())};
+    $id('hid-v18-follow').onclick=()=>{S.pianoView.follow=!S.pianoView.follow;if(!S.pianoView.follow)S.pianoView.startMidi=viewStartMidi();rebuildDynamicPiano();};
+    $id('hid-v18-center').onclick=()=>{S.pianoView.follow=true;S.pianoView.baseOffset=-2;rebuildDynamicPiano();};
+    $id('hid-v18-key-count').oninput=e=>{S.pianoView.keyCount=clamp(+e.target.value,12,61);rebuildDynamicPiano();};
+    $id('hid-v18-key-width').oninput=e=>{S.pianoView.keyWidth=clamp(+e.target.value,24,92);rebuildDynamicPiano();};
+    $id('hid-v18-offset-down').onclick=()=>{S.pianoView.baseOffset=clamp((S.pianoView.baseOffset||0)-1,-24,24);rebuildDynamicPiano();};
+    $id('hid-v18-offset-up').onclick=()=>{S.pianoView.baseOffset=clamp((S.pianoView.baseOffset||0)+1,-24,24);rebuildDynamicPiano();};
+    $id('hid-v18-slide-mode').onclick=()=>togglePianoSlideMode();
+    updateV18Controls();
+  }
+
+  function updateV18Controls(){
+    const S=ensureV18State(); if(!S) return;
+    const voice=$id('hid-v18-voice-mode'); if(voice) voice.value=S.voiceMode||'poly';
+    const badge=$id('hid-v18-voice-badge'); if(badge) badge.textContent=(S.voiceMode||'poly').toUpperCase();
+    const follow=$id('hid-v18-follow'); if(follow){follow.classList.toggle('on',!!S.pianoView.follow);follow.textContent=S.pianoView.follow?'FOLLOW':'FREE'}
+    const kc=$id('hid-v18-key-count'), kv=$id('hid-v18-key-count-v'); if(kc) kc.value=S.pianoView.keyCount; if(kv) kv.textContent=S.pianoView.keyCount+' keys';
+    const kw=$id('hid-v18-key-width'), kwv=$id('hid-v18-key-width-v'); if(kw) kw.value=S.pianoView.keyWidth; if(kwv) kwv.textContent=S.pianoView.keyWidth+'px';
+    const ov=$id('hid-v18-offset-v'); if(ov) ov.textContent=(S.pianoView.baseOffset>0?'+':'')+(S.pianoView.baseOffset||0);
+    const sm=$id('hid-v18-slide-mode'); if(sm){const play=S.pianoView.keySlideMode==='play';sm.textContent=play?'PLAY/GLIDE':'SCROLL';sm.classList.toggle('on',play)}
+    const wrap=document.querySelector('.piano-wrap'); if(wrap) wrap.classList.toggle('hid-key-glide-locked',S.pianoView.keySlideMode==='play');
+  }
+
+  function togglePianoSlideMode(){
+    const S=ensureV18State(); if(!S) return;
+    S.pianoView.keySlideMode=S.pianoView.keySlideMode==='play'?'scroll':'play';
+    updateV18Controls();
+    safeToast(S.pianoView.keySlideMode==='play'?'Piano key glide: PLAY':'Piano key glide: SCROLL');
+  }
+
+  function midiFromPoint(x,y){
+    const els=document.elementsFromPoint(x,y)||[];
+    for(const el of els){
+      if(el && el.dataset && el.dataset.midi && (el.classList.contains('wkey')||el.classList.contains('bkey')||el.classList.contains('chroma-key'))) return +el.dataset.midi;
+    }
+    return null;
+  }
+  function installKeyGlide(){
+    const wrap=document.querySelector('.piano-wrap'); if(!wrap||wrap.__hidV18GlideInstalled) return;
+    wrap.__hidV18GlideInstalled=true;
+    let active=false, pid=null, lastMidi=null;
+    const off=()=>{try{if(lastMidi!=null && !getState()?.build) releaseNoteByDisplay(lastMidi)}catch(_){ } active=false; pid=null; lastMidi=null;};
+    wrap.addEventListener('pointerdown',e=>{
+      const S=ensureV18State(); if(!S||S.pianoView.keySlideMode!=='play') return;
+      active=true; pid=e.pointerId; try{wrap.setPointerCapture(pid)}catch(_){ } e.preventDefault();
+      const m=midiFromPoint(e.clientX,e.clientY); if(m!=null){lastMidi=m;try{handlePianoClick(m,e)}catch(_){pressNoteByDisplay(m)}}
+    },{passive:false});
+    wrap.addEventListener('pointermove',e=>{
+      const S=ensureV18State(); if(!active||pid!==e.pointerId||!S||S.pianoView.keySlideMode!=='play') return;
+      e.preventDefault(); const m=midiFromPoint(e.clientX,e.clientY); if(m==null||m===lastMidi) return;
+      try{if(lastMidi!=null && !S.build) releaseNoteByDisplay(lastMidi)}catch(_){ }
+      lastMidi=m; try{handlePianoClick(m,e)}catch(_){pressNoteByDisplay(m)}
+    },{passive:false});
+    ['pointerup','pointercancel','lostpointercapture'].forEach(type=>wrap.addEventListener(type,e=>{if(pid===null||e.pointerId===pid)off();},{passive:false}));
+  }
+
+  function glideVoiceToMidi(v,newMidi){
+    try{
+      if(!v||!v.oscs||!ctx) return false;
+      const oldMidi=Number.isFinite(+v.midi)?+v.midi:newMidi;
+      const oldF=(typeof freqOf==='function')?freqOf(oldMidi):440*Math.pow(2,(oldMidi-69)/12);
+      const newF=(typeof freqOf==='function')?freqOf(newMidi):440*Math.pow(2,(newMidi-69)/12);
+      const tau=clamp(getState()?.mod?.glide??0.08,0.015,0.75);
+      v.oscs.forEach(o=>{
+        const osc=o.osc; if(!osc||!osc.frequency) return;
+        const ratio=clamp((osc.frequency.value||oldF)/Math.max(1,oldF),0.125,8);
+        osc.frequency.cancelScheduledValues(ctx.currentTime);
+        osc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);
+      });
+      if(v.fmOsc&&v.fmOsc.frequency){
+        const ratio=clamp((v.fmOsc.frequency.value||oldF)/Math.max(1,oldF),0.125,24);
+        v.fmOsc.frequency.cancelScheduledValues(ctx.currentTime);
+        v.fmOsc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);
+      }
+      v.midi=newMidi;
+      return true;
+    }catch(e){return false;}
+  }
+
+  const oldPress=(typeof pressNoteByDisplay==='function')?pressNoteByDisplay:null;
+  const oldRelease=(typeof releaseNoteByDisplay==='function')?releaseNoteByDisplay:null;
+  try{
+    pressNoteByDisplay=function(displayMidi){
+      const S=ensureV18State(); if(!S||!oldPress) return oldPress&&oldPress.apply(this,arguments);
+      if(S.arp?.enabled || S.voiceMode==='poly') return oldPress.apply(this,arguments);
+      S._hidHeldDisplayNotes.add(displayMidi);
+      if(S.activeNotes?.has(displayMidi)) return;
+      const activeKeys=Array.from(S.activeNotes?.keys?.()||[]);
+      const current=activeKeys[activeKeys.length-1];
+      if(S.voiceMode==='legato' && current!=null){
+        const v=S.activeNotes.get(current);
+        if(glideVoiceToMidi(v,displayMidi)){
+          S.activeNotes.delete(current); S.activeNotes.set(displayMidi,v);
+          try{highlightKey(current,'lit',false);highlightKey(displayMidi,'lit',true)}catch(_){ }
+          try{recordEvent({type:'on',midi:displayMidi,vel:.78}); if(S.padArmedRec>=0)padCaptureNote(displayMidi,'on'); updateTape(); if(S.viz?.active)vizPulse(displayMidi,1)}catch(_){ }
+          return;
+        }
+      }
+      // MONO: cleanly release old notes before starting the next one.
+      try{for(const m of activeKeys){const v=S.activeNotes.get(m); if(v){v.fadeOut?v.fadeOut(18):v.release();} highlightKey(m,'lit',false); S.activeNotes.delete(m);}}catch(_){ }
+      return oldPress.call(this,displayMidi);
+    };
+    releaseNoteByDisplay=function(displayMidi){
+      const S=ensureV18State(); if(!S||!oldRelease) return oldRelease&&oldRelease.apply(this,arguments);
+      if(S.arp?.enabled || S.voiceMode==='poly') return oldRelease.apply(this,arguments);
+      if(S._hidHeldDisplayNotes) S._hidHeldDisplayNotes.delete(displayMidi);
+      const remaining=Array.from(S._hidHeldDisplayNotes||[]);
+      const activeHas=S.activeNotes?.has(displayMidi);
+      if(S.voiceMode==='legato' && activeHas && remaining.length){
+        const next=remaining[remaining.length-1];
+        const v=S.activeNotes.get(displayMidi);
+        if(glideVoiceToMidi(v,next)){
+          S.activeNotes.delete(displayMidi); S.activeNotes.set(next,v);
+          try{highlightKey(displayMidi,'lit',false); highlightKey(next,'lit',true)}catch(_){ }
+          return;
+        }
+      }
+      return oldRelease.call(this,displayMidi);
+    };
+  }catch(e){console.warn('V18 voice mode override failed',e)}
+
+  function patchTransposeOrientation(){
+    const wrap=(name,after)=>{
+      try{
+        const old=(typeof window[name]==='function')?window[name]:null;
+        // lexical functions are not always window props, so use eval assignment where available.
+        if(typeof eval(name)==='function'){
+          const original=eval(name);
+          if(original.__hidV18Wrapped) return;
+          const fn=function(){const r=original.apply(this,arguments);try{after()}catch(_){ }return r;};
+          fn.__hidV18Wrapped=true;
+          eval(name+'=fn');
+        } else if(old){
+          window[name]=function(){const r=old.apply(this,arguments);try{after()}catch(_){ }return r;};
+        }
+      }catch(_){ }
+    };
+    const after=()=>{try{rebuildDynamicPiano();refreshShortcutLabelsV18();}catch(_){ }};
+    wrap('adjustOctave',after); wrap('adjustTranspose',after); wrap('resetTransposeTargetPrimary',after);
+  }
+
+  function syncLeadUIOnPatchChange(){
+    try{
+      const S=getState(); if(!S) return;
+      document.documentElement.classList.toggle('hid-v18-lead-enhanced',S.bank==='LEAD');
+      const p=BANKS?.[S.bank]?.patches?.[S.patchIdx];
+      const tape=$id('tape-text');
+      if(tape && S.bank==='LEAD' && p) tape.title='Solo-ready lead patch: clearer cutoff, controlled resonance, quick attack';
+    }catch(_){ }
+  }
+
+  function installPatchChangeObserver(){
+    ['sel-bank','sel-patch','patch-prev','patch-next'].forEach(id=>{
+      const el=$id(id); if(el&&!el.__hidV18PatchObs){el.__hidV18PatchObs=true; el.addEventListener('change',()=>setTimeout(syncLeadUIOnPatchChange,30)); el.addEventListener('click',()=>setTimeout(syncLeadUIOnPatchChange,50));}
+    });
+  }
+
+  function bootV18(){
+    try{ensureV18State(); enhanceLeadPatches(); installControlStrip(); installKeyGlide(); patchTransposeOrientation(); installPatchChangeObserver(); rebuildDynamicPiano(); syncLeadUIOnPatchChange();}
+    catch(e){console.warn('V18 boot issue',e)}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(bootV18,60)); else setTimeout(bootV18,60);
+  const bootTimer=setInterval(()=>{try{if($id('piano-host')) bootV18()}catch(_){ }},1500);
+  setTimeout(()=>clearInterval(bootTimer),20000);
+  window.HID_V18_REBUILD_KEYBOARD=bootV18;
+})();
+</script>
+
+
+
+<!-- H.I.D. V19 — chromatic bar slider, scale degrees, hue modes -->
+<style id="hid-v19-chromatic-bars-style">
+  .hid-v19-chroma-ui{position:relative;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .hid-v19-chroma-panel{position:absolute;left:0;bottom:calc(100% + 8px);z-index:1200;width:min(520px,94vw);max-height:min(70vh,520px);overflow:auto;padding:9px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(6,5,18,.98),rgba(0,0,0,.98));box-shadow:0 0 22px var(--window-glow,rgba(0,255,213,.35)),0 12px 32px rgba(0,0,0,.75);display:none}
+  .hid-v19-chroma-panel.open{display:block}
+  .hid-v19-chroma-head{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--neon);text-shadow:0 0 6px var(--neon);letter-spacing:.14em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .hid-v19-chroma-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px}
+  .hid-v19-chroma-field{display:flex;flex-direction:column;gap:3px;border:1px solid rgba(0,255,213,.18);background:rgba(0,255,213,.035);padding:6px;border-radius:2px}
+  .hid-v19-chroma-field label{font-size:12px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+  .hid-v19-chroma-field select,.hid-v19-chroma-field input[type=range]{width:100%}
+  .hid-v19-chroma-field .v{font-family:'Share Tech Mono',monospace;color:var(--neon3);text-align:left;min-width:0}
+  .hid-v19-chroma-note{font-size:12px;color:var(--dim);line-height:1.35;margin-top:7px}
+
+  .hid-v19-chroma-bars .chroma{align-items:stretch!important;background:radial-gradient(ellipse at center,#070815,#000)!important;border-top:1px solid rgba(0,255,213,.2);border-bottom:1px solid rgba(0,255,213,.18);gap:2px;padding:4px;min-height:100%}
+  .hid-v19-chroma-bars .chroma-key{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;height:100%!important;min-height:118px!important;padding:5px 2px 8px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:6px 6px 2px 2px!important;background:linear-gradient(180deg,rgba(255,255,255,.08),var(--bar-bg,rgba(0,255,213,.42)) 58%,rgba(0,0,0,.92))!important;box-shadow:inset 0 0 12px rgba(0,0,0,.75),0 0 5px rgba(0,0,0,.3)!important;overflow:hidden;transition:transform .08s ease,filter .12s ease,box-shadow .18s ease,background .18s ease;touch-action:none;flex:0 0 var(--hid-v19-bar-w,34px)!important;min-width:var(--hid-v19-bar-w,34px)!important}
+  .hid-v19-chroma-bars .chroma-key::before{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:var(--bar-fill,38%);border-radius:4px 4px 1px 1px;background:linear-gradient(180deg,rgba(255,255,255,.92),hsla(var(--bar-hue,180),100%,60%,.88) 30%,hsla(var(--bar-hue,180),100%,42%,.72));box-shadow:0 0 12px hsla(var(--bar-hue,180),100%,60%,.72),inset 0 0 12px rgba(255,255,255,.18);opacity:.42;transform-origin:bottom;transition:height .18s ease,opacity .18s ease,filter .18s ease}
+  .hid-v19-chroma-bars .chroma-key::after{content:attr(data-degree);position:absolute;top:5px;left:3px;right:3px;text-align:center;font-family:'VT323',monospace;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:.05em;text-shadow:0 0 4px rgba(0,0,0,.8);pointer-events:none}
+  .hid-v19-chroma-bars .chroma-key .chroma-nm{position:relative;z-index:2;font-family:'VT323',monospace;font-size:clamp(11px,1.7vw,15px);color:#fff!important;text-shadow:0 0 5px hsla(var(--bar-hue,180),100%,62%,.85),0 0 12px #000;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.02em;margin-bottom:6px;white-space:nowrap}
+  .hid-v19-chroma-bars .chroma-key .chroma-sc{position:relative;z-index:2;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,.72)!important;background:rgba(0,0,0,.45);padding:1px 3px;border-radius:2px;min-height:13px}
+  .hid-v19-chroma-bars .chroma-key.lit{transform:translateY(-2px) scale(1.015);filter:brightness(1.3) saturate(1.55);box-shadow:0 0 18px hsla(var(--bar-hue,180),100%,62%,.95),0 0 36px hsla(var(--bar-hue,180),100%,50%,.42),inset 0 0 18px rgba(255,255,255,.18)!important;background:linear-gradient(180deg,rgba(255,255,255,.26),hsla(var(--bar-hue,180),100%,56%,.92) 48%,rgba(0,0,0,.85))!important}
+  .hid-v19-chroma-bars .chroma-key.lit::before{height:96%;opacity:1;filter:brightness(1.22)}
+  .hid-v19-chroma-bars .chroma-key.shape{outline:2px solid var(--neon3);box-shadow:0 0 18px var(--neon3),inset 0 0 16px rgba(255,230,0,.25)!important}
+  .hid-v19-chroma-bars .chroma-key.hid-v19-afterglow{animation:hidV19BarFade .65s ease-out forwards}
+  @keyframes hidV19BarFade{0%{filter:brightness(1.35) saturate(1.5);box-shadow:0 0 20px hsla(var(--bar-hue,180),100%,62%,.9),0 0 42px hsla(var(--bar-hue,180),100%,50%,.42),inset 0 0 16px rgba(255,255,255,.16)}100%{filter:brightness(1) saturate(1);box-shadow:inset 0 0 12px rgba(0,0,0,.75),0 0 5px rgba(0,0,0,.3)}}
+  @media(max-width:700px){.hid-v19-chroma-panel{left:auto;right:0;width:94vw}.hid-v19-chroma-bars .chroma-key{min-height:102px!important}.hid-v19-chroma-bars .chroma-key .chroma-nm{font-size:12px}.hid-v19-chroma-bars .chroma-key::after{font-size:10px}}
+</style>
+<script id="hid-v19-chromatic-bars-scales">
+(function(){
+  'use strict';
+  if(window.__HID_V19_CHROMATIC_BARS__) return;
+  window.__HID_V19_CHROMATIC_BARS__=true;
+
+  const $=id=>document.getElementById(id);
+  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
+  const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const ROOTS=NOTE_NAMES.map((n,i)=>({n,pc:i}));
+  const SCALES={
+    chromatic:{name:'Chromatic / Every Note',ints:[0,1,2,3,4,5,6,7,8,9,10,11],deg:['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7']},
+    major:{name:'Major / Ionian',ints:[0,2,4,5,7,9,11],deg:['1','2','3','4','5','6','7']},
+    minor:{name:'Natural Minor / Aeolian',ints:[0,2,3,5,7,8,10],deg:['1','2','♭3','4','5','♭6','♭7']},
+    dorian:{name:'Dorian',ints:[0,2,3,5,7,9,10],deg:['1','2','♭3','4','5','6','♭7']},
+    phrygian:{name:'Phrygian',ints:[0,1,3,5,7,8,10],deg:['1','♭2','♭3','4','5','♭6','♭7']},
+    lydian:{name:'Lydian',ints:[0,2,4,6,7,9,11],deg:['1','2','3','#4','5','6','7']},
+    mixolydian:{name:'Mixolydian',ints:[0,2,4,5,7,9,10],deg:['1','2','3','4','5','6','♭7']},
+    locrian:{name:'Locrian',ints:[0,1,3,5,6,8,10],deg:['1','♭2','♭3','4','♭5','♭6','♭7']},
+    majPent:{name:'Major Pentatonic',ints:[0,2,4,7,9],deg:['1','2','3','5','6']},
+    minPent:{name:'Minor Pentatonic',ints:[0,3,5,7,10],deg:['1','♭3','4','5','♭7']},
+    blues:{name:'Blues',ints:[0,3,5,6,7,10],deg:['1','♭3','4','♭5','5','♭7']},
+    harmMinor:{name:'Harmonic Minor',ints:[0,2,3,5,7,8,11],deg:['1','2','♭3','4','5','♭6','7']},
+    melMinor:{name:'Melodic Minor',ints:[0,2,3,5,7,9,11],deg:['1','2','♭3','4','5','6','7']}
+  };
+  function state(){try{return typeof STATE!=='undefined'?STATE:null}catch(_){return null}}
+  function toast(msg){try{typeof window.toast==='function'?window.toast(msg):console.log(msg)}catch(_){}}
+  function ensure(){const S=state(); if(!S) return null; if(!S.chromaV19) S.chromaV19={root:'C',scale:'chromatic',layout:'chromatic',colorMode:'rainbow',hue:178,bars:0}; if(!S.voiceMode) S.voiceMode='poly'; return S;}
+  function noteName(m){try{return nName(m)+octOf(m)}catch(_){return NOTE_NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1)}}
+  function shortcut(m){try{return shortcutFor(m)||''}catch(_){return ''}}
+  function black(m){return [1,3,6,8,10].includes(((m%12)+12)%12)}
+  function physicalBounds(){try{const vals=Object.values(KB_NOTES||{}).map(Number).filter(Number.isFinite); if(vals.length)return {lo:Math.min(...vals),hi:Math.max(...vals)}}catch(_){} return {lo:48,hi:78}}
+  function viewStart(){const S=ensure(); if(!S) return 48; const pv=S.pianoView||{}; if(pv.follow===false) return clamp(pv.startMidi||48,0,127); const b=physicalBounds(); return clamp(Math.round((b.lo||48)+(S.octave||0)*12+(S.transpose||0)+(pv.baseOffset||0)),0,127)}
+  function keyCount(){const S=ensure(); return clamp(S?.pianoView?.keyCount||37,8,88)}
+  function barWidth(){const S=ensure(); const w=clamp(S?.pianoView?.keyWidth||42,22,96); return Math.max(18,Math.round(w*.82))}
+  function rootPc(){const S=ensure(); const r=S?.chromaV19?.root||'C'; return ROOTS.find(x=>x.n===r)?.pc??0}
+  function scaleInfo(){const S=ensure(); return SCALES[S?.chromaV19?.scale]||SCALES.chromatic}
+  function buildScaleMidiList(start,count){
+    const pc=rootPc(), sc=scaleInfo();
+    const all=[];
+    for(let oct=-2;oct<=10;oct++){
+      for(let i=0;i<sc.ints.length;i++){
+        const m=pc+12*(oct+1)+sc.ints[i];
+        if(m>=0&&m<=127) all.push({m,degree:sc.deg[i]||String(i+1),idx:i});
+      }
+    }
+    all.sort((a,b)=>a.m-b.m);
+    let pos=all.findIndex(x=>x.m>=start); if(pos<0) pos=Math.max(0,all.length-count);
+    return all.slice(pos,pos+count);
+  }
+  function buildChromaticMidiList(start,count){
+    const sc=scaleInfo(), pc=rootPc();
+    return Array.from({length:count},(_,i)=>{
+      const m=clamp(start+i,0,127); const rel=((m-pc)%12+12)%12; const idx=sc.ints.indexOf(rel);
+      const degree=idx>=0?(sc.deg[idx]||''):(SCALES.chromatic.deg[rel]||'');
+      return {m,degree,idx:rel};
+    });
+  }
+  function barHue(item,i,total){const S=ensure(); const cfg=S?.chromaV19||{}; if(cfg.colorMode==='single') return clamp(cfg.hue??178,0,360); return Math.round((i/Math.max(1,total))*330 + 12)%360;}
+  function buildChromaV19(){
+    const c=$('chroma'); if(!c) return;
+    const S=ensure(); if(!S) return;
+    const cfg=S.chromaV19; const count=keyCount(); const start=viewStart(); const w=barWidth();
+    const data=(cfg.layout==='scale'&&cfg.scale!=='chromatic')?buildScaleMidiList(start,count):buildChromaticMidiList(start,count);
+    document.body.classList.add('hid-v19-chroma-bars');
+    c.innerHTML=''; c.style.width=(data.length*w)+'px'; c.style.minWidth=(data.length*w)+'px'; c.style.setProperty('--hid-v19-bar-w',w+'px');
+    data.forEach((item,i)=>{
+      const hue=barHue(item,i,data.length); const k=document.createElement('div');
+      k.className='chroma-key hid-v19-bar'; k.dataset.midi=item.m; k.dataset.degree=item.degree||'';
+      const fill=28+Math.round(((item.m%12)/11)*42);
+      k.style.setProperty('--bar-hue',String(hue));
+      k.style.setProperty('--bar-fill',fill+'%');
+      k.style.setProperty('--bar-bg',`hsla(${hue},100%,42%,.34)`);
+      k.innerHTML=`<span class="chroma-nm">${noteName(item.m)}</span><span class="chroma-sc">${shortcut(item.m)}</span>`;
+      try{ if(typeof attachPlayableKeyEvents==='function') attachPlayableKeyEvents(k,item.m); }catch(_){ }
+      c.appendChild(k);
+    });
+    syncChromaControls();
+  }
+  function installControls(){
+    const S=ensure(); if(!S) return;
+    let strip=$('hid-v18-control-strip')||document.querySelector('.piano-controls');
+    if(!strip) return;
+    if($('hid-v19-chroma-ui')){syncChromaControls();return;}
+    const wrap=document.createElement('div'); wrap.className='hid-v18-mini-field hid-v19-chroma-ui'; wrap.id='hid-v19-chroma-ui';
+    wrap.innerHTML=`
+      <label>Chroma</label><button class="btn tiny gold" id="hid-v19-chroma-open">CHROMA SETUP</button><span class="v" id="hid-v19-chroma-summary">ALL</span>
+      <div class="hid-v19-chroma-panel" id="hid-v19-chroma-panel">
+        <div class="hid-v19-chroma-head"><span>CHROMATIC BAR SLIDER</span><button class="btn tiny warn" id="hid-v19-chroma-close">CLOSE</button></div>
+        <div class="hid-v19-chroma-grid">
+          <div class="hid-v19-chroma-field"><label>Root Note</label><select id="hid-v19-root"></select></div>
+          <div class="hid-v19-chroma-field"><label>Scale / Mode</label><select id="hid-v19-scale"></select></div>
+          <div class="hid-v19-chroma-field"><label>Note Order</label><select id="hid-v19-layout"><option value="chromatic">Every note / chromatic</option><option value="scale">Scale degrees only</option></select></div>
+          <div class="hid-v19-chroma-field"><label>Bar Color Mode</label><select id="hid-v19-color-mode"><option value="rainbow">Hue order: every bar different</option><option value="single">Single glowing hue</option></select></div>
+          <div class="hid-v19-chroma-field"><label>Single Hue</label><input type="range" id="hid-v19-hue" min="0" max="360" step="1"><span class="v" id="hid-v19-hue-v">178°</span></div>
+          <div class="hid-v19-chroma-field"><label>Voice Mode</label><select id="hid-v19-voice"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select></div>
+        </div>
+        <div class="hid-v19-chroma-note">Switch the main key mode to <b>CHROMATIC</b> to see this bar layout. In <b>Scale degrees only</b>, the bars skip non-scale tones and run through the selected root/scale/mode in order. Voice mode here uses the same synth voice engine as the main piano.</div>
+      </div>`;
+    strip.appendChild(wrap);
+    const root=$('hid-v19-root'); ROOTS.forEach(r=>root.insertAdjacentHTML('beforeend',`<option value="${r.n}">${r.n}</option>`));
+    const scale=$('hid-v19-scale'); Object.entries(SCALES).forEach(([k,v])=>scale.insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
+    $('hid-v19-chroma-open').onclick=()=>{$('hid-v19-chroma-panel')?.classList.toggle('open')};
+    $('hid-v19-chroma-close').onclick=()=>{$('hid-v19-chroma-panel')?.classList.remove('open')};
+    root.onchange=e=>{S.chromaV19.root=e.target.value;buildChromaV19();toast('Chromatic root: '+e.target.value)};
+    scale.onchange=e=>{S.chromaV19.scale=e.target.value;buildChromaV19();toast('Chromatic scale: '+(SCALES[e.target.value]?.name||e.target.value))};
+    $('hid-v19-layout').onchange=e=>{S.chromaV19.layout=e.target.value;buildChromaV19();};
+    $('hid-v19-color-mode').onchange=e=>{S.chromaV19.colorMode=e.target.value;buildChromaV19();};
+    $('hid-v19-hue').oninput=e=>{S.chromaV19.hue=+e.target.value;buildChromaV19();};
+    $('hid-v19-voice').onchange=e=>{S.voiceMode=e.target.value; try{const vm=$('hid-v18-voice-mode'); if(vm)vm.value=S.voiceMode; const b=$('hid-v18-voice-badge'); if(b)b.textContent=S.voiceMode.toUpperCase()}catch(_){} toast('Voice mode: '+S.voiceMode.toUpperCase())};
+    syncChromaControls();
+  }
+  function syncChromaControls(){
+    const S=ensure(); if(!S||!S.chromaV19) return; const c=S.chromaV19;
+    const set=(id,val)=>{const el=$(id); if(el&&el.value!==String(val))el.value=val};
+    set('hid-v19-root',c.root||'C'); set('hid-v19-scale',c.scale||'chromatic'); set('hid-v19-layout',c.layout||'chromatic'); set('hid-v19-color-mode',c.colorMode||'rainbow'); set('hid-v19-hue',c.hue??178); set('hid-v19-voice',S.voiceMode||'poly');
+    const hv=$('hid-v19-hue-v'); if(hv) hv.textContent=(c.hue??178)+'°';
+    const sum=$('hid-v19-chroma-summary'); if(sum){const scale=SCALES[c.scale||'chromatic']?.name||'Chromatic'; sum.textContent=(c.layout==='scale'?'SCALE':'ALL')+' · '+scale.split('/')[0].trim();}
+  }
+  function wrapHighlightForAfterglow(){
+    try{
+      if(typeof highlightKey!=='function'||highlightKey.__hidV19Wrapped) return;
+      const old=highlightKey;
+      const fn=function(m,cls,on){
+        const r=old.apply(this,arguments);
+        try{
+          if(cls==='lit'){
+            const el=document.querySelector(`#chroma .chroma-key[data-midi="${m}"]`);
+            if(el){
+              if(on){el.classList.remove('hid-v19-afterglow');}
+              else {el.classList.add('hid-v19-afterglow'); setTimeout(()=>el.classList.remove('hid-v19-afterglow'),720);}
+            }
+          }
+        }catch(_){ }
+        return r;
+      };
+      fn.__hidV19Wrapped=true;
+      try{eval('highlightKey=fn')}catch(_){window.highlightKey=fn}
+    }catch(_){ }
+  }
+  function overrideBuildChroma(){
+    try{
+      if(typeof buildChroma==='function' && buildChroma.__hidV19) return;
+      const fn=function(){return buildChromaV19()}; fn.__hidV19=true;
+      try{eval('buildChroma=fn')}catch(_){window.buildChroma=fn}
+    }catch(_){ }
+  }
+  function refresh(){try{ensure(); installControls(); overrideBuildChroma(); wrapHighlightForAfterglow(); buildChromaV19();}catch(e){console.warn('V19 chroma init issue',e)}}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,90),{once:true}); else setTimeout(refresh,90);
+  const t=setInterval(refresh,1500); setTimeout(()=>clearInterval(t),22000);
+  window.HID_V19_REBUILD_CHROMA=refresh;
+})();
+</script>
+
+
+<script id="hid-v19b-chroma-refresh-hooks">
+(function(){
+  'use strict';
+  if(window.__HID_V19B_CHROMA_HOOKS__) return;
+  window.__HID_V19B_CHROMA_HOOKS__=true;
+  function rebuild(){try{if(typeof window.HID_V19_REBUILD_CHROMA==='function') window.HID_V19_REBUILD_CHROMA();}catch(_){}}
+  function hook(){
+    const strip=document.getElementById('hid-v18-control-strip');
+    if(strip&&!strip.__hidV19BHooked){
+      strip.__hidV19BHooked=true;
+      strip.addEventListener('input',e=>{if(e.target&&/^hid-v18-(key-count|key-width)/.test(e.target.id||'')) setTimeout(rebuild,40);},true);
+      strip.addEventListener('click',e=>{if(e.target&&/^hid-v18-(offset|follow|center|slide)/.test(e.target.id||'')) setTimeout(rebuild,80);},true);
+      strip.addEventListener('change',e=>{if(e.target&&/^hid-v18-voice/.test(e.target.id||'')) setTimeout(rebuild,40);},true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook,{once:true}); else hook();
+  const t=setInterval(()=>{hook();rebuild();},2500); setTimeout(()=>clearInterval(t),18000);
 })();
 </script>
 
