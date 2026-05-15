@@ -186,31 +186,43 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
 </script>
 
 
-<script id="hid-v21-staged-launch-and-home-manifest">
-/* V21: staged launch repair + restored homepage patch manifest.
-   Shows the app immediately, loads only the core engine first, then optional repair modules in small idle chunks. */
+<script id="hid-v22-safe-core-launch-and-home-manifest">
+/* V22: safe core launch. The app opens only from LAUNCH, loads the real playing engine first,
+   keeps Remote/QR and stacked repair layers out of the launch path, and restores the homepage patch manifest. */
 (function(){
-  if(window.__HID_V21_STAGED_BOOT_INSTALLED) return;
-  window.__HID_V21_STAGED_BOOT_INSTALLED=true;
+  if(window.__HID_V22_SAFE_BOOT_INSTALLED) return;
+  window.__HID_V22_SAFE_BOOT_INSTALLED=true;
 
   const PATCH_BANKS = [
     ['ELECTRIC PIANO',['Velvet Suitcase','Warm Tines','Glass Rhodes','Midnight EP','Phaser Keys','Dusty Stage','Neo Soul Keys','Sparkle Bell EP','Tape EP','Dyno Bite']],
-    ['SYNTH LEADS',['Solar Lead','Resonant Mono','Silk Glide','Neon Solo','Fusion Square','Crystal Sync','Desert Whistle','Talk Lead','Bit Prophet','Afterglow Lead']],
+    ['SYNTH LEADS',['Solar Lead','Resonant Mono','Silk Glide','Neon Solo','Fusion Square','Desert Whistle','Talk Lead','Bit Prophet','Afterglow Lead']],
     ['PADS',['Desert Air','Analog Choir','Soft Horizon','Glass Cloud','Warm Motion','Slow Bloom','Purple Mist','Dream Stack','Wide Halo','Night Wash']],
-    ['SYNTH BASS',['Round Sub','Funk Moog','Rubber Bass','Deep Square','808 Bloom','Pulse Bass','Low Velvet','Analog Bite','Warm Growl','Palm Drive']],
+    ['SYNTH BASS',['Round Sub','Funk Moog','Rubber Bass','Deep Square','808 Bloom','Pulse Bass','Low Velvet','Analog Bite','Warm Growl']],
     ['STRINGS',['Tape Strings','Cinema Warmth','Small Ensemble','Air Strings','Slow Bow','Vintage Mellotron','Pad Strings','Bright Section','Soft Octaves','Wide Chamber']]
   ];
+  const ESSENTIAL_IDS = [
+    'hid-bigger-v15',
+    'hid-keyboard-pitchbend-v16',
+    'hid-v17-3d-glide-color-fix',
+    'hid-v18-lead-voice-keylayout',
+    'hid-v19-chromatic-bars-scales',
+    'hid-v19b-chroma-refresh-hooks'
+  ];
+  const ADVANCED_IDS = [
+    'hid-v13-core-repair',
+    'hid-v12-fix-script',
+    'hid-v14-qr-camera-layer-script'
+  ];
+  const REMOTE_IDS = [
+    'hid-final-remote-repair','hid-remote-v4-script','hid-remote-v5-script','hid-remote-v8-script','hid-remote-v9-script','hid-remote-v11-qr-script'
+  ];
 
-  function ready(fn){
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true});
-    else fn();
-  }
-
+  function ready(fn){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true}); else fn(); }
   function restoreHomeManifest(){
     try{
       const box=document.getElementById('lh-patches-inner');
-      if(!box || box.__hidV21Manifest) return;
-      box.__hidV21Manifest=true;
+      if(!box || box.__hidV22Manifest) return;
+      box.__hidV22Manifest=true;
       let html='';
       PATCH_BANKS.forEach((bank,bi)=>{
         html += `<div class="lh-bank-header">BANK ${String(bi+1).padStart(2,'0')} · ${bank[0]}</div>`;
@@ -219,149 +231,198 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
           html += `<div class="lh-patch-line"><span class="pn ${cls}">${name}</span><span class="pi">${String(pi+1).padStart(2,'0')}</span></div>`;
         });
       });
-      box.innerHTML = html + html;
+      box.innerHTML=html+html;
     }catch(e){ console.warn('home manifest restore skipped',e); }
   }
-
-  function setStatus(msg, appMsg){
+  function restoreHomeFX(){
     try{
-      const btn=document.getElementById('launch-btn');
-      if(btn && document.getElementById('launch') && getComputedStyle(document.getElementById('launch')).display!=='none'){
-        btn.dataset.originalText=btn.dataset.originalText||btn.textContent;
-        btn.textContent=msg || 'LOADING...';
-        btn.setAttribute('aria-busy','true');
-        btn.style.opacity='.86';
-      }
-      let line=document.getElementById('hid-launch-status');
-      const holder=document.querySelector('.launch-actions')||document.getElementById('launch');
-      if(holder && !line){
-        line=document.createElement('div');
-        line.id='hid-launch-status';
-        line.style.cssText='width:100%;margin-top:10px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.12em;color:var(--neon);text-shadow:0 0 6px var(--neon);position:relative;z-index:7;';
-        holder.appendChild(line);
-      }
-      if(line) line.textContent=msg||'';
-      let appLine=document.getElementById('hid-app-boot-ribbon');
-      const app=document.getElementById('app');
-      if(app && app.classList.contains('active')){
-        if(!appLine){
-          appLine=document.createElement('div');
-          appLine.id='hid-app-boot-ribbon';
-          appLine.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:999999;padding:7px 12px;border:1px solid var(--stroke);background:rgba(0,0,0,.82);color:var(--neon);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.1em;text-shadow:0 0 5px var(--neon);border-radius:6px;pointer-events:none;box-shadow:0 0 16px rgba(0,255,213,.22);';
-          app.appendChild(appLine);
+      const sf=document.getElementById('lh-stars');
+      if(sf && !sf.children.length){
+        const frag=document.createDocumentFragment();
+        for(let i=0;i<62;i++){
+          const sp=document.createElement('span');
+          sp.style.left=(Math.random()*100).toFixed(2)+'%';
+          sp.style.top=(Math.random()*100).toFixed(2)+'%';
+          sp.style.animationDelay=(Math.random()*3).toFixed(2)+'s';
+          sp.style.animationDuration=(2+Math.random()*3).toFixed(2)+'s';
+          frag.appendChild(sp);
         }
-        appLine.textContent=appMsg || msg || 'LOADING...';
+        sf.appendChild(frag);
+      }
+      const wave=document.getElementById('lh-wave');
+      if(wave && !wave.children.length){
+        const frag=document.createDocumentFragment();
+        for(let i=0;i<42;i++){ const b=document.createElement('div'); b.className='b'; b.style.animationDelay=(i*.07).toFixed(2)+'s'; frag.appendChild(b); }
+        wave.appendChild(frag);
       }
     }catch(e){}
   }
-
-  function clearStatus(){
+  function showMain(){
+    try{
+      const modal=document.getElementById('prelaunch-modal');
+      if(modal){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); modal.style.pointerEvents='none'; modal.style.display='none'; }
+      const launch=document.getElementById('launch');
+      if(launch){ launch.style.display='none'; launch.style.pointerEvents='none'; launch.setAttribute('aria-hidden','true'); }
+      const app=document.getElementById('app');
+      if(app){ app.style.display='flex'; app.style.visibility='visible'; app.style.opacity='1'; app.classList.add('active'); app.removeAttribute('aria-hidden'); }
+      document.documentElement.classList.add('hid-entered');
+      document.body && document.body.classList.add('hid-entered');
+    }catch(e){ console.warn('showMain recovered',e); }
+  }
+  function setBtnBusy(on,msg){
     try{
       const btn=document.getElementById('launch-btn');
       if(btn){
-        btn.textContent=btn.dataset.originalText||'▶ LAUNCH';
-        btn.removeAttribute('aria-busy');
-        btn.style.pointerEvents='auto';
-        btn.style.opacity='';
+        btn.dataset.originalText=btn.dataset.originalText||btn.textContent;
+        btn.textContent=on?(msg||'LOADING...'):(btn.dataset.originalText||'▶ LAUNCH');
+        btn.toggleAttribute('aria-busy',!!on);
+        btn.style.pointerEvents=on?'none':'auto';
+        btn.style.opacity=on?'.86':'';
       }
-      setTimeout(()=>{try{document.getElementById('hid-app-boot-ribbon')?.remove()}catch{}},900);
+      let line=document.getElementById('hid-launch-status');
+      const holder=document.querySelector('.launch-actions')||document.getElementById('launch');
+      if(holder && on && !line){
+        line=document.createElement('div'); line.id='hid-launch-status';
+        line.style.cssText='width:100%;margin-top:10px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.12em;color:var(--neon);text-shadow:0 0 6px var(--neon);position:relative;z-index:7;';
+        holder.appendChild(line);
+      }
+      if(line) line.textContent=on?(msg||'LOADING APP ENGINE...'):'';
     }catch(e){}
   }
-
-  function showMainNow(){
+  function ribbon(msg,ms){
     try{
-      const modal=document.getElementById('prelaunch-modal');
-      if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');modal.style.pointerEvents='none';modal.style.display='none';}
-      const launch=document.getElementById('launch');
-      if(launch){launch.style.display='none';launch.style.pointerEvents='none';launch.setAttribute('aria-hidden','true');}
-      const app=document.getElementById('app');
-      if(app){app.style.display='flex';app.style.visibility='visible';app.style.opacity='1';app.classList.add('active');app.removeAttribute('aria-hidden');}
-      document.documentElement.classList.add('hid-entered');
-      document.body && document.body.classList.add('hid-entered');
-    }catch(err){console.warn('show main recovered',err)}
+      let r=document.getElementById('hid-v22-ribbon');
+      if(!r){
+        r=document.createElement('div'); r.id='hid-v22-ribbon';
+        r.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:999999;padding:7px 12px;border:1px solid var(--stroke);background:rgba(0,0,0,.84);color:var(--neon);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:.1em;text-shadow:0 0 5px var(--neon);border-radius:6px;pointer-events:none;box-shadow:0 0 16px rgba(0,255,213,.22);';
+        document.body.appendChild(r);
+      }
+      r.textContent=msg||'';
+      if(ms) setTimeout(()=>{ try{r.remove()}catch{} },ms);
+    }catch(e){}
   }
-
   function lazyScripts(){ return Array.from(document.querySelectorAll('script[type="text/hid-lazy-js"]')); }
-
-  function runLazyScript(old, suffix){
-    if(!old || old.__hidV21Loaded) return;
-    old.__hidV21Loaded=true;
-    try{
-      const sc=document.createElement('script');
-      if(old.id) sc.id=old.id+'-'+(suffix||'v21live');
-      sc.text = old.textContent || '';
-      document.body.appendChild(sc);
-    }catch(err){
-      console.error('V21 module load recovered', old && old.id, err);
-    }
+  function scriptById(id){ return document.getElementById(id); }
+  function runLazyScript(old, tag){
+    if(!old || old.__hidLoaded) return Promise.resolve(false);
+    old.__hidLoaded=true;
+    return new Promise(resolve=>{
+      try{
+        const sc=document.createElement('script');
+        if(old.id) sc.id=old.id+'-'+(tag||'live');
+        sc.text=old.textContent||'';
+        document.body.appendChild(sc);
+      }catch(err){ console.error('module load recovered', old && old.id, err); }
+      setTimeout(()=>resolve(true),0);
+    });
   }
-
-  function afterCoreInit(){
+  function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+  async function loadCore(){
+    if(window.__HID_V22_CORE_LOADED) return;
+    const core=lazyScripts()[0];
+    if(!core) return;
+    ribbon('LOADING CORE ENGINE...');
+    await runLazyScript(core,'v22core');
+    window.__HID_V22_CORE_LOADED=true;
+  }
+  async function initCore(){
+    if(window.__appInitialized) return;
     try{
-      if(typeof window.initApp==='function' && !window.__appInitialized){
+      if(typeof window.initApp==='function'){
         window.__appInitialized=true;
         window.initApp();
+      }else if(typeof initApp==='function'){
+        window.__appInitialized=true;
+        initApp();
+      }else{
+        throw new Error('initApp was not found after core load');
       }
     }catch(err){
       window.__lastStartupError=err;
-      console.error('Core init recovered; app remains visible.',err);
+      console.error('V22 core init recovered',err);
+      try{ if(typeof initAudio==='function') initAudio(); }catch{}
+      try{ if(typeof buildPiano==='function') buildPiano(); }catch{}
+      try{ if(typeof buildChroma==='function') buildChroma(); }catch{}
+      try{ if(typeof buildBankSelect==='function') buildBankSelect(); }catch{}
+      try{ if(typeof setupSplitters==='function') setupSplitters(); }catch{}
     }
+    try{ if(typeof initAudio==='function') initAudio(); }catch(e){}
+    try{ if(window.ctx && window.ctx.state && window.ctx.state!=='running') window.ctx.resume().catch(()=>{}); }catch(e){}
+  }
+  async function loadIds(ids,label,gap){
+    for(const id of ids){
+      const node=scriptById(id);
+      if(!node || node.__hidLoaded) continue;
+      ribbon((label||'LOADING MODULE')+' · '+id.replace(/^hid-/,''));
+      await runLazyScript(node,'v22');
+      await sleep(gap||650);
+    }
+    try{ document.getElementById('hid-v22-ribbon')?.remove(); }catch{}
+  }
+  function scheduleEssentials(){
+    if(window.__HID_V22_ESSENTIALS_SCHEDULED) return;
+    window.__HID_V22_ESSENTIALS_SCHEDULED=true;
+    const run=()=>loadIds(ESSENTIAL_IDS,'ADDING RECENT LIVE FIX',900).catch(e=>console.warn('essential modules skipped',e));
+    setTimeout(()=>{
+      if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:4000});
+      else run();
+    },2500);
+  }
+  async function enter(ev){
+    try{ ev&&ev.preventDefault&&ev.preventDefault(); ev&&ev.stopPropagation&&ev.stopPropagation(); }catch(e){}
+    if(window.__HID_V22_BOOTING) return false;
+    window.__HID_V22_BOOTING=true;
+    setBtnBusy(true,'OPENING...');
+    showMain();
     try{
-      if(typeof window.initAudio==='function') window.initAudio();
-      if(window.ctx && window.ctx.state && window.ctx.state!=='running') window.ctx.resume().catch(()=>{});
-    }catch(audioErr){ console.warn('Audio unlock deferred',audioErr); }
-  }
-
-  function loadOptionalModulesGradually(startIndex){
-    const scripts=lazyScripts();
-    let i=startIndex||1;
-    function step(deadline){
-      if(i>=scripts.length){
-        try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(e){}
-        clearStatus();
-        return;
-      }
-      const old=scripts[i++];
-      setStatus('OPENING APP...', 'LOADING MODULE '+i+'/'+scripts.length);
-      runLazyScript(old,'v21opt');
-      // Give Safari/iPad breathing room between large remote/visualizer patches.
-      if('requestIdleCallback' in window) requestIdleCallback(step,{timeout:700});
-      else setTimeout(step,90);
+      await sleep(40);
+      await loadCore();
+      await initCore();
+      ribbon('READY — LIVE ENGINE ACTIVE',900);
+      scheduleEssentials();
+    }catch(err){
+      window.__lastStartupError=err;
+      console.error('V22 launch recovered',err);
+      ribbon('OPENED IN SAFE MODE',1600);
+    }finally{
+      setBtnBusy(false);
+      window.__HID_V22_BOOTING=false;
     }
-    if('requestIdleCallback' in window) requestIdleCallback(step,{timeout:500});
-    else setTimeout(step,120);
+    return false;
   }
-
-  let booting=false;
-  window.__HID_DIRECT_ENTER=function(ev){
-    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
-    if(booting) return false;
-    booting=true;
-    showMainNow();
-    setStatus('OPENING...', 'LOADING CORE ENGINE...');
-    // Let the browser paint the app screen before running the large core script.
-    setTimeout(function(){
-      const scripts=lazyScripts();
-      if(!scripts.length){ clearStatus(); return; }
+  window.__HID_DIRECT_ENTER=enter;
+  window.HID_LOAD_ADVANCED_MODULES=function(){ return loadIds(ADVANCED_IDS,'LOADING ADVANCED FIX',900); };
+  window.HID_OPEN_REMOTE=function(ev){
+    try{ ev&&ev.preventDefault&&ev.preventDefault(); ev&&ev.stopPropagation&&ev.stopPropagation(); }catch(e){}
+    if(!window.__appInitialized){ ribbon('LAUNCH APP FIRST',1200); return false; }
+    if(window.__HID_REMOTE_LOADING){ ribbon('REMOTE STILL LOADING...',900); return false; }
+    window.__HID_REMOTE_LOADING=true;
+    loadIds(REMOTE_IDS.concat(ADVANCED_IDS),'LOADING REMOTE/QR',850).then(()=>{
+      window.__HID_REMOTE_LOADING=false;
+      try{ if(typeof window.HID_INSTALL_REMOTE==='function') window.HID_INSTALL_REMOTE(); }catch(e){}
       try{
-        runLazyScript(scripts[0],'v21core');
-        afterCoreInit();
-      }catch(err){
-        window.__lastStartupError=err;
-        console.error('V21 launch recovered',err);
-      }
-      setStatus('APP OPENED', 'FINISHING OPTIONAL MODULES...');
-      loadOptionalModulesGradually(1);
-    },60);
+        if(window.HID_OPEN_REMOTE && window.HID_OPEN_REMOTE!==arguments.callee){ return window.HID_OPEN_REMOTE(ev); }
+      }catch(e){}
+      try{ if(typeof toggleWindow==='function') toggleWindow('remote',true); }catch(e){}
+      ribbon('REMOTE READY',1000);
+    }).catch(err=>{ window.__HID_REMOTE_LOADING=false; console.warn('Remote load recovered',err); ribbon('REMOTE LOAD RECOVERED',1500); });
     return false;
   };
-
-  window.__HID_V21_RESTORE_HOME_MANIFEST=restoreHomeManifest;
-  ready(function(){
-    restoreHomeManifest();
-    // Re-run once after the original launch UI scripts if they load later.
-    setTimeout(restoreHomeManifest,700);
+  function bindLaunch(){
+    const buttons=[document.getElementById('launch-btn'),document.getElementById('prelaunch-continue')].filter(Boolean);
+    buttons.forEach(btn=>{
+      if(btn.__hidV22Bound) return; btn.__hidV22Bound=true;
+      btn.style.pointerEvents='auto';
+      btn.onclick=enter;
+      ['pointerup','touchend','click'].forEach(type=>btn.addEventListener(type,enter,{capture:true,passive:false}));
+    });
+  }
+  ['pointerup','touchend','click'].forEach(type=>{
+    document.addEventListener(type,function(ev){
+      const t=ev.target; if(t&&t.closest&&t.closest('#launch-btn,#prelaunch-continue')) enter(ev);
+    },{capture:true,passive:false});
   });
+  ready(function(){ restoreHomeManifest(); restoreHomeFX(); bindLaunch(); setTimeout(()=>{restoreHomeManifest(); restoreHomeFX(); bindLaunch();},600); });
 })();
 </script>
 
@@ -1534,6 +1595,12 @@ body.hid-entered.remote-missing #hid-remote-emergency{display:block}
   #launch .lh-stage-cols > .lh-side:last-child .lh-patch-line{font-size:11px!important;padding:0 3px!important;}
 }
 
+</style>
+
+<style id="hid-v22-safe-boot-style">
+#hid-v22-ribbon{max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.hid-entered #launch{display:none!important;pointer-events:none!important}
+body.hid-entered #app{display:flex!important;visibility:visible!important;opacity:1!important}
 </style>
 </head>
 <body>
@@ -6589,433 +6656,7 @@ window.addEventListener('keyup',e=>{
   STATE.viz.keysDown.delete(e.code);
 });
 
-
-/* ===== LAUNCH — retry-safe direct start ===== */
-let __launchReady=false;
-let __launchStarting=false;
-
-async function startAppFromLaunch(ev){
-  if(ev){ ev.preventDefault?.(); ev.stopPropagation?.(); }
-  if(__launchReady || __launchStarting) return;
-  __launchStarting=true;
-
-  const launchEl=document.getElementById('launch');
-  const appEl=document.getElementById('app');
-  const modal=document.getElementById('prelaunch-modal');
-
-  // Immediately move the user past the home screen so a slow/blocked audio
-  // unlock never makes the Launch button feel broken.
-  if(modal){
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
-    modal.style.pointerEvents='none';
-  }
-  if(launchEl) launchEl.style.display='none';
-  if(appEl) appEl.classList.add('active');
-  window.__keyboardNavMode=false;
-
-  try{
-    if(!window.__appInitialized){
-      window.__appInitialized=true;
-      initApp();
-    }
-    // Audio unlock should happen after the app UI exists, and it should never
-    // block app launch if Safari/iOS delays AudioContext startup.
-    try{
-      initAudio();
-      if(ctx && ctx.state!=='running') await ctx.resume().catch(()=>{});
-      if(ctx){
-        const _unlockOsc=ctx.createOscillator();
-        const _unlockGain=ctx.createGain();
-        _unlockGain.gain.value=0.00001;
-        _unlockOsc.connect(_unlockGain).connect(master||ctx.destination);
-        _unlockOsc.start();
-        _unlockOsc.stop(ctx.currentTime+0.01);
-      }
-    }catch(audioErr){
-      console.warn('launch audio unlock delayed/failed',audioErr);
-    }
-    __launchReady=true;
-  }catch(err){
-    window.__lastStartupError=err;
-    console.error('App startup recovered without returning to the launch screen.',err);
-    __launchReady=true;
-    // Do NOT return the user to the home screen. Keep the app visible even if
-    // one optional module fails, then let the user continue using whatever loaded.
-    if(launchEl) launchEl.style.display='none';
-    if(appEl) appEl.classList.add('active');
-    try{ toast('Main screen opened — one module recovered'); }catch{}
-  }finally{
-    __launchStarting=false;
-  }
-}
-
-function openPrelaunchReminder(ev){
-  // Direct-launch now: this prevents the advisory modal from blocking startup
-  // on iPad/iPhone when pointer/touch events arrive in a different order.
-  return startAppFromLaunch(ev);
-}
-
-function bindLaunchAction(el,fn){
-  if(!el || el.__hidLaunchBound) return;
-  el.__hidLaunchBound=true;
-  let last=0;
-  const run=(ev)=>{
-    const now=performance.now();
-    if(now-last<250){ ev?.preventDefault?.(); ev?.stopPropagation?.(); return; }
-    last=now;
-    fn(ev);
-  };
-  el.addEventListener('pointerup',run,{passive:false});
-  el.addEventListener('click',run,{passive:false});
-  el.addEventListener('touchend',run,{passive:false});
-}
-
-function __bindLaunchButtons(){
-  const lb=document.getElementById('launch-btn');
-  const cb=document.getElementById('prelaunch-continue');
-  bindLaunchAction(lb,startAppFromLaunch);
-  bindLaunchAction(cb,startAppFromLaunch);
-  if(lb) lb.onclick=startAppFromLaunch;
-  if(cb) cb.onclick=startAppFromLaunch;
-}
-
-__bindLaunchButtons();
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',__bindLaunchButtons,{once:true});
-window.addEventListener('load',__bindLaunchButtons,{once:true});
-
-// Capture-phase fallback: even if another overlay/window steals the normal
-// click, the home-screen Launch and modal Continue buttons still start the app.
-document.addEventListener('pointerup',e=>{
-  const t=e.target;
-  if(!t || !t.closest) return;
-  if(t.closest('#launch-btn') || t.closest('#prelaunch-continue')) startAppFromLaunch(e);
-},{capture:true,passive:false});
-document.addEventListener('click',e=>{
-  const t=e.target;
-  if(!t || !t.closest) return;
-  if(t.closest('#launch-btn') || t.closest('#prelaunch-continue')) startAppFromLaunch(e);
-},{capture:true,passive:false});
-
-window.addEventListener('keydown',e=>{
-  if(e.code==='Tab') window.__keyboardNavMode=true;
-  const launchEl=document.getElementById('launch');
-  if(launchEl && getComputedStyle(launchEl).display!=='none' && e.code==='Enter'){
-    e.preventDefault();
-    startAppFromLaunch(e);
-  }
-});
-document.addEventListener('keydown',e=>{
-  if(e.code==='Escape'){
-    const modal=document.getElementById('prelaunch-modal');
-    if(modal?.classList.contains('show')){
-      e.preventDefault();
-      modal.classList.remove('show');
-      modal.setAttribute('aria-hidden','true');
-      modal.style.pointerEvents='none';
-    }
-  }
-});
-/* ===== LAUNCH SCREEN UI POPULATORS ===== */
-(function initLaunchScreenUI(){
-  try{
-    // starfield
-    const sf = document.getElementById('lh-stars');
-    if (sf && !sf.children.length){
-      const frag = document.createDocumentFragment();
-      for (let i=0;i<70;i++){
-        const s = document.createElement('span');
-        s.style.left = (Math.random()*100).toFixed(2)+'%';
-        s.style.top  = (Math.random()*100).toFixed(2)+'%';
-        s.style.animationDelay = (Math.random()*3).toFixed(2)+'s';
-        s.style.animationDuration = (2+Math.random()*3).toFixed(2)+'s';
-        if (Math.random()<.25) s.style.boxShadow='0 0 4px #fff,0 0 10px var(--neon2)';
-        else if (Math.random()<.5) s.style.boxShadow='0 0 4px #fff,0 0 10px var(--neon3)';
-        if (Math.random()<.1){ s.style.width='3px'; s.style.height='3px'; }
-        frag.appendChild(s);
-      }
-      sf.appendChild(frag);
-    }
-    // waveform spectrum
-    const wave = document.getElementById('lh-wave');
-    if (wave && !wave.children.length){
-      const frag = document.createDocumentFragment();
-      for (let i=0;i<42;i++){
-        const b = document.createElement('div');
-        b.className = 'b';
-        b.style.animationDelay = (i*0.07).toFixed(2)+'s';
-        b.style.animationDuration = (0.9 + (i%5)*0.18).toFixed(2)+'s';
-        frag.appendChild(b);
-      }
-      wave.appendChild(frag);
-    }
-    // patch manifest — list every patch, twice for seamless scroll
-    const inner = document.getElementById('lh-patches-inner');
-    if (inner && typeof BANKS !== 'undefined'){
-      const tones = ['','m','y'];
-      const make = ()=>{
-        let html = '';
-        let pIdx = 0;
-        for (const k of Object.keys(BANKS)){
-          const bank = BANKS[k];
-          html += `<div class="lh-bank-header">▸ ${bank.name}</div>`;
-          bank.patches.forEach((p,i)=>{
-            pIdx++;
-            const tone = tones[pIdx % 3];
-            const num = String(pIdx).padStart(3,'0');
-            html += `<div class="lh-patch-line"><span class="pn ${tone}">${p.n}</span><span class="pi">#${num}</span></div>`;
-          });
-        }
-        return html;
-      };
-      inner.innerHTML = make() + make();
-    }
-    // live clock — runs while launch screen is visible
-    const tick = ()=>{
-      const el = document.getElementById('lh-time');
-      const launch = document.getElementById('launch');
-      if (!el || !launch || launch.style.display==='none') return;
-      const d = new Date();
-      const pad = n => String(n).padStart(2,'0');
-      el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-      requestAnimationFrame(()=>setTimeout(tick, 500));
-    };
-    tick();
-  }catch(err){ console.warn('launch UI init failed', err); }
-})();
-
-
-/* ============ REMOTE CONTROL PATCH — iPad Host + iPhone Controller ============
-   Backend-free WebRTC DataChannel control layer for GitHub Pages.
-   Pairing is manual: HOST creates offer → CONTROLLER creates answer → HOST accepts answer.
-   Expanded controller board: pads, slots, EQ/FX, sound design, arp, visualizer, windows.
-*/
-(function(){
-  const REMOTE={role:null,pc:null,dc:null,connected:false,lastState:null,hostOffer:null,controllerAnswer:null,stateTimer:null,pressed:new Set(),activeWheel:false,selectedPad:0,soundScope:'global',fullScreen:false,manualNormal:false,uiBusy:false,lastTouch:0,renderTimer:null,fastRAF:0,fastPending:new Map(),seq:0,lastFastCmd:Object.create(null),lastWheelCmdT:0};
-  const rtcCfg={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
-  const clampLocal=(v,a,b)=>Math.max(a,Math.min(b,+v||0));
-  const esc=s=>String(s??'').replace(/[<>&"']/g,ch=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[ch]));
-  const enc=obj=>{try{return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));}catch(e){return btoa(JSON.stringify(obj));}};
-  const dec=str=>{try{return JSON.parse(decodeURIComponent(escape(atob((str||'').trim()))));}catch(e){return JSON.parse(atob((str||'').trim()));}};
-  const waitIce=pc=>new Promise(res=>{if(pc.iceGatheringState==='complete')return res();const done=()=>{if(pc.iceGatheringState==='complete'){pc.removeEventListener('icegatheringstatechange',done);res();}};pc.addEventListener('icegatheringstatechange',done);setTimeout(res,3200);});
-  const copyText=async txt=>{try{await navigator.clipboard.writeText(txt);toast('Copied');}catch(e){toast('Select and copy the code manually');}};
-  const getPath=(root,path,def=0)=>{try{return path.split('.').reduce((o,k)=>o?.[k],root)??def}catch{return def}};
-  const setPath=(root,path,val)=>{const parts=path.split('.');let o=root;for(let i=0;i<parts.length-1;i++){o[parts[i]]=o[parts[i]]||{};o=o[parts[i]];}o[parts.at(-1)]=val;};
-  const FX_ALLOWED=new Set(['eqLow','eqMid','eqHigh','distAmt','chorusDepth','chorusRate','chorusMix','phaserRate','phaserDepth','phaserMix','tremRate','tremDepth','delayMix','delayFB','reverbMix','reverbSize','stereoEnhanceAmt']);
-  const FX_TOGGLES=new Set(['distOn','chorusOn','phaserOn','tremOn','delayOn','reverbOn','stereoEnhanceOn']);
-  const SOUND_ALLOWED=new Set(['amp.a','amp.d','amp.s','amp.r','filt.co','filt.q','mod.lfoR','mod.lfoD','mod.glide','mod.vol','mod.drive','mod.pan']);
-  function remoteStatusText(){if(REMOTE.connected)return 'CONNECTED · '+(REMOTE.role==='host'?'HOST/iPad':'CONTROLLER/iPhone');if(REMOTE.role==='host')return 'HOST READY · WAITING FOR ANSWER';if(REMOTE.role==='controller')return 'CONTROLLER READY · WAITING FOR HOST';return 'NOT PAIRED';}
-  function closeRemoteConnection(silent=false){try{REMOTE.dc&&REMOTE.dc.close()}catch{}try{REMOTE.pc&&REMOTE.pc.close()}catch{}REMOTE.pc=null;REMOTE.dc=null;REMOTE.connected=false;REMOTE.hostOffer=null;REMOTE.controllerAnswer=null;clearInterval(REMOTE.stateTimer);REMOTE.stateTimer=null;if(!silent)toast('Remote disconnected');buildRemoteWindow();}
-  function makePeer(){const pc=new RTCPeerConnection(rtcCfg);pc.onconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(pc.connectionState)){REMOTE.connected=false;buildRemoteWindow();}};pc.oniceconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(pc.iceConnectionState)){REMOTE.connected=false;buildRemoteWindow();}};return pc;}
-  function setupChannel(dc){REMOTE.dc=dc;dc.onopen=()=>{REMOTE.connected=true;toast('Remote connected');buildRemoteWindow();if(REMOTE.role==='host'){remoteSendState();clearInterval(REMOTE.stateTimer);REMOTE.stateTimer=setInterval(remoteSendState,1400);}else{remoteSend({type:'requestState'});}};dc.onclose=()=>{REMOTE.connected=false;buildRemoteWindow();};dc.onerror=()=>{REMOTE.connected=false;buildRemoteWindow();};dc.onmessage=e=>{let msg=null;try{msg=JSON.parse(e.data)}catch{return}if(REMOTE.role==='host'){if(msg.type==='cmd')applyRemoteCommand(msg);if(msg.type==='requestState')remoteSendState();}else if(msg.type==='state'){REMOTE.lastState=msg.state;updateControllerState();}};}
-  function remoteSend(obj){if(!REMOTE.dc||REMOTE.dc.readyState!=='open')return false;try{REMOTE.dc.send(JSON.stringify(obj));return true}catch{return false}}
-  function markRemoteBusy(ms=950){REMOTE.uiBusy=true;REMOTE.lastTouch=performance.now();clearTimeout(REMOTE.busyTimer);REMOTE.busyTimer=setTimeout(()=>{REMOTE.uiBusy=false;},ms);}
-  function cmd(name,data={}){markRemoteBusy(420);return remoteSend({type:'cmd',cmd:name,...data,t:Date.now(),seq:++REMOTE.seq});}
-  function cmdFast(name,data={}){markRemoteBusy(650);const payload={type:'cmd',cmd:name,...data,t:Date.now(),seq:++REMOTE.seq,fast:1};REMOTE.fastPending.set(name,payload);if(!REMOTE.fastRAF){REMOTE.fastRAF=requestAnimationFrame(()=>{REMOTE.fastRAF=0;const items=[...REMOTE.fastPending.values()];REMOTE.fastPending.clear();for(const p of items)remoteSend(p);});}return true;}
-  function setRemoteFullScreen(on){REMOTE.fullScreen=!!on;const w=WIN.remote;if(!w)return;document.body.classList.toggle('remote-fullscreen',!!on);w.el.classList.toggle('remote-fs',!!on);try{if(on){w.el.style.left='0px';w.el.style.top='0px';}}catch{}}
-
-  function padState(){return (STATE.pads||[]).map((p,i)=>{p=p?ensurePadDefaults(p,i):null;return p?{i,name:p.name||('PAD '+(i+1)),kind:p.kind||'pad',disabled:!!p.disabled,wheel:p.wheelEnabled!==false,vol:p.volume??1,fxSend:p.fxSend??1,selected:STATE.padEditingIdx===i,source:p.sourceLabel||p.kind||'PAD'}:{i,name:'EMPTY',kind:'empty',disabled:false,wheel:false,vol:0,fxSend:0,selected:false,source:'EMPTY'};});}
-  function slotState(){return (STATE.slots||[]).map((s,i)=>s?{i,name:s.name||('SLOT '+(i+1)),disabled:!!s.disabled,active:STATE.slotIdx===i}:{i,name:'EMPTY',disabled:false,active:false,empty:true});}
-  function currentRemoteState(){return {bpm:STATE.bpm,arp:{...STATE.arp},bank:STATE.bank,patchIdx:STATE.patchIdx,patch:currentPatchLabel?currentPatchLabel():'PATCH',pads:padState(),slots:slotState(),padEditingIdx:STATE.padEditingIdx,scope:STATE.padControlScope,fx:{...STATE.fx},sound:{amp:{...STATE.amp},filt:{...STATE.filt},mod:{...STATE.mod}},viz:{...STATE.viz,cam:{...STATE.viz.cam}}};}
-  function remoteSendState(){if(REMOTE.role==='host'&&REMOTE.connected)remoteSend({type:'state',state:currentRemoteState()});}
-  function rebuildTouchedWindows(){try{buildPadsWindow&&buildPadsWindow()}catch{}try{buildSlotsWindow&&buildSlotsWindow()}catch{}try{buildFXWindow&&buildFXWindow()}catch{}try{buildSoundDesignWindow&&buildSoundDesignWindow()}catch{}try{buildArpWindow&&buildArpWindow()}catch{}try{buildVizControls&&buildVizControls()}catch{}try{updateTape&&updateTape()}catch{}try{buildPatchSelect&&buildPatchSelect()}catch{}try{buildBankSelect&&buildBankSelect()}catch{}try{buildBankWindow&&buildBankWindow()}catch{}}
-  function applyRemoteWheel(semi){if(!STATE?.modWheel)return;const mw=STATE.modWheel;const val=clampLocal(+semi||0,-(mw.rangeDown||12),(mw.rangeUp||12));mw.active=val;mw.target=val===0?0:(val>0?val/(mw.rangeUp||12):val/(mw.rangeDown||12));const cents=val*100;const apply=v=>{try{if(v&&v.wheelEnabled===false)return;for(const o of v.oscs||[])o.osc.detune.setTargetAtTime(cents+(o.osc._origDetune||0),ctx.currentTime,0.018)}catch{}};if(STATE.activeNotes)for(const[,v]of STATE.activeNotes)apply(v);for(const[,vs]of STATE.padPlayingVoices||[])for(const v of(vs.voices||[]))apply(v);for(const[,seq]of STATE.padPlayingSequences||[])for(const v of(seq.allVoices||[]))apply(v);try{applyPitchToActiveSamples&&applyPitchToActiveSamples()}catch{}const meter=$('#mw-meter');if(meter)meter.textContent=(val>=0?'+':'')+val.toFixed(2)+' st';}
-  function setRemoteMaster(v){const val=clampLocal(+v,0,1.2);const el=$('#master-vol');if(el)el.value=val;const mv=$('#master-val');if(mv)mv.textContent=Math.round(val*100);if(master)master.gain.setTargetAtTime(val,ctx?.currentTime||0,0.02);STATE.mod.vol=val;}
-  function selectRemotePad(idx){idx=+idx; if(idx<0||idx>=STATE.pads.length)return; STATE.padEditingIdx=idx; STATE.padControlScope='pad'; STATE.transposeTarget='pad'; REMOTE.selectedPad=idx; rebuildTouchedWindows();}
-  function applyPadParam(idx,key,value){const p=ensurePadDefaults(STATE.pads[idx],idx);if(!p)return; if(key==='volume')p.volume=clampLocal(value,0,2); if(key==='fxSend')p.fxSend=clampLocal(value,0,1); if(key==='wheelEnabled')p.wheelEnabled=!!value; if(key==='transpose')p.transpose=clampLocal(value,-24,24); if(key==='octaveShift')p.octaveShift=clampLocal(value,-3,3); applyPadLiveParams(idx);}
-  function applySoundParam(scope,path,value,padIdx){if(!SOUND_ALLOWED.has(path))return;const val=+value; if(scope==='pad'){const idx=Number.isFinite(+padIdx)?+padIdx:STATE.padEditingIdx;const p=ensurePadDefaults(STATE.pads[idx],idx);if(!p||p.kind==='sample')return;p.patchSnapshot=p.patchSnapshot||snapshotPatch();const [a,b]=path.split('.');p.patchSnapshot[a]=p.patchSnapshot[a]||{};p.patchSnapshot[a][b]=val;applyPadLiveParams(idx);STATE.padEditingIdx=idx;STATE.padControlScope='pad';}else{setPath(STATE,path,val);if(path==='mod.vol')setRemoteMaster(val);} }
-  function applyRemoteCommand(m){try{ensureAudioReady&&ensureAudioReady()}catch{}try{if(m.fast){const key=m.cmd+':'+(m.key||m.idx||'');if(m.t && m.t<(REMOTE.lastFastCmd[key]||0))return;REMOTE.lastFastCmd[key]=m.t;}if(m.cmd==='wheel'){if(m.t && m.t<(REMOTE.lastWheelCmdT||0))return;REMOTE.lastWheelCmdT=m.t;}switch(m.cmd){
-    case 'noteOn':pressNoteByDisplay(+m.midi);break;case 'noteOff':releaseNoteByDisplay(+m.midi);break;
-    case 'pad':padTrigger(+m.idx);break;case 'padStop':padStop(+m.idx,true);break;case 'padSelect':selectRemotePad(+m.idx);break;
-    case 'padParam':applyPadParam(+m.idx,m.key,m.value);break;case 'padWheelToggle':{const p=ensurePadDefaults(STATE.pads[+m.idx],+m.idx);if(p){p.wheelEnabled=!(p.wheelEnabled!==false);applyPadLiveParams(+m.idx)}}break;
-    case 'stopAll':stopAll();break;case 'kill':$('#kill-btn')?.click();break;case 'bpm':setGlobalTempo(+m.value,true);break;case 'tap':tapTempo();break;
-    case 'arpToggle':arpSetEnabled(!STATE.arp.enabled);break;case 'arpOn':arpSetEnabled(!!m.value);break;case 'arpParam':if(['bpm','gate','swing','octaves'].includes(m.key)){STATE.arp[m.key]=+m.value;if(m.key==='bpm')setGlobalTempo(+m.value,true);}else if(['rate','direction'].includes(m.key)){STATE.arp[m.key]=String(m.value)}break;
-    case 'master':setRemoteMaster(m.value);break;case 'wheel':applyRemoteWheel(m.value);break;case 'wheelRelease':if(!STATE.modWheel.holdMode)applyRemoteWheel(0);break;case 'sustainToggle':$('#btn-sustain')?.click();break;
-    case 'slot':triggerSlotIndex(+m.idx);break;case 'slotNext':triggerNextSlot();break;case 'slotPrev':triggerPrevSlot();break;case 'slotCount':slotCountdownNext();break;case 'slotToggle':toggleSlotDisabled(+m.idx);break;
-    case 'fxSet':if(FX_ALLOWED.has(m.key)){STATE.fx[m.key]=+m.value;applyFXState();}break;case 'fxToggle':if(FX_TOGGLES.has(m.key)){STATE.fx[m.key]=!STATE.fx[m.key];applyFXState();}break;
-    case 'soundSet':applySoundParam(m.scope,m.path,m.value,m.padIdx);break;case 'soundScope':STATE.padControlScope=m.scope==='pad'?'pad':'global';if(STATE.padControlScope==='pad'&&Number.isFinite(+m.padIdx))STATE.padEditingIdx=+m.padIdx;break;
-    case 'patchNext':$('#patch-next')?.click();break;case 'patchPrev':$('#patch-prev')?.click();break;case 'copyPatchToPad':selectRemotePad(+m.idx);copyCurrentPatchToSelectedPad();break;
-    case 'vizToggle':toggleVisualizer(!STATE.viz.active);break;case 'vizAuto':STATE.viz.autoPan=!STATE.viz.autoPan;STATE.viz.autoTarget=null;if(!STATE.viz.active)toggleVisualizer(true);break;case 'vizClean':toggleVizClean(!!m.value);break;case 'vizRandom':vizRandomize();break;case 'vizParam':{const allowed=['sensitivity','particleCount','motion','colorShift','bloom','fog','autoSpeed','micSensitivity'];if(allowed.includes(m.key)){STATE.viz[m.key]=+m.value;if(viz3d)viz3d.applySettings();}}break;case 'vizScene':vizSetScene(String(m.value));break;
-    case 'openWindow':toggleWindow(m.id,true);break;}
-    rebuildTouchedWindows();remoteSendState();}catch(err){console.warn('remote command failed',err)}}
-  async function startHostPairing(){closeRemoteConnection(true);REMOTE.role='host';const pc=REMOTE.pc=makePeer();const dc=pc.createDataChannel('hold-it-down-remote',{ordered:false,maxPacketLifeTime:120});setupChannel(dc);const offer=await pc.createOffer();await pc.setLocalDescription(offer);await waitIce(pc);REMOTE.hostOffer=enc(pc.localDescription);buildRemoteWindow();toast('Host code ready');}
-  async function acceptControllerAnswer(code){if(!REMOTE.pc||REMOTE.role!=='host'){toast('Start HOST first');return}try{await REMOTE.pc.setRemoteDescription(new RTCSessionDescription(dec(code)));toast('Answer accepted');buildRemoteWindow()}catch(e){toast('Could not read controller answer');console.warn(e)}}
-  async function startControllerPairing(offerCode){closeRemoteConnection(true);REMOTE.role='controller';const pc=REMOTE.pc=makePeer();pc.ondatachannel=e=>setupChannel(e.channel);try{await pc.setRemoteDescription(new RTCSessionDescription(dec(offerCode)));const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await waitIce(pc);REMOTE.controllerAnswer=enc(pc.localDescription);buildRemoteWindow();toast('Controller answer ready')}catch(e){toast('Could not read host code');console.warn(e);buildRemoteWindow()}}
-  function noteLabel(m){const names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];return names[((m%12)+12)%12]+(Math.floor(m/12)-1)}
-  function padGridHTML(){const pads=(REMOTE.lastState?.pads||Array.from({length:16},(_,i)=>({i,name:'PAD '+(i+1),kind:'pad',vol:1,fxSend:1,wheel:true}))).slice(0,32);return `<div class="remote-pad-grid big">${pads.map(p=>`<div class="remote-pad-cell ${p.selected?'sel':''}" data-pad-cell="${p.i}"><button class="remote-pad-pb ${p.wheel?'':'off'}" data-rpad-wheel="${p.i}" title="Pitch/mod wheel for this pad">PB</button><button class="remote-pad-trigger ${p.kind==='empty'?'empty':''}" data-rpad="${p.i}"><b>${p.i+1}</b><span>${esc(p.name||'PAD')}</span><span style="color:var(--dim);font-size:9px">${esc(p.source||p.kind||'')}</span></button><div class="remote-pad-mini"><span>VOL</span><input type="range" min="0" max="2" step="0.01" value="${p.vol??1}" data-rpad-vol="${p.i}"><span class="v">${Math.round((p.vol??1)*100)}</span></div><div class="remote-pad-mini"><span>FX</span><input type="range" min="0" max="1" step="0.01" value="${p.fxSend??1}" data-rpad-fx="${p.i}"><span class="v">${Math.round((p.fxSend??1)*100)}</span></div></div>`).join('')}</div>`}
-  function slotGridHTML(){const slots=(REMOTE.lastState?.slots||[]);return `<div class="remote-slot-grid">${slots.map(s=>`<button class="remote-slot ${s.empty?'empty':''} ${s.disabled?'off':''} ${s.active?'active':''}" data-rslot="${s.i}"><b>${s.i+1}</b><span>${esc(s.name||'EMPTY')}</span></button>`).join('')}</div>`}
-  function pianoHTML(){let html='';for(let i=0;i<24;i++){const m=48+i;html+=`<button class="remote-note ${[1,3,6,8,10].includes(m%12)?'black':''}" data-rnote="${m}">${noteLabel(m)}</button>`}return html}
-  function pSlider(label,id,min,max,step,value,attrs='',fmt=''){return `<div class="remote-param"><label>${label}</label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" ${attrs}><span class="v">${fmt||value}</span></div>`}
-  function fxControlsHTML(){const fx=REMOTE.lastState?.fx||{};const rows=[['LOW','eqLow',-15,15,.1,fx.eqLow??0,'dB'],['MID','eqMid',-15,15,.1,fx.eqMid??0,'dB'],['HIGH','eqHigh',-15,15,.1,fx.eqHigh??0,'dB'],['DRIVE','distAmt',0,1,.01,fx.distAmt??.3,''],['CHORUS','chorusMix',0,1,.01,fx.chorusMix??.4,''],['PHASER','phaserMix',0,1,.01,fx.phaserMix??.4,''],['TREMOLO','tremDepth',0,1,.01,fx.tremDepth??.5,''],['DELAY','delayMix',0,1,.01,fx.delayMix??.3,''],['DLY FB','delayFB',0,.95,.01,fx.delayFB??.35,''],['REVERB','reverbMix',0,1,.01,fx.reverbMix??.18,''],['STEREO','stereoEnhanceAmt',0,1,.01,fx.stereoEnhanceAmt??.42,'']];const togg=['distOn','chorusOn','phaserOn','tremOn','delayOn','reverbOn','stereoEnhanceOn'];return `<div class="remote-toggle-row three">${togg.map(togg=>`<button class="btn tiny ${fx[togg]?'on':''}" data-rfx-toggle="${togg}">${togg.replace('On','').replace('stereoEnhance','STEREO').toUpperCase()}</button>`).join('')}</div><div class="remote-knob-table" style="margin-top:6px">${rows.map(r=>pSlider(r[0],'rfx-'+r[1],r[2],r[3],r[4],r[5],`data-rfx="${r[1]}"`,r[6]==='dB'?(+r[5]).toFixed(1)+'dB':Math.round((+r[5])*100)+'%')).join('')}</div>`}
-  function soundControlsHTML(){const st=REMOTE.lastState||{};const scope=REMOTE.soundScope||st.scope||'global';const padIdx=Number.isFinite(REMOTE.selectedPad)?REMOTE.selectedPad:(st.padEditingIdx>=0?st.padEditingIdx:0);const src=st.sound||{amp:{},filt:{},mod:{}};const rows=[['ATK','amp.a',0,3,.01,getPath(src,'amp.a',.005),'s'],['DEC','amp.d',0,3,.01,getPath(src,'amp.d',.5),'s'],['SUS','amp.s',0,1,.01,getPath(src,'amp.s',.7),''],['REL','amp.r',0,4,.01,getPath(src,'amp.r',.5),'s'],['CUTOFF','filt.co',80,12000,1,getPath(src,'filt.co',2400),'Hz'],['RES','filt.q',.1,20,.1,getPath(src,'filt.q',3),''],['LFO R','mod.lfoR',0,14,.01,getPath(src,'mod.lfoR',5),'Hz'],['LFO D','mod.lfoD',0,.25,.001,getPath(src,'mod.lfoD',.02),''],['GLIDE','mod.glide',0,1,.01,getPath(src,'mod.glide',0),''],['VOL','mod.vol',0,1.2,.01,getPath(src,'mod.vol',.7),''],['DRIVE','mod.drive',0,1,.01,getPath(src,'mod.drive',.3),''],['PAN','mod.pan',-1,1,.01,getPath(src,'mod.pan',0),'']];return `<div class="remote-scope-strip"><button class="btn tiny ${scope==='global'?'on':''}" data-rscope="global">GLOBAL LIVE PATCH</button><button class="btn tiny ${scope==='pad'?'on':''}" data-rscope="pad">SELECTED PAD</button></div><div class="remote-select-row"><label>PAD</label><select id="remote-sound-pad">${(st.pads||[]).map(p=>`<option value="${p.i}" ${p.i===padIdx?'selected':''}>${p.i+1} · ${esc(p.name||'PAD')}</option>`).join('')}</select></div><div class="remote-open-strip"><button class="btn tiny" data-rcmd="patchPrev">PATCH ◀</button><button class="btn tiny" data-rcmd="patchNext">PATCH ▶</button><button class="btn tiny gold" id="remote-copy-patch">COPY PATCH TO PAD</button></div><div class="remote-hint" style="margin:5px 0">Current live patch: <b style="color:var(--neon3)">${esc(st.patch||'PATCH')}</b></div><div class="remote-knob-table">${rows.map(r=>pSlider(r[0],'rsnd-'+r[1].replace('.','-'),r[2],r[3],r[4],r[5],`data-rsound="${r[1]}"`,r[6]==='Hz'?Math.round(+r[5]):r[6]==='s'?(+r[5]).toFixed(2)+'s':(r[1]==='mod.pan'?(+r[5]).toFixed(2):Math.round((+r[5])*100)+'%'))).join('')}</div>`}
-  function arpVizHTML(){const st=REMOTE.lastState||{},a=st.arp||{},v=st.viz||{};return `<div class="remote-toggle-row"><button class="btn gold ${a.enabled?'on':''}" data-rcmd="arpToggle">ARP ${a.enabled?'ON':'OFF'}</button><button class="btn" data-rcmd="tap">TAP TEMPO</button></div>${pSlider('ARP BPM','rarp-bpm',40,220,1,a.bpm||st.bpm||STATE.bpm,'data-rarp="bpm"',a.bpm||st.bpm||STATE.bpm)}${pSlider('GATE','rarp-gate',0.05,1,.01,a.gate??.55,'data-rarp="gate"',Math.round((a.gate??.55)*100)+'%')}${pSlider('SWING','rarp-swing',0,.7,.01,a.swing??0,'data-rarp="swing"',Math.round((a.swing??0)*100)+'%')}<div class="remote-toggle-row" style="margin-top:6px"><button class="btn ${v.active?'on':''}" data-rviz-cmd="toggle">VISUALIZER</button><button class="btn ${v.autoPan?'on':''}" data-rviz-cmd="auto">AUTO-PAN</button></div>${pSlider('AUTO SPD','rviz-speed',0.1,6,.05,v.autoSpeed||1,'data-rviz="autoSpeed"',(v.autoSpeed||1).toFixed(2))}${pSlider('SENS','rviz-sens',0.2,3.4,.05,v.sensitivity||1.2,'data-rviz="sensitivity"',(v.sensitivity||1.2).toFixed(2))}${pSlider('MOTION','rviz-mot',0.08,3.9,.05,v.motion||1,'data-rviz="motion"',(v.motion||1).toFixed(2))}${pSlider('BLOOM','rviz-bloom',0.2,2.9,.05,v.bloom||1,'data-rviz="bloom"',(v.bloom||1).toFixed(2))}<div class="remote-open-strip" style="margin-top:5px"><button class="btn tiny" data-rviz-cmd="random">RANDOM VIZ</button><button class="btn tiny" data-rviz-cmd="clean">CLEAN DOT</button></div>`}
-  function hostPanelHTML(){return `<div class="remote-section"><div class="remote-subtitle">1 · HOST CODE FROM IPAD</div><textarea id="remote-host-offer" readonly placeholder="Tap START HOST to create a code">${REMOTE.hostOffer||''}</textarea><div class="remote-row"><button class="btn gold" id="remote-start-host">${REMOTE.hostOffer?'RESTART HOST':'START HOST'}</button><button class="btn" id="remote-copy-offer" ${REMOTE.hostOffer?'':'disabled'}>COPY HOST CODE</button></div></div><div class="remote-section"><div class="remote-subtitle">2 · PASTE IPHONE ANSWER HERE</div><textarea id="remote-answer-in" placeholder="Paste the controller answer code from your iPhone"></textarea><div class="remote-row"><button class="btn gold" id="remote-accept-answer">ACCEPT ANSWER</button><button class="btn warn" id="remote-disconnect">DISCONNECT</button></div></div>`}
-  function controllerPanelHTML(){const st=REMOTE.lastState||{};return `<div class="remote-fs-header"><div class="rtitle">H.I.D. REMOTE BOARD<br><b>${REMOTE.connected?'LIVE CONTROL':'PAIR / SETUP'}</b></div><button class="btn tiny gold" id="remote-fs-toggle">${REMOTE.fullScreen?'NORMAL VIEW':'FULL SCREEN'}</button></div><div class="remote-section"><div class="remote-subtitle">1 · PASTE IPAD HOST CODE</div><textarea id="remote-offer-in" placeholder="Paste the host code from your iPad">${REMOTE.hostOffer||''}</textarea><div class="remote-row"><button class="btn gold" id="remote-start-controller">CONNECT AS CONTROLLER</button><button class="btn warn" id="remote-disconnect-c">DISCONNECT</button></div></div><div class="remote-section"><div class="remote-subtitle">2 · COPY THIS ANSWER BACK TO IPAD</div><textarea id="remote-controller-answer" readonly placeholder="Your answer code appears here after connecting">${REMOTE.controllerAnswer||''}</textarea><div class="remote-row"><button class="btn" id="remote-copy-answer" ${REMOTE.controllerAnswer?'':'disabled'}>COPY ANSWER CODE</button></div></div><div class="remote-controller ${REMOTE.connected?'live':'locked'}"><div class="remote-strip"><span>COMPLETE REMOTE CONTROL BOARD</span><b>${REMOTE.connected?'LIVE':'PAIR FIRST'}</b></div><div class="remote-board"><div class="remote-board-col"><div class="remote-panel-card gold"><div class="remote-mini-title">PADS / SAMPLER <span>trigger · select · mix · PB</span></div>${padGridHTML()}</div><div class="remote-panel-card"><div class="remote-mini-title">SLOTS / CHORD BANK <span>window slots</span></div><div class="remote-toggle-row three"><button class="btn tiny" data-rcmd="slotPrev">PREV</button><button class="btn tiny gold" data-rcmd="slotNext">NEXT</button><button class="btn tiny gold" data-rcmd="slotCount">3s COUNT</button></div>${slotGridHTML()}</div></div><div class="remote-board-col"><div class="remote-panel-card"><div class="remote-mini-title">GLOBAL TRANSPORT / MIX <span>${esc(st.patch||'')}</span></div><div class="remote-row remote-transport"><button class="btn warn" data-rcmd="kill">KILL</button><button class="btn warn" data-rcmd="stopAll">STOP ALL</button><button class="btn gold" data-rcmd="tap">TAP</button><button class="btn" data-rcmd="sustainToggle">SUSTAIN</button></div>${pSlider('BPM','remote-bpm',40,220,1,st.bpm||STATE.bpm,'',''+(st.bpm||STATE.bpm))}${pSlider('MASTER','remote-master',0,1.2,.01,getPath(st,'sound.mod.vol',.7),'',Math.round(getPath(st,'sound.mod.vol',.7)*100)+'%')}<div class="remote-wheel-zone"><div class="remote-param"><label>PITCH</label><input type="range" id="remote-wheel" min="-12" max="12" step="0.01" value="0"><span class="v" id="remote-wheel-v">0.00</span></div><div class="remote-wheel-pad" id="remote-wheel-pad"><div class="remote-wheel-thumb" id="remote-wheel-thumb"></div><div class="remote-wheel-readout" id="remote-wheel-readout">0.00 ST</div><span>GLIDE PITCH LEFT / RIGHT</span></div><button class="btn tiny" id="remote-wheel-zero" style="width:100%;margin-top:4px">CENTER PITCH</button></div></div><div class="remote-panel-card mag"><div class="remote-mini-title">EQ / FX RACK <span>global bus</span></div>${fxControlsHTML()}</div></div><div class="remote-board-col"><div class="remote-panel-card gold"><div class="remote-mini-title">SOUND DESIGN <span>global or selected pad</span></div>${soundControlsHTML()}</div><div class="remote-panel-card"><div class="remote-mini-title">ARP / VISUALIZER <span>tempo + autopan</span></div>${arpVizHTML()}</div><div class="remote-panel-card"><div class="remote-mini-title">WINDOW SHORTCUTS <span>open on iPad</span></div><div class="remote-window-grid">${[['pads','PADS'],['slots','SLOTS'],['sound','SOUND'],['fx','FX'],['arp','ARP'],['spatial','3D SOUND'],['bank','BANK'],['help','HELP']].map(w=>`<button class="btn tiny" data-rwin="${w[0]}">${w[1]}</button>`).join('')}</div></div></div></div><div class="remote-subtitle">TWO-OCTAVE NOTE SURFACE</div><div class="remote-note-grid" id="remote-note-grid">${pianoHTML()}</div><div class="remote-hint">The iPhone sends control only. Keep the iPad connected to speakers/headphones. Pitch wheel and pad controls lock touch scrolling while active.</div></div>`}
-  function buildRemoteWindow(){
-    const w=WIN.remote;if(!w)return;
-    const body=w.el.querySelector('.win-body');
-    const role=REMOTE.role||'none';
-    if(role==='controller' && !REMOTE.manualNormal)REMOTE.fullScreen=true;
-    if(role!=='controller')REMOTE.fullScreen=false;
-    setRemoteFullScreen(role==='controller'&&!!REMOTE.fullScreen);
-    body.innerHTML=`<div class="remote-root"><div class="pad-target-strip"><span>REMOTE LINK: <b>${remoteStatusText()}</b></span><span class="scope">GitHub Pages · WebRTC direct</span></div><div class="remote-role-row"><button class="btn gold ${role==='host'?'on':''}" id="remote-role-host">THIS DEVICE IS iPAD HOST</button><button class="btn ${role==='controller'?'on':''}" id="remote-role-controller">THIS DEVICE IS iPHONE CONTROLLER</button></div><div class="remote-hint">Pair once, then this panel becomes a full mixer/control board for pads, chord slots, sound design, EQ/FX, arp, visualizer, and windows.</div><div id="remote-panel">${role==='host'?hostPanelHTML():role==='controller'?controllerPanelHTML():'<div class="remote-empty">Choose HOST on the iPad, or CONTROLLER on the iPhone.</div>'}</div></div>`;
-    body.querySelector('#remote-role-host')?.addEventListener('click',()=>{REMOTE.role='host';REMOTE.fullScreen=false;REMOTE.manualNormal=false;buildRemoteWindow()});
-    body.querySelector('#remote-role-controller')?.addEventListener('click',()=>{REMOTE.role='controller';REMOTE.fullScreen=true;REMOTE.manualNormal=false;buildRemoteWindow()});
-    body.querySelector('#remote-fs-toggle')?.addEventListener('click',()=>{REMOTE.fullScreen=!REMOTE.fullScreen;REMOTE.manualNormal=!REMOTE.fullScreen;setRemoteFullScreen(REMOTE.role==='controller'&&REMOTE.fullScreen);buildRemoteWindow()});
-    body.querySelector('#remote-start-host')?.addEventListener('click',startHostPairing);
-    body.querySelector('#remote-copy-offer')?.addEventListener('click',()=>copyText(REMOTE.hostOffer||body.querySelector('#remote-host-offer')?.value||''));
-    body.querySelector('#remote-accept-answer')?.addEventListener('click',()=>acceptControllerAnswer(body.querySelector('#remote-answer-in')?.value||''));
-    body.querySelector('#remote-disconnect')?.addEventListener('click',()=>closeRemoteConnection());
-    body.querySelector('#remote-start-controller')?.addEventListener('click',()=>startControllerPairing(body.querySelector('#remote-offer-in')?.value||''));
-    body.querySelector('#remote-copy-answer')?.addEventListener('click',()=>copyText(REMOTE.controllerAnswer||body.querySelector('#remote-controller-answer')?.value||''));
-    body.querySelector('#remote-disconnect-c')?.addEventListener('click',()=>closeRemoteConnection());
-    bindControllerSurface(body);
-  }
-  function bindControllerSurface(body){['pointerdown','touchstart','input'].forEach(ev=>body.addEventListener(ev,()=>markRemoteBusy(1000),{capture:true,passive:true}));body.querySelectorAll('[data-rcmd]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();cmd(b.dataset.rcmd)}));const bpm=body.querySelector('#remote-bpm');if(bpm){bpm.oninput=e=>{e.target.nextElementSibling.textContent=e.target.value;cmdFast('bpm',{value:+e.target.value})}}const masterEl=body.querySelector('#remote-master');if(masterEl)masterEl.oninput=e=>{e.target.nextElementSibling.textContent=Math.round(+e.target.value*100)+'%';cmdFast('master',{value:+e.target.value})};
-    const wheel=body.querySelector('#remote-wheel'), wheelV=body.querySelector('#remote-wheel-v'), wheelThumb=body.querySelector('#remote-wheel-thumb'), wheelRead=body.querySelector('#remote-wheel-readout');
-    const updateWheelUI=val=>{val=clampLocal(+val||0,-12,12);if(wheel)wheel.value=val;if(wheelV)wheelV.textContent=val.toFixed(2);if(wheelRead)wheelRead.textContent=val.toFixed(2)+' ST';if(wheelThumb)wheelThumb.style.left=((val+12)/24*100).toFixed(2)+'%';};
-    if(wheel){const send=e=>{e.preventDefault?.();markRemoteBusy(900);const val=+wheel.value;updateWheelUI(val);cmdFast('wheel',{value:val})};['pointerdown','touchstart'].forEach(ev=>wheel.addEventListener(ev,e=>{REMOTE.activeWheel=true;document.body.classList.add('remote-wheel-lock');markRemoteBusy(1200);e.preventDefault();},{passive:false}));['input','pointermove','touchmove'].forEach(ev=>wheel.addEventListener(ev,send,{passive:false}));['change','pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>wheel.addEventListener(ev,e=>{REMOTE.activeWheel=false;document.body.classList.remove('remote-wheel-lock');e.preventDefault?.();cmd('wheelRelease');if(!STATE.modWheel?.holdMode)updateWheelUI(0)},{passive:false}));updateWheelUI(+wheel.value||0);}
-    const wheelPad=body.querySelector('#remote-wheel-pad');if(wheelPad){const valFromX=x=>{const r=wheelPad.getBoundingClientRect();return clampLocal(((x-r.left)/Math.max(1,r.width)-0.5)*24,-12,12)};const setFromEvent=e=>{const x=e.clientX??(e.touches?.[0]?.clientX);if(x==null)return;e.preventDefault();markRemoteBusy(900);const val=valFromX(x);updateWheelUI(val);cmdFast('wheel',{value:val});};wheelPad.addEventListener('pointerdown',e=>{REMOTE.activeWheel=true;document.body.classList.add('remote-wheel-lock');wheelPad.classList.add('active');try{wheelPad.setPointerCapture(e.pointerId)}catch{}setFromEvent(e)},{passive:false});wheelPad.addEventListener('pointermove',e=>{if(!REMOTE.activeWheel)return;setFromEvent(e)},{passive:false});const end=e=>{if(!REMOTE.activeWheel)return;REMOTE.activeWheel=false;document.body.classList.remove('remote-wheel-lock');wheelPad.classList.remove('active');cmd('wheelRelease');if(!STATE.modWheel?.holdMode)updateWheelUI(0);e.preventDefault?.()};wheelPad.addEventListener('pointerup',end,{passive:false});wheelPad.addEventListener('pointercancel',end,{passive:false});wheelPad.addEventListener('lostpointercapture',end,{passive:false});}
-    body.querySelector('#remote-wheel-zero')?.addEventListener('click',()=>{updateWheelUI(0);cmd('wheel',{value:0});cmd('wheelRelease')});
-    body.querySelectorAll('[data-rpad]').forEach(b=>{b.addEventListener('pointerdown',e=>{if(e.target.closest('input,button.remote-pad-pb'))return;e.preventDefault();markRemoteBusy(600);cmd('pad',{idx:+b.dataset.rpad});cmd('padSelect',{idx:+b.dataset.rpad});b.classList.add('hit');},{passive:false});b.addEventListener('pointerup',()=>b.classList.remove('hit'));b.addEventListener('pointercancel',()=>b.classList.remove('hit'));});
-    body.querySelectorAll('[data-pad-cell]').forEach(c=>c.addEventListener('dblclick',()=>cmd('padSelect',{idx:+c.dataset.padCell})));body.querySelectorAll('[data-rpad-wheel]').forEach(b=>b.onclick=e=>{e.stopPropagation();cmd('padWheelToggle',{idx:+b.dataset.rpadWheel})});body.querySelectorAll('[data-rpad-vol]').forEach(r=>r.oninput=e=>{e.target.nextElementSibling.textContent=Math.round(+e.target.value*100);cmdFast('padParam',{idx:+r.dataset.rpadVol,key:'volume',value:+e.target.value})});body.querySelectorAll('[data-rpad-fx]').forEach(r=>r.oninput=e=>{e.target.nextElementSibling.textContent=Math.round(+e.target.value*100);cmdFast('padParam',{idx:+r.dataset.rpadFx,key:'fxSend',value:+e.target.value})});
-    body.querySelectorAll('[data-rslot]').forEach(b=>{b.onclick=e=>{e.preventDefault();cmd('slot',{idx:+b.dataset.rslot})};b.oncontextmenu=e=>{e.preventDefault();cmd('slotToggle',{idx:+b.dataset.rslot})}});
-    body.querySelectorAll('[data-rfx]').forEach(r=>r.oninput=e=>{const v=+e.target.value;e.target.nextElementSibling.textContent=(['eqLow','eqMid','eqHigh'].includes(r.dataset.rfx)?v.toFixed(1)+'dB':Math.round(v*100)+'%');cmdFast('fxSet',{key:r.dataset.rfx,value:v})});body.querySelectorAll('[data-rfx-toggle]').forEach(b=>b.onclick=()=>cmd('fxToggle',{key:b.dataset.rfxToggle}));
-    body.querySelectorAll('[data-rscope]').forEach(b=>b.onclick=()=>{REMOTE.soundScope=b.dataset.rscope;cmd('soundScope',{scope:REMOTE.soundScope,padIdx:+(body.querySelector('#remote-sound-pad')?.value||0)});buildRemoteWindow()});const sndPad=body.querySelector('#remote-sound-pad');if(sndPad)sndPad.onchange=e=>{REMOTE.selectedPad=+e.target.value;cmd('padSelect',{idx:REMOTE.selectedPad});};body.querySelector('#remote-copy-patch')?.addEventListener('click',()=>cmd('copyPatchToPad',{idx:+(sndPad?.value||0)}));body.querySelectorAll('[data-rsound]').forEach(r=>r.oninput=e=>{const path=r.dataset.rsound,val=+e.target.value;e.target.nextElementSibling.textContent=(path.includes('amp.')?val.toFixed(2)+'s':path==='filt.co'?Math.round(val):path==='mod.pan'?val.toFixed(2):Math.round(val*100)+'%');cmdFast('soundSet',{scope:REMOTE.soundScope||'global',padIdx:+(sndPad?.value||0),path,value:val})});
-    body.querySelectorAll('[data-rarp]').forEach(r=>r.oninput=e=>{const k=r.dataset.rarp,v=+e.target.value;e.target.nextElementSibling.textContent=k==='bpm'?v:k==='gate'||k==='swing'?Math.round(v*100)+'%':v;cmdFast('arpParam',{key:k,value:v})});body.querySelectorAll('[data-rviz]').forEach(r=>r.oninput=e=>{const v=+e.target.value;e.target.nextElementSibling.textContent=v.toFixed(2);cmdFast('vizParam',{key:r.dataset.rviz,value:v})});body.querySelectorAll('[data-rviz-cmd]').forEach(b=>b.onclick=()=>{const c=b.dataset.rvizCmd;if(c==='toggle')cmd('vizToggle');else if(c==='auto')cmd('vizAuto');else if(c==='random')cmd('vizRandom');else if(c==='clean')cmd('vizClean',{value:true})});body.querySelectorAll('[data-rwin]').forEach(b=>b.onclick=()=>cmd('openWindow',{id:b.dataset.rwin}));
-    body.querySelectorAll('[data-rnote]').forEach(b=>{const midi=+b.dataset.rnote;const on=e=>{e.preventDefault();markRemoteBusy(1000);if(REMOTE.pressed.has(midi))return;REMOTE.pressed.add(midi);b.classList.add('hit');cmd('noteOn',{midi});try{b.setPointerCapture(e.pointerId)}catch{}};const off=e=>{if(!REMOTE.pressed.has(midi))return;REMOTE.pressed.delete(midi);b.classList.remove('hit');cmd('noteOff',{midi});try{b.releasePointerCapture(e.pointerId)}catch{}};b.addEventListener('pointerdown',on,{passive:false});b.addEventListener('pointerup',off,{passive:false});b.addEventListener('pointercancel',off,{passive:false});b.addEventListener('lostpointercapture',off,{passive:false});});
-  }
-  window.addEventListener('touchmove',e=>{if(REMOTE.activeWheel)e.preventDefault()},{passive:false});
-  function updateControllerState(){const w=WIN.remote;if(!w||REMOTE.role!=='controller')return;const hidden=w.el.classList.contains('hidden');if(hidden)return;const now=performance.now();if(REMOTE.uiBusy||now-(REMOTE.lastTouch||0)<1100){clearTimeout(REMOTE.renderTimer);REMOTE.renderTimer=setTimeout(()=>{REMOTE.uiBusy=false;updateControllerState();},1200);return;}buildRemoteWindow();}
-  function installRemoteControl(){if(WIN.remote)return;const dw=$('#desktop')?.clientWidth||900,dh=$('#desktop')?.clientHeight||600;makeWindow('remote','REMOTE CONTROL','',{x:Math.max(10,dw-620),y:45,w:Math.min(760,Math.max(420,dw-30)),h:Math.min(720,dh-60)});buildRemoteWindow();const lb=$('#launcher-bar');if(lb&&!lb.querySelector('[data-w="remote"]')){const b=document.createElement('button');b.className='launcher-btn';b.dataset.w='remote';b.textContent='REMOTE';b.onclick=()=>toggleWindow('remote');lb.appendChild(b)}const top=$('.topbar');const help=$('#btn-help');if(top&&!$('#btn-remote-top')){const b=document.createElement('button');b.className='btn gold';b.id='btn-remote-top';b.textContent='↔ REMOTE';b.onclick=()=>toggleWindow('remote',true);top.insertBefore(b,help||null)}}
-  const oldInit=window.initApp||initApp;
-  initApp=function(){
-    try{ oldInit(); }
-    catch(coreErr){
-      window.__lastStartupError=coreErr;
-      console.error('Core startup recovered instead of returning to launch screen',coreErr);
-      try{ document.getElementById('launch') && (document.getElementById('launch').style.display='none'); }catch{}
-      try{ document.getElementById('app') && document.getElementById('app').classList.add('active'); }catch{}
-    }
-    try{ installRemoteControl(); }
-    catch(remoteErr){
-      window.__lastRemoteStartupError=remoteErr;
-      console.warn('Remote panel startup skipped instead of blocking app launch',remoteErr);
-    }
-  };
-  function ensureRemoteLaunchers(){
-    try{
-      const lb=$('#launcher-bar');
-      if(lb && !lb.querySelector('[data-w="remote"]')){
-        const b=document.createElement('button');
-        b.className='launcher-btn';b.dataset.w='remote';b.id='launcher-remote-dynamic';b.textContent='REMOTE';
-        b.onclick=(e)=>{e.preventDefault();window.HID_OPEN_REMOTE&&window.HID_OPEN_REMOTE(e);};
-        lb.appendChild(b);
-      }
-      const top=$('.topbar');
-      const help=$('#btn-help');
-      if(top && !$('#btn-remote-top') && !$('#btn-remote-top-static')){
-        const b=document.createElement('button');
-        b.className='btn gold';b.id='btn-remote-top';b.textContent='↔ REMOTE';
-        b.onclick=(e)=>{e.preventDefault();window.HID_OPEN_REMOTE&&window.HID_OPEN_REMOTE(e);};
-        top.insertBefore(b,help||null);
-      }
-    }catch(e){console.warn('Remote launcher restore skipped',e)}
-  }
-  window.HID_INSTALL_REMOTE=function(){
-    try{ installRemoteControl(); }
-    catch(e){ console.warn('Primary remote installer recovered',e); }
-    try{ ensureRemoteLaunchers(); }catch(e){}
-    try{
-      const missing=!WIN.remote;
-      document.body.classList.toggle('remote-missing',!!missing);
-    }catch(e){}
-    return !!(WIN&&WIN.remote);
-  };
-  window.HID_OPEN_REMOTE=function(ev){
-    try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
-    try{ showToast&&showToast('Opening Remote Control'); }catch(e){}
-    try{ window.HID_INSTALL_REMOTE(); }catch(e){ console.warn('Remote open install recovered',e); }
-    try{ if(WIN.remote){ toggleWindow('remote',true); buildRemoteWindow(); bringToFront('remote'); document.body.classList.remove('remote-missing'); return false; } }catch(e){ console.warn('Remote open recovered',e); }
-    try{ document.body.classList.add('remote-missing'); }catch(e){}
-    alert('Remote Control could not fully initialize yet. Enter the app first, then tap REMOTE again.');
-    return false;
-  };
-  window.HID_REMOTE={startHostPairing,startControllerPairing,close:closeRemoteConnection,send:cmd,open:window.HID_OPEN_REMOTE,install:window.HID_INSTALL_REMOTE};
-  // If the launch bypass already opened the app before this patch installed,
-  // attach the Remote window/buttons immediately and keep a short failsafe watcher.
-  try{ setTimeout(()=>{ if(document.body.classList.contains('hid-entered')||window.__appInitialized) window.HID_INSTALL_REMOTE(); },0); }catch(e){}
-  try{
-    let checks=0;
-    const remoteWatch=setInterval(()=>{
-      checks++;
-      const app=document.getElementById('app');
-      if(app && (app.classList.contains('active') || document.body.classList.contains('hid-entered'))){ window.HID_INSTALL_REMOTE(); }
-      if((WIN&&WIN.remote) || checks>20) clearInterval(remoteWatch);
-    },700);
-  }catch(e){}
-})();
-
-
-/* ===== HARD LAUNCH REPAIR PATCH =====
-   Keeps the user from getting trapped on the home screen if audio, remote,
-   or visualizer startup throws on iPad/Safari.  The interface opens first;
-   optional modules initialize afterward and fail softly. */
-(function(){
-  function showMainInterface(){
-    const launch=document.getElementById('launch');
-    const app=document.getElementById('app');
-    const modal=document.getElementById('prelaunch-modal');
-    if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');modal.style.pointerEvents='none';}
-    if(launch){launch.style.display='none';launch.style.pointerEvents='none';}
-    if(app){app.style.display='flex';app.classList.add('active');app.style.visibility='visible';app.style.opacity='1';}
-    document.body.classList.remove('performance','remote-fullscreen','remote-wheel-lock');
-  }
-  function safeBootModules(){
-    if(window.__hidHardBooted) return;
-    window.__hidHardBooted=true;
-    try{
-      if(typeof initApp==='function' && !window.__appInitialized){
-        window.__appInitialized=true;
-        initApp();
-      }
-    }catch(err){
-      window.__lastStartupError=err;
-      console.error('Hard launch boot recovered',err);
-      // Try to at least build the core interface pieces that are safe.
-      try{ if(typeof initAudio==='function') initAudio(); }catch{}
-      try{ if(typeof updateKeyboardPianoUI==='function') updateKeyboardPianoUI(); }catch{}
-      try{ if(typeof buildPiano==='function') buildPiano(); }catch{}
-      try{ if(typeof buildChroma==='function') buildChroma(); }catch{}
-      try{ if(typeof buildBankSelect==='function') buildBankSelect(); }catch{}
-      try{ if(typeof setupSplitters==='function') setupSplitters(); }catch{}
-    }
-    showMainInterface();
-    try{ if(ctx && ctx.state!=='running') ctx.resume().catch(()=>{}); }catch{}
-  }
-  function hardLaunch(ev){
-    if(ev){ev.preventDefault?.();ev.stopPropagation?.();}
-    showMainInterface();
-    setTimeout(safeBootModules,0);
-  }
-  window.HID_FORCE_LAUNCH=hardLaunch;
-  function bind(){
-    const lb=document.getElementById('launch-btn');
-    const cb=document.getElementById('prelaunch-continue');
-    [lb,cb].forEach(btn=>{if(!btn)return;btn.style.pointerEvents='auto';btn.onclick=hardLaunch;btn.addEventListener('pointerdown',hardLaunch,{capture:true,passive:false});btn.addEventListener('touchstart',hardLaunch,{capture:true,passive:false});btn.addEventListener('click',hardLaunch,{capture:true,passive:false});});
-    const launch=document.getElementById('launch');
-    if(launch && !launch.__hidHardLaunchBound){
-      launch.__hidHardLaunchBound=true;
-      launch.style.pointerEvents='auto';
-      launch.addEventListener('pointerdown',function(e){ if(e.target.closest('#launch-btn,#prelaunch-continue')) hardLaunch(e); },{capture:true,passive:false});
-      launch.addEventListener('touchstart',function(e){ if(e.target.closest('#launch-btn,#prelaunch-continue')) hardLaunch(e); },{capture:true,passive:false});
-    }
-  }
-  bind();
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind,{once:true});
-  window.addEventListener('load',bind,{once:true});
-})();
-
+/* V22: launch/remote repair code removed from core engine so playing mode can initialize cleanly. */
 </script>
 
 <div class="overlay-modal" id="prelaunch-modal" aria-hidden="true" style="pointer-events:none">
