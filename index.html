@@ -205,8 +205,7 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
     'hid-keyboard-pitchbend-v16',
     'hid-v17-3d-glide-color-fix',
     'hid-v18-lead-voice-keylayout',
-    'hid-v19-chromatic-bars-scales',
-    'hid-v19b-chroma-refresh-hooks'
+    /* V30: V28/V29 own chromatic bars; old V19 layers removed */
   ];
   const ADVANCED_IDS = [
     'hid-v13-core-repair',
@@ -214,7 +213,7 @@ document.addEventListener('touchend',e=>{const n=Date.now();if(n-__lastTouchEnd<
     'hid-v14-qr-camera-layer-script'
   ];
   const REMOTE_IDS = [
-    'hid-final-remote-repair','hid-remote-v4-script','hid-remote-v5-script','hid-remote-v8-script','hid-remote-v9-script','hid-remote-v11-qr-script'
+    'hid-remote-v9-script','hid-remote-v11-qr-script'
   ];
 
   function ready(fn){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true}); else fn(); }
@@ -9668,782 +9667,10 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   @keyframes hidV19BarFade{0%{filter:brightness(1.35) saturate(1.5);box-shadow:0 0 20px hsla(var(--bar-hue,180),100%,62%,.9),0 0 42px hsla(var(--bar-hue,180),100%,50%,.42),inset 0 0 16px rgba(255,255,255,.16)}100%{filter:brightness(1) saturate(1);box-shadow:inset 0 0 12px rgba(0,0,0,.75),0 0 5px rgba(0,0,0,.3)}}
   @media(max-width:700px){.hid-v19-chroma-panel{left:auto;right:0;width:94vw}.hid-v19-chroma-bars .chroma-key{min-height:102px!important}.hid-v19-chroma-bars .chroma-key .chroma-nm{font-size:12px}.hid-v19-chroma-bars .chroma-key::after{font-size:10px}}
 </style>
-<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v19-chromatic-bars-scales">
-(function(){
-  'use strict';
-  if(window.__HID_V19_CHROMATIC_BARS__) return;
-  window.__HID_V19_CHROMATIC_BARS__=true;
-
-  const $=id=>document.getElementById(id);
-  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
-  const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const ROOTS=NOTE_NAMES.map((n,i)=>({n,pc:i}));
-  const SCALES={
-    chromatic:{name:'Chromatic / Every Note',ints:[0,1,2,3,4,5,6,7,8,9,10,11],deg:['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7']},
-    major:{name:'Major / Ionian',ints:[0,2,4,5,7,9,11],deg:['1','2','3','4','5','6','7']},
-    minor:{name:'Natural Minor / Aeolian',ints:[0,2,3,5,7,8,10],deg:['1','2','♭3','4','5','♭6','♭7']},
-    dorian:{name:'Dorian',ints:[0,2,3,5,7,9,10],deg:['1','2','♭3','4','5','6','♭7']},
-    phrygian:{name:'Phrygian',ints:[0,1,3,5,7,8,10],deg:['1','♭2','♭3','4','5','♭6','♭7']},
-    lydian:{name:'Lydian',ints:[0,2,4,6,7,9,11],deg:['1','2','3','#4','5','6','7']},
-    mixolydian:{name:'Mixolydian',ints:[0,2,4,5,7,9,10],deg:['1','2','3','4','5','6','♭7']},
-    locrian:{name:'Locrian',ints:[0,1,3,5,6,8,10],deg:['1','♭2','♭3','4','♭5','♭6','♭7']},
-    majPent:{name:'Major Pentatonic',ints:[0,2,4,7,9],deg:['1','2','3','5','6']},
-    minPent:{name:'Minor Pentatonic',ints:[0,3,5,7,10],deg:['1','♭3','4','5','♭7']},
-    blues:{name:'Blues',ints:[0,3,5,6,7,10],deg:['1','♭3','4','♭5','5','♭7']},
-    harmMinor:{name:'Harmonic Minor',ints:[0,2,3,5,7,8,11],deg:['1','2','♭3','4','5','♭6','7']},
-    melMinor:{name:'Melodic Minor',ints:[0,2,3,5,7,9,11],deg:['1','2','♭3','4','5','6','7']}
-  };
-  function state(){try{return typeof STATE!=='undefined'?STATE:null}catch(_){return null}}
-  function toast(msg){try{typeof window.toast==='function'?window.toast(msg):console.log(msg)}catch(_){}}
-  function ensure(){const S=state(); if(!S) return null; if(!S.chromaV19) S.chromaV19={root:'C',scale:'chromatic',layout:'chromatic',colorMode:'rainbow',hue:178,bars:0}; if(!S.voiceMode) S.voiceMode='poly'; return S;}
-  function noteName(m){try{return nName(m)+octOf(m)}catch(_){return NOTE_NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1)}}
-  function shortcut(m){try{return shortcutFor(m)||''}catch(_){return ''}}
-  function black(m){return [1,3,6,8,10].includes(((m%12)+12)%12)}
-  function physicalBounds(){try{const vals=Object.values(KB_NOTES||{}).map(Number).filter(Number.isFinite); if(vals.length)return {lo:Math.min(...vals),hi:Math.max(...vals)}}catch(_){} return {lo:48,hi:78}}
-  function viewStart(){const S=ensure(); if(!S) return 48; const pv=S.pianoView||{}; if(pv.follow===false) return clamp(pv.startMidi||48,0,127); const b=physicalBounds(); return clamp(Math.round((b.lo||48)+(S.octave||0)*12+(S.transpose||0)+(pv.baseOffset||0)),0,127)}
-  function keyCount(){const S=ensure(); return clamp(S?.pianoView?.keyCount||37,8,88)}
-  function barWidth(){const S=ensure(); const w=clamp(S?.pianoView?.keyWidth||42,22,96); return Math.max(18,Math.round(w*.82))}
-  function rootPc(){const S=ensure(); const r=S?.chromaV19?.root||'C'; return ROOTS.find(x=>x.n===r)?.pc??0}
-  function scaleInfo(){const S=ensure(); return SCALES[S?.chromaV19?.scale]||SCALES.chromatic}
-  function buildScaleMidiList(start,count){
-    const pc=rootPc(), sc=scaleInfo();
-    const all=[];
-    for(let oct=-2;oct<=10;oct++){
-      for(let i=0;i<sc.ints.length;i++){
-        const m=pc+12*(oct+1)+sc.ints[i];
-        if(m>=0&&m<=127) all.push({m,degree:sc.deg[i]||String(i+1),idx:i});
-      }
-    }
-    all.sort((a,b)=>a.m-b.m);
-    let pos=all.findIndex(x=>x.m>=start); if(pos<0) pos=Math.max(0,all.length-count);
-    return all.slice(pos,pos+count);
-  }
-  function buildChromaticMidiList(start,count){
-    const sc=scaleInfo(), pc=rootPc();
-    return Array.from({length:count},(_,i)=>{
-      const m=clamp(start+i,0,127); const rel=((m-pc)%12+12)%12; const idx=sc.ints.indexOf(rel);
-      const degree=idx>=0?(sc.deg[idx]||''):(SCALES.chromatic.deg[rel]||'');
-      return {m,degree,idx:rel};
-    });
-  }
-  function barHue(item,i,total){const S=ensure(); const cfg=S?.chromaV19||{}; if(cfg.colorMode==='single') return clamp(cfg.hue??178,0,360); return Math.round((i/Math.max(1,total))*330 + 12)%360;}
-  function buildChromaV19(){
-    const c=$('chroma'); if(!c) return;
-    const S=ensure(); if(!S) return;
-    const cfg=S.chromaV19; const count=keyCount(); const start=viewStart(); const w=barWidth();
-    const data=(cfg.layout==='scale'&&cfg.scale!=='chromatic')?buildScaleMidiList(start,count):buildChromaticMidiList(start,count);
-    document.body.classList.add('hid-v19-chroma-bars');
-    c.innerHTML=''; c.style.width=(data.length*w)+'px'; c.style.minWidth=(data.length*w)+'px'; c.style.setProperty('--hid-v19-bar-w',w+'px');
-    data.forEach((item,i)=>{
-      const hue=barHue(item,i,data.length); const k=document.createElement('div');
-      k.className='chroma-key hid-v19-bar'; k.dataset.midi=item.m; k.dataset.degree=item.degree||'';
-      const fill=28+Math.round(((item.m%12)/11)*42);
-      k.style.setProperty('--bar-hue',String(hue));
-      k.style.setProperty('--bar-fill',fill+'%');
-      k.style.setProperty('--bar-bg',`hsla(${hue},100%,42%,.34)`);
-      k.innerHTML=`<span class="chroma-nm">${noteName(item.m)}</span><span class="chroma-sc">${shortcut(item.m)}</span>`;
-      try{ if(typeof attachPlayableKeyEvents==='function') attachPlayableKeyEvents(k,item.m); }catch(_){ }
-      c.appendChild(k);
-    });
-    syncChromaControls();
-  }
-  function installControls(){
-    const S=ensure(); if(!S) return;
-    let strip=$('hid-v18-control-strip')||document.querySelector('.piano-controls');
-    if(!strip) return;
-    if($('hid-v19-chroma-ui')){syncChromaControls();return;}
-    const wrap=document.createElement('div'); wrap.className='hid-v18-mini-field hid-v19-chroma-ui'; wrap.id='hid-v19-chroma-ui';
-    wrap.innerHTML=`
-      <label>Chroma</label><button class="btn tiny gold" id="hid-v19-chroma-open">CHROMA SETUP</button><span class="v" id="hid-v19-chroma-summary">ALL</span>
-      <div class="hid-v19-chroma-panel" id="hid-v19-chroma-panel">
-        <div class="hid-v19-chroma-head"><span>CHROMATIC BAR SLIDER</span><button class="btn tiny warn" id="hid-v19-chroma-close">CLOSE</button></div>
-        <div class="hid-v19-chroma-grid">
-          <div class="hid-v19-chroma-field"><label>Root Note</label><select id="hid-v19-root"></select></div>
-          <div class="hid-v19-chroma-field"><label>Scale / Mode</label><select id="hid-v19-scale"></select></div>
-          <div class="hid-v19-chroma-field"><label>Note Order</label><select id="hid-v19-layout"><option value="chromatic">Every note / chromatic</option><option value="scale">Scale degrees only</option></select></div>
-          <div class="hid-v19-chroma-field"><label>Bar Color Mode</label><select id="hid-v19-color-mode"><option value="rainbow">Hue order: every bar different</option><option value="single">Single glowing hue</option></select></div>
-          <div class="hid-v19-chroma-field"><label>Single Hue</label><input type="range" id="hid-v19-hue" min="0" max="360" step="1"><span class="v" id="hid-v19-hue-v">178°</span></div>
-          <div class="hid-v19-chroma-field"><label>Voice Mode</label><select id="hid-v19-voice"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select></div>
-        </div>
-        <div class="hid-v19-chroma-note">Switch the main key mode to <b>CHROMATIC</b> to see this bar layout. In <b>Scale degrees only</b>, the bars skip non-scale tones and run through the selected root/scale/mode in order. Voice mode here uses the same synth voice engine as the main piano.</div>
-      </div>`;
-    strip.appendChild(wrap);
-    const root=$('hid-v19-root'); ROOTS.forEach(r=>root.insertAdjacentHTML('beforeend',`<option value="${r.n}">${r.n}</option>`));
-    const scale=$('hid-v19-scale'); Object.entries(SCALES).forEach(([k,v])=>scale.insertAdjacentHTML('beforeend',`<option value="${k}">${v.name}</option>`));
-    $('hid-v19-chroma-open').onclick=()=>{$('hid-v19-chroma-panel')?.classList.toggle('open')};
-    $('hid-v19-chroma-close').onclick=()=>{$('hid-v19-chroma-panel')?.classList.remove('open')};
-    root.onchange=e=>{S.chromaV19.root=e.target.value;buildChromaV19();toast('Chromatic root: '+e.target.value)};
-    scale.onchange=e=>{S.chromaV19.scale=e.target.value;buildChromaV19();toast('Chromatic scale: '+(SCALES[e.target.value]?.name||e.target.value))};
-    $('hid-v19-layout').onchange=e=>{S.chromaV19.layout=e.target.value;buildChromaV19();};
-    $('hid-v19-color-mode').onchange=e=>{S.chromaV19.colorMode=e.target.value;buildChromaV19();};
-    $('hid-v19-hue').oninput=e=>{S.chromaV19.hue=+e.target.value;buildChromaV19();};
-    $('hid-v19-voice').onchange=e=>{S.voiceMode=e.target.value; try{const vm=$('hid-v18-voice-mode'); if(vm)vm.value=S.voiceMode; const b=$('hid-v18-voice-badge'); if(b)b.textContent=S.voiceMode.toUpperCase()}catch(_){} toast('Voice mode: '+S.voiceMode.toUpperCase())};
-    syncChromaControls();
-  }
-  function syncChromaControls(){
-    const S=ensure(); if(!S||!S.chromaV19) return; const c=S.chromaV19;
-    const set=(id,val)=>{const el=$(id); if(el&&el.value!==String(val))el.value=val};
-    set('hid-v19-root',c.root||'C'); set('hid-v19-scale',c.scale||'chromatic'); set('hid-v19-layout',c.layout||'chromatic'); set('hid-v19-color-mode',c.colorMode||'rainbow'); set('hid-v19-hue',c.hue??178); set('hid-v19-voice',S.voiceMode||'poly');
-    const hv=$('hid-v19-hue-v'); if(hv) hv.textContent=(c.hue??178)+'°';
-    const sum=$('hid-v19-chroma-summary'); if(sum){const scale=SCALES[c.scale||'chromatic']?.name||'Chromatic'; sum.textContent=(c.layout==='scale'?'SCALE':'ALL')+' · '+scale.split('/')[0].trim();}
-  }
-  function wrapHighlightForAfterglow(){
-    try{
-      if(typeof highlightKey!=='function'||highlightKey.__hidV19Wrapped) return;
-      const old=highlightKey;
-      const fn=function(m,cls,on){
-        const r=old.apply(this,arguments);
-        try{
-          if(cls==='lit'){
-            const el=document.querySelector(`#chroma .chroma-key[data-midi="${m}"]`);
-            if(el){
-              if(on){el.classList.remove('hid-v19-afterglow');}
-              else {el.classList.add('hid-v19-afterglow'); setTimeout(()=>el.classList.remove('hid-v19-afterglow'),720);}
-            }
-          }
-        }catch(_){ }
-        return r;
-      };
-      fn.__hidV19Wrapped=true;
-      try{eval('highlightKey=fn')}catch(_){window.highlightKey=fn}
-    }catch(_){ }
-  }
-  function overrideBuildChroma(){
-    try{
-      if(typeof buildChroma==='function' && buildChroma.__hidV19) return;
-      const fn=function(){return buildChromaV19()}; fn.__hidV19=true;
-      try{eval('buildChroma=fn')}catch(_){window.buildChroma=fn}
-    }catch(_){ }
-  }
-  function refresh(){try{ensure(); installControls(); overrideBuildChroma(); wrapHighlightForAfterglow(); buildChromaV19();}catch(e){console.warn('V19 chroma init issue',e)}}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,90),{once:true}); else setTimeout(refresh,90);
-  const t=setInterval(refresh,1500); setTimeout(()=>clearInterval(t),22000);
-  window.HID_V19_REBUILD_CHROMA=refresh;
-})();
-</script>
-
-
-<script type="text/hid-lazy-js" data-hid-lazy="1" id="hid-v19b-chroma-refresh-hooks">
-(function(){
-  'use strict';
-  if(window.__HID_V19B_CHROMA_HOOKS__) return;
-  window.__HID_V19B_CHROMA_HOOKS__=true;
-  function rebuild(){try{if(typeof window.HID_V19_REBUILD_CHROMA==='function') window.HID_V19_REBUILD_CHROMA();}catch(_){}}
-  function hook(){
-    const strip=document.getElementById('hid-v18-control-strip');
-    if(strip&&!strip.__hidV19BHooked){
-      strip.__hidV19BHooked=true;
-      strip.addEventListener('input',e=>{if(e.target&&/^hid-v18-(key-count|key-width)/.test(e.target.id||'')) setTimeout(rebuild,40);},true);
-      strip.addEventListener('click',e=>{if(e.target&&/^hid-v18-(offset|follow|center|slide)/.test(e.target.id||'')) setTimeout(rebuild,80);},true);
-      strip.addEventListener('change',e=>{if(e.target&&/^hid-v18-voice/.test(e.target.id||'')) setTimeout(rebuild,40);},true);
-    }
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook,{once:true}); else hook();
-  const t=setInterval(()=>{hook();rebuild();},2500); setTimeout(()=>clearInterval(t),18000);
-})();
-</script>
-
-
-
-<!-- H.I.D. V23 — reliable chromatic scale bars, true poly/mono/legato, top-zone morph -->
-<style id="hid-v23-chroma-scale-morph-style">
-  .hid-v23-chroma-controls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(0,255,213,.055),rgba(0,0,0,.86));padding:4px 6px;border-radius:3px;position:relative;z-index:12;font-family:'VT323',monospace}
-  .hid-v23-chroma-controls label{font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
-  .hid-v23-chroma-controls select{font-size:12px;min-height:24px;max-width:168px;padding:2px 5px}
-  .hid-v23-chroma-controls input[type=range]{width:82px;height:16px;touch-action:none}
-  .hid-v23-chroma-controls .v{font-family:'Share Tech Mono',monospace;color:var(--neon3);text-shadow:0 0 4px var(--neon3);font-size:12px;min-width:34px;text-align:right}
-  .hid-v23-chroma-more{position:absolute;left:0;bottom:calc(100% + 8px);z-index:2000;width:min(620px,96vw);max-height:min(74vh,560px);overflow:auto;display:none;padding:10px;border:1px solid var(--stroke);border-radius:6px;background:linear-gradient(180deg,rgba(5,5,16,.98),rgba(0,0,0,.98));box-shadow:0 0 28px var(--window-glow,rgba(0,255,213,.35)),0 12px 38px rgba(0,0,0,.75)}
-  .hid-v23-chroma-more.open{display:block}
-  .hid-v23-chroma-more-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-family:'Press Start 2P',monospace;font-size:8px;color:var(--neon);text-shadow:0 0 6px var(--neon);letter-spacing:.12em}
-  .hid-v23-chroma-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
-  .hid-v23-chroma-field{display:flex;flex-direction:column;gap:4px;padding:7px;border:1px solid rgba(0,255,213,.18);background:rgba(0,255,213,.035);border-radius:4px;min-width:0}
-  .hid-v23-chroma-field label{font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
-  .hid-v23-chroma-note{font-size:12px;color:var(--dim);line-height:1.35;margin-top:8px;letter-spacing:.04em}
-  .hid-v23-chroma-ready .chroma{align-items:stretch!important;background:radial-gradient(ellipse at 50% 15%,rgba(255,255,255,.05),transparent 36%),radial-gradient(ellipse at center,#080817,#000)!important;border-top:1px solid rgba(0,255,213,.22);border-bottom:1px solid rgba(0,255,213,.18);gap:2px;padding:4px;min-height:100%;touch-action:none;overflow:visible}
-  .hid-v23-chroma-ready .chroma-key{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;height:100%!important;min-height:120px!important;padding:5px 2px 8px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:7px 7px 2px 2px!important;background:linear-gradient(180deg,rgba(255,255,255,.1),hsla(var(--bar-hue,180),100%,46%,.38) 48%,rgba(0,0,0,.94))!important;box-shadow:inset 0 0 14px rgba(0,0,0,.78),0 0 5px rgba(0,0,0,.3)!important;overflow:hidden;transition:transform .06s ease,filter .12s ease,box-shadow .18s ease,background .18s ease;touch-action:none;flex:0 0 var(--hid-v23-bar-w,34px)!important;min-width:var(--hid-v23-bar-w,34px)!important;user-select:none;-webkit-user-select:none}
-  .hid-v23-chroma-ready .chroma-key::before{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:var(--bar-fill,36%);border-radius:5px 5px 1px 1px;background:linear-gradient(180deg,rgba(255,255,255,.92),hsla(var(--bar-hue,180),100%,62%,.88) 32%,hsla(var(--bar-hue,180),100%,42%,.7));box-shadow:0 0 12px hsla(var(--bar-hue,180),100%,62%,.68),inset 0 0 12px rgba(255,255,255,.16);opacity:.44;transform-origin:bottom;transition:height .16s ease,opacity .16s ease,filter .16s ease}
-  .hid-v23-chroma-ready .chroma-key::after{content:attr(data-degree);position:absolute;top:5px;left:3px;right:3px;text-align:center;font-family:'VT323',monospace;font-size:12px;color:rgba(255,255,255,.78);letter-spacing:.05em;text-shadow:0 0 5px rgba(0,0,0,.8);pointer-events:none}
-  .hid-v23-chroma-ready .chroma-key .chroma-nm{position:relative;z-index:2;font-family:'VT323',monospace;font-size:clamp(11px,1.7vw,15px);color:#fff!important;text-shadow:0 0 5px hsla(var(--bar-hue,180),100%,62%,.85),0 0 12px #000;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.02em;margin-bottom:6px;white-space:nowrap;pointer-events:none}
-  .hid-v23-chroma-ready .chroma-key .chroma-sc{position:relative;z-index:2;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,.72)!important;background:rgba(0,0,0,.45);padding:1px 3px;border-radius:2px;min-height:13px;pointer-events:none}
-  .hid-v23-chroma-ready .chroma-key .hid-v23-top-zone{position:absolute;left:0;right:0;top:0;height:var(--hid-v23-top-zone,36%);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.02));border-bottom:1px dashed rgba(255,255,255,.14);pointer-events:none;opacity:.6}
-  .hid-v23-chroma-ready .chroma-key.lit{transform:translateY(-2px) scale(1.015);filter:brightness(1.34) saturate(1.55);box-shadow:0 0 18px hsla(var(--bar-hue,180),100%,62%,.95),0 0 40px hsla(var(--bar-hue,180),100%,50%,.42),inset 0 0 18px rgba(255,255,255,.18)!important;background:linear-gradient(180deg,rgba(255,255,255,.28),hsla(var(--bar-hue,180),100%,56%,.92) 48%,rgba(0,0,0,.85))!important}
-  .hid-v23-chroma-ready .chroma-key.lit::before{height:96%;opacity:1;filter:brightness(1.24)}
-  .hid-v23-chroma-ready .chroma-key.hid-v23-morphing{box-shadow:0 0 22px rgba(255,255,255,.9),0 0 48px hsla(var(--bar-hue,180),100%,62%,.72),0 0 80px rgba(255,0,170,.35),inset 0 0 22px rgba(255,255,255,.2)!important;filter:brightness(1.48) saturate(1.85)}
-  .hid-v23-chroma-ready .chroma-key.hid-v23-afterglow{animation:hidV23BarFade .72s ease-out forwards}
-  .hid-v23-chroma-ready .chroma-key.hid-v23-outscale{opacity:.68;filter:saturate(.62)}
-  @keyframes hidV23BarFade{0%{filter:brightness(1.32) saturate(1.45);box-shadow:0 0 18px hsla(var(--bar-hue,180),100%,62%,.85),0 0 40px hsla(var(--bar-hue,180),100%,50%,.38),inset 0 0 18px rgba(255,255,255,.12)}100%{filter:brightness(1) saturate(1);box-shadow:inset 0 0 14px rgba(0,0,0,.78),0 0 5px rgba(0,0,0,.3)}}
-  @media(max-width:700px){.hid-v23-chroma-controls{gap:4px;padding:4px}.hid-v23-chroma-controls select{max-width:120px}.hid-v23-chroma-controls input[type=range]{width:68px}.hid-v23-chroma-more{left:auto;right:0;width:96vw}.hid-v23-chroma-ready .chroma-key{min-height:104px!important}.hid-v23-chroma-ready .chroma-key .chroma-nm{font-size:12px}.hid-v23-chroma-ready .chroma-key::after{font-size:10px}}
-</style>
-<script id="hid-v23-chroma-scale-morph-fix">
-(function(){
-  'use strict';
-  if(window.__HID_V23_CHROMA_SCALE_MORPH__) return;
-  window.__HID_V23_CHROMA_SCALE_MORPH__=true;
-
-  const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const SCALES={
-    chromatic:{name:'Chromatic / Every Note',ints:[0,1,2,3,4,5,6,7,8,9,10,11],deg:['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7']},
-    major:{name:'Major / Ionian',ints:[0,2,4,5,7,9,11],deg:['1','2','3','4','5','6','7']},
-    minor:{name:'Natural Minor / Aeolian',ints:[0,2,3,5,7,8,10],deg:['1','2','♭3','4','5','♭6','♭7']},
-    dorian:{name:'Dorian',ints:[0,2,3,5,7,9,10],deg:['1','2','♭3','4','5','6','♭7']},
-    phrygian:{name:'Phrygian',ints:[0,1,3,5,7,8,10],deg:['1','♭2','♭3','4','5','♭6','♭7']},
-    lydian:{name:'Lydian',ints:[0,2,4,6,7,9,11],deg:['1','2','3','#4','5','6','7']},
-    mixolydian:{name:'Mixolydian',ints:[0,2,4,5,7,9,10],deg:['1','2','3','4','5','6','♭7']},
-    locrian:{name:'Locrian',ints:[0,1,3,5,6,8,10],deg:['1','♭2','♭3','4','♭5','♭6','♭7']},
-    majorPent:{name:'Major Pentatonic',ints:[0,2,4,7,9],deg:['1','2','3','5','6']},
-    minorPent:{name:'Minor Pentatonic',ints:[0,3,5,7,10],deg:['1','♭3','4','5','♭7']},
-    blues:{name:'Blues',ints:[0,3,5,6,7,10],deg:['1','♭3','4','♭5','5','♭7']},
-    harmonicMinor:{name:'Harmonic Minor',ints:[0,2,3,5,7,8,11],deg:['1','2','♭3','4','5','♭6','7']},
-    melodicMinor:{name:'Melodic Minor',ints:[0,2,3,5,7,9,11],deg:['1','2','♭3','4','5','6','7']},
-    dorianB2:{name:'Dorian ♭2',ints:[0,1,3,5,7,9,10],deg:['1','♭2','♭3','4','5','6','♭7']},
-    lydianAug:{name:'Lydian Augmented',ints:[0,2,4,6,8,9,11],deg:['1','2','3','#4','#5','6','7']},
-    lydianDom:{name:'Lydian Dominant',ints:[0,2,4,6,7,9,10],deg:['1','2','3','#4','5','6','♭7']},
-    mixoB6:{name:'Mixolydian ♭6',ints:[0,2,4,5,7,8,10],deg:['1','2','3','4','5','♭6','♭7']},
-    locrianNat2:{name:'Locrian ♮2',ints:[0,2,3,5,6,8,10],deg:['1','2','♭3','4','♭5','♭6','♭7']},
-    altered:{name:'Altered / Super Locrian',ints:[0,1,3,4,6,8,10],deg:['1','♭9','#9','3','#11','♭13','♭7']},
-    phrygianDom:{name:'Phrygian Dominant',ints:[0,1,4,5,7,8,10],deg:['1','♭2','3','4','5','♭6','♭7']},
-    doubleHarmonic:{name:'Double Harmonic Major',ints:[0,1,4,5,7,8,11],deg:['1','♭2','3','4','5','♭6','7']},
-    hungarianMinor:{name:'Hungarian Minor',ints:[0,2,3,6,7,8,11],deg:['1','2','♭3','#4','5','♭6','7']},
-    wholeTone:{name:'Whole Tone',ints:[0,2,4,6,8,10],deg:['1','2','3','#4','#5','♭7']},
-    diminishedHW:{name:'Diminished H-W',ints:[0,1,3,4,6,7,9,10],deg:['1','♭2','♭3','3','♭5','5','6','♭7']},
-    diminishedWH:{name:'Diminished W-H',ints:[0,2,3,5,6,8,9,11],deg:['1','2','♭3','4','♭5','♭6','6','7']},
-    bebopDom:{name:'Bebop Dominant',ints:[0,2,4,5,7,9,10,11],deg:['1','2','3','4','5','6','♭7','7']},
-    egyptian:{name:'Egyptian Pentatonic',ints:[0,2,5,7,10],deg:['1','2','4','5','♭7']},
-    japanese:{name:'Japanese In Sen',ints:[0,1,5,7,10],deg:['1','♭2','4','5','♭7']}
-  };
-  const ROOTS=NOTE_NAMES.map((n,pc)=>({n,pc}));
-  const $=id=>document.getElementById(id);
-  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
-  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const getS=()=>{try{return typeof STATE!=='undefined'?STATE:null}catch(_){return null}};
-  const say=msg=>{try{typeof toast==='function'?toast(msg):console.log(msg)}catch(_){}};
-
-  function ensure(){
-    const S=getS(); if(!S) return null;
-    if(!S.voiceMode) S.voiceMode='poly';
-    if(!S.pianoView) S.pianoView={follow:true,keyCount:37,keyWidth:42,baseOffset:-2,keySlideMode:'scroll'};
-    if(!S.chromaV23){
-      const old=S.chromaV19||{};
-      S.chromaV23={root:old.root||'C',scale:old.scale||'chromatic',layout:old.layout||'chromatic',colorMode:old.colorMode||'rainbow',hue:old.hue??178,topMorph:true,topZone:.36,morphAmount:.78};
-    }
-    return S;
-  }
-  function pcOfRoot(){const S=ensure(); const r=S?.chromaV23?.root||'C'; return ROOTS.find(x=>x.n===r)?.pc??0;}
-  function scale(){const S=ensure(); return SCALES[S?.chromaV23?.scale]||SCALES.chromatic;}
-  function noteName(m){try{return nName(m)+octOf(m)}catch(_){return NOTE_NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1)}}
-  function shortcut(m){try{return shortcutFor(m)||''}catch(_){return ''}}
-  function physicalBounds(){try{const vals=Object.values(KB_NOTES||{}).map(Number).filter(Number.isFinite); if(vals.length)return {lo:Math.min(...vals),hi:Math.max(...vals)}}catch(_){} return {lo:48,hi:78}}
-  function viewStart(){const S=ensure(); if(!S) return 48; const pv=S.pianoView||{}; if(pv.follow===false) return clamp(pv.startMidi||48,0,127); const b=physicalBounds(); return clamp(Math.round((b.lo||48)+(S.octave||0)*12+(S.transpose||0)+(pv.baseOffset||0)),0,127)}
-  function keyCount(){const S=ensure(); return clamp(S?.pianoView?.keyCount||37,8,88)}
-  function barWidth(){const S=ensure(); return Math.max(18,Math.round(clamp(S?.pianoView?.keyWidth||42,22,96)*.82))}
-  function degreeFor(m){const sc=scale(), pc=pcOfRoot(); const rel=((m-pc)%12+12)%12; const idx=sc.ints.indexOf(rel); return {inScale:idx>=0, degree:idx>=0?(sc.deg[idx]||String(idx+1)):(SCALES.chromatic.deg[rel]||''), idx};}
-  function scaleMidiList(start,count){
-    const sc=scale(), pc=pcOfRoot(); const all=[];
-    for(let oct=-2; oct<=10; oct++) for(let i=0;i<sc.ints.length;i++){const m=pc+12*(oct+1)+sc.ints[i]; if(m>=0&&m<=127) all.push({m,degree:sc.deg[i]||String(i+1),inScale:true,idx:i});}
-    all.sort((a,b)=>a.m-b.m); let pos=all.findIndex(x=>x.m>=start); if(pos<0) pos=Math.max(0,all.length-count); return all.slice(pos,pos+count);
-  }
-  function chromaticList(start,count){
-    return Array.from({length:count},(_,i)=>{const m=clamp(start+i,0,127); const d=degreeFor(m); return {m,degree:d.degree,inScale:d.inScale,idx:d.idx};});
-  }
-  function hueFor(item,i,total){const S=ensure(); const cfg=S?.chromaV23||{}; if(cfg.colorMode==='single') return clamp(cfg.hue??178,0,360); return Math.round((i/Math.max(1,total-1))*330+12)%360;}
-
-  function buildChromaV23(){
-    const c=$('chroma'); if(!c) return;
-    const S=ensure(); if(!S) return; const cfg=S.chromaV23;
-    const start=viewStart(), count=keyCount(), w=barWidth();
-    const list=(cfg.layout==='scale' && cfg.scale!=='chromatic')?scaleMidiList(start,count):chromaticList(start,count);
-    document.body.classList.add('hid-v23-chroma-ready');
-    document.body.classList.add('hid-v19-chroma-bars');
-    c.innerHTML=''; c.style.width=(list.length*w)+'px'; c.style.minWidth=(list.length*w)+'px';
-    c.style.setProperty('--hid-v23-bar-w',w+'px'); c.style.setProperty('--hid-v19-bar-w',w+'px');
-    c.style.setProperty('--hid-v23-top-zone',Math.round(clamp(cfg.topZone??.36,.12,.72)*100)+'%');
-    list.forEach((item,i)=>{
-      const hue=hueFor(item,i,list.length); const k=document.createElement('div');
-      k.className='chroma-key hid-v23-bar'+(!item.inScale&&cfg.layout==='chromatic'&&cfg.scale!=='chromatic'?' hid-v23-outscale':'');
-      k.dataset.midi=item.m; k.dataset.degree=item.degree||''; k.dataset.inScale=item.inScale?'1':'0';
-      const fill=26+Math.round((((item.m%12)+12)%12)/11*44);
-      k.style.setProperty('--bar-hue',String(hue)); k.style.setProperty('--bar-fill',fill+'%');
-      k.innerHTML=`<span class="hid-v23-top-zone"></span><span class="chroma-nm">${noteName(item.m)}</span><span class="chroma-sc">${shortcut(item.m)}</span>`;
-      c.appendChild(k);
-    });
-    syncControls();
-  }
-
-  function installControls(){
-    const S=ensure(); if(!S) return;
-    let strip=$('hid-v18-control-strip')||document.querySelector('.piano-controls')||$('piano-host');
-    if(!strip) return;
-    if($('hid-v23-chroma-controls')){syncControls(); return;}
-    const wrap=document.createElement('div'); wrap.id='hid-v23-chroma-controls'; wrap.className='hid-v23-chroma-controls';
-    wrap.innerHTML=`
-      <label>Chroma Scale</label>
-      <select id="hid-v23-root"></select>
-      <select id="hid-v23-scale"></select>
-      <select id="hid-v23-layout"><option value="chromatic">Every note</option><option value="scale">Scale degrees only</option></select>
-      <select id="hid-v23-voice"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select>
-      <button class="btn tiny gold" id="hid-v23-more-btn">MORE</button>
-      <span class="v" id="hid-v23-summary">READY</span>
-      <div class="hid-v23-chroma-more" id="hid-v23-more">
-        <div class="hid-v23-chroma-more-head"><span>CHROMATIC BAR SETUP · SCALE + MORPH</span><button class="btn tiny warn" id="hid-v23-close">CLOSE</button></div>
-        <div class="hid-v23-chroma-grid">
-          <div class="hid-v23-chroma-field"><label>Root Note</label><select id="hid-v23-root-2"></select></div>
-          <div class="hid-v23-chroma-field"><label>Scale / Mode</label><select id="hid-v23-scale-2"></select></div>
-          <div class="hid-v23-chroma-field"><label>Note Order</label><select id="hid-v23-layout-2"><option value="chromatic">Every note / chromatic</option><option value="scale">Scale degrees only</option></select></div>
-          <div class="hid-v23-chroma-field"><label>Voice Mode</label><select id="hid-v23-voice-2"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select></div>
-          <div class="hid-v23-chroma-field"><label>Color Mode</label><select id="hid-v23-color"><option value="rainbow">Hue order: every bar different</option><option value="single">Single glowing hue</option></select></div>
-          <div class="hid-v23-chroma-field"><label>Single Hue</label><input id="hid-v23-hue" type="range" min="0" max="360" step="1"><span class="v" id="hid-v23-hue-v">178°</span></div>
-          <div class="hid-v23-chroma-field"><label>Top Morph</label><select id="hid-v23-topmorph"><option value="on">ON — dreamy top-zone morph</option><option value="off">OFF</option></select></div>
-          <div class="hid-v23-chroma-field"><label>Top Zone Size</label><input id="hid-v23-topzone" type="range" min="12" max="72" step="1"><span class="v" id="hid-v23-topzone-v">36%</span></div>
-          <div class="hid-v23-chroma-field"><label>Morph Amount</label><input id="hid-v23-morph" type="range" min="0" max="100" step="1"><span class="v" id="hid-v23-morph-v">78%</span></div>
-        </div>
-        <div class="hid-v23-chroma-note">Use <b>Scale degrees only</b> for perfect Mixolydian, Phrygian, Dorian, Lydian, diminished, altered, pentatonic, blues, and other modes in order. The upper region of each bar activates the dreamy morph layer; the lower region plays the normal selected patch.</div>
-      </div>`;
-    strip.appendChild(wrap);
-    function fillSelect(id, items){const el=$(id); if(!el) return; el.innerHTML=''; items.forEach(([v,n])=>el.insertAdjacentHTML('beforeend',`<option value="${v}">${n}</option>`));}
-    const rootItems=ROOTS.map(r=>[r.n,r.n]); const scaleItems=Object.entries(SCALES).map(([k,v])=>[k,v.name]);
-    ['hid-v23-root','hid-v23-root-2'].forEach(id=>fillSelect(id,rootItems));
-    ['hid-v23-scale','hid-v23-scale-2'].forEach(id=>fillSelect(id,scaleItems));
-    const bindSel=(ids,prop,after)=>ids.forEach(id=>{const el=$(id); if(el) el.onchange=e=>{const S=ensure(); if(!S) return; if(prop==='voiceMode'){S.voiceMode=e.target.value;} else {S.chromaV23[prop]=e.target.value;} if(after) after(); buildChromaV23();};});
-    bindSel(['hid-v23-root','hid-v23-root-2'],'root',()=>say('Chromatic root changed'));
-    bindSel(['hid-v23-scale','hid-v23-scale-2'],'scale',()=>say('Chromatic scale changed'));
-    bindSel(['hid-v23-layout','hid-v23-layout-2'],'layout');
-    bindSel(['hid-v23-voice','hid-v23-voice-2'],'voiceMode',()=>say('Voice mode changed'));
-    bindSel(['hid-v23-color'],'colorMode');
-    const btn=$('hid-v23-more-btn'), more=$('hid-v23-more'), close=$('hid-v23-close'); if(btn) btn.onclick=()=>more?.classList.toggle('open'); if(close) close.onclick=()=>more?.classList.remove('open');
-    const topMorph=$('hid-v23-topmorph'); if(topMorph) topMorph.onchange=e=>{const S=ensure(); S.chromaV23.topMorph=e.target.value==='on'; buildChromaV23();};
-    const hue=$('hid-v23-hue'); if(hue) hue.oninput=e=>{const S=ensure(); S.chromaV23.hue=+e.target.value; buildChromaV23();};
-    const tz=$('hid-v23-topzone'); if(tz) tz.oninput=e=>{const S=ensure(); S.chromaV23.topZone=clamp(+e.target.value/100,.12,.72); buildChromaV23();};
-    const ma=$('hid-v23-morph'); if(ma) ma.oninput=e=>{const S=ensure(); S.chromaV23.morphAmount=clamp(+e.target.value/100,0,1); syncControls();};
-    syncControls();
-  }
-  function setVal(id,v){const el=$(id); if(el && el.value!==String(v)) el.value=v;}
-  function syncControls(){
-    const S=ensure(); if(!S||!S.chromaV23) return; const c=S.chromaV23;
-    ['hid-v23-root','hid-v23-root-2'].forEach(id=>setVal(id,c.root||'C'));
-    ['hid-v23-scale','hid-v23-scale-2'].forEach(id=>setVal(id,c.scale||'chromatic'));
-    ['hid-v23-layout','hid-v23-layout-2'].forEach(id=>setVal(id,c.layout||'chromatic'));
-    ['hid-v23-voice','hid-v23-voice-2'].forEach(id=>setVal(id,S.voiceMode||'poly'));
-    setVal('hid-v23-color',c.colorMode||'rainbow'); setVal('hid-v23-hue',c.hue??178); setVal('hid-v23-topmorph',c.topMorph===false?'off':'on'); setVal('hid-v23-topzone',Math.round((c.topZone??.36)*100)); setVal('hid-v23-morph',Math.round((c.morphAmount??.78)*100));
-    const hv=$('hid-v23-hue-v'); if(hv) hv.textContent=(c.hue??178)+'°';
-    const tv=$('hid-v23-topzone-v'); if(tv) tv.textContent=Math.round((c.topZone??.36)*100)+'%';
-    const mv=$('hid-v23-morph-v'); if(mv) mv.textContent=Math.round((c.morphAmount??.78)*100)+'%';
-    const sum=$('hid-v23-summary'); if(sum){const sc=SCALES[c.scale||'chromatic']?.name||'Chromatic'; sum.textContent=(c.layout==='scale'?'SCALE':'ALL')+' · '+sc.split('/')[0].trim()+' · '+(S.voiceMode||'poly').toUpperCase();}
-    try{const vm=$('hid-v18-voice-mode'); if(vm) vm.value=S.voiceMode||'poly'; const vb=$('hid-v18-voice-badge'); if(vb) vb.textContent=(S.voiceMode||'poly').toUpperCase();}catch(_){ }
-  }
-
-  function makeMorphSnap(midi,topStrength){
-    const S=ensure();
-    let patch=null;
-    try{patch=JSON.parse(JSON.stringify(BANKS[S.bank].patches[S.patchIdx]));}catch(_){patch={osc:[{t:'sawtooth',o:0,d:0,g:0.7},{t:'sine',o:1,d:4,g:0.22}],env:{a:.012,d:.35,s:.72,r:.45},filt:{t:'lowpass',co:5600,Q:3.2},fEnv:{a:.02,d:.35,s:.58,r:.35,amt:1800},lfo:{r:.35,d:.18,t:'cutoff'},drive:.08};}
-    const amt=clamp(topStrength,0,1);
-    patch.osc=Array.isArray(patch.osc)?patch.osc.slice():[{t:'sawtooth',o:0,d:0,g:0.7}];
-    patch.osc=patch.osc.map(o=>Object.assign({},o,{g:clamp((o.g??1)*(1-amt*.16),0,1.4)}));
-    patch.osc.push({t:'sine',o:2,d:7,g:.16+.20*amt},{t:'triangle',o:1,d:-5,g:.10+.18*amt});
-    patch.env=Object.assign({a:.01,d:.32,s:.7,r:.38},patch.env||{});
-    patch.env.a=Math.max(.006,Math.min(.045,patch.env.a+amt*.018)); patch.env.r=Math.max(patch.env.r||.35,.42+amt*.28); patch.env.s=Math.max(patch.env.s||.65,.72);
-    patch.filt=Object.assign({t:'lowpass',co:5200,Q:2.5},patch.filt||{}); patch.filt.t='lowpass'; patch.filt.co=clamp((patch.filt.co||4200)+2200+amt*4800,1400,19000); patch.filt.Q=clamp((patch.filt.Q||2.2)+amt*2.4,1.2,8.8);
-    patch.fEnv=Object.assign({a:.02,d:.42,s:.55,r:.4,amt:1400},patch.fEnv||{}); patch.fEnv.amt=clamp((patch.fEnv.amt||1200)+amt*2600,200,9200); patch.fEnv.s=clamp(.46+amt*.18,.2,.9);
-    patch.lfo={r:.18+amt*.72,d:.16+amt*.26,t:'cutoff'}; patch.drive=clamp((patch.drive||0)+amt*.06,0,.52);
-    return {patch,amp:Object.assign({},S.amp||{}),filt:Object.assign({},S.filt||{}),mod:Object.assign({},S.mod||{})};
-  }
-  function beginVoice(midi,morph){
-    try{if(typeof ensureAudioReady==='function') ensureAudioReady(); else if(typeof initAudio==='function') initAudio();}catch(_){ }
-    const S=ensure(); if(!S) return null;
-    const strength=(S.chromaV23?.morphAmount??.78)*(morph?1:0);
-    const snap=morph?makeMorphSnap(midi,strength):null;
-    const v=(typeof startVoice==='function')?startVoice(midi,.78,snap):null;
-    if(v){S.activeNotes.set(midi,v); try{highlightKey(midi,'lit',true)}catch(_){ } try{recordEvent({type:'on',midi,vel:.78}); if(S.padArmedRec>=0) padCaptureNote(midi,'on'); updateTape(); if(S.viz?.active) vizPulse(midi,morph?1.8:1)}catch(_){ }}
-    return v;
-  }
-  function releaseVoice(midi,fast){
-    const S=ensure(); if(!S) return; const v=S.activeNotes?.get(midi); if(!v) return;
-    if(S.sustain&&!fast) return;
-    try{v.fadeOut?v.fadeOut(fast?18:36):v.release()}catch(_){ }
-    S.activeNotes.delete(midi); try{highlightKey(midi,'lit',false); const el=document.querySelector(`#chroma .chroma-key[data-midi="${midi}"]`); if(el){el.classList.add('hid-v23-afterglow'); setTimeout(()=>el.classList.remove('hid-v23-afterglow'),760);}}catch(_){ }
-    try{recordEvent({type:'off',midi}); if(S.padArmedRec>=0) padCaptureNote(midi,'off');}catch(_){ }
-  }
-  function glideVoice(v,newMidi){
-    try{
-      if(!v||!v.oscs||!ctx) return false; const S=ensure();
-      const oldMidi=Number.isFinite(+v.midi)?+v.midi:newMidi; const oldF=(typeof freqOf==='function')?freqOf(oldMidi):440*Math.pow(2,(oldMidi-69)/12); const newF=(typeof freqOf==='function')?freqOf(newMidi):440*Math.pow(2,(newMidi-69)/12);
-      const tau=clamp(S?.mod?.glide??S?.modWheel?.glide??0.08,.015,.85);
-      v.oscs.forEach(o=>{const osc=o.osc; if(!osc||!osc.frequency)return; const ratio=clamp((osc.frequency.value||oldF)/Math.max(1,oldF),.125,8); osc.frequency.cancelScheduledValues(ctx.currentTime); osc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);});
-      if(v.fmOsc&&v.fmOsc.frequency){const ratio=clamp((v.fmOsc.frequency.value||oldF)/Math.max(1,oldF),.125,24); v.fmOsc.frequency.cancelScheduledValues(ctx.currentTime); v.fmOsc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);}
-      v.midi=newMidi; return true;
-    }catch(_){return false;}
-  }
-
-  function installGesture(){
-    const c=$('chroma'); if(!c||c.__hidV23Gesture) return; c.__hidV23Gesture=true;
-    const G={active:false,pid:null,last:null,lastMorph:false,started:new Set(),buildTouched:new Set(),voice:null};
-    const barFrom=e=>{const els=document.elementsFromPoint(e.clientX,e.clientY)||[]; return els.find(el=>el&&el.classList&&el.classList.contains('chroma-key')&&el.dataset&&el.dataset.midi);};
-    const isTop=(el,e)=>{const S=ensure(); if(!el||!S?.chromaV23?.topMorph) return false; const r=el.getBoundingClientRect(); const pct=(e.clientY-r.top)/Math.max(1,r.height); return pct<=clamp(S.chromaV23.topZone??.36,.12,.72);};
-    const paintMorph=(m,on)=>{try{const el=document.querySelector(`#chroma .chroma-key[data-midi="${m}"]`); if(el) el.classList.toggle('hid-v23-morphing',!!on);}catch(_){ }};
-    const noteAtEvent=e=>{const el=barFrom(e); if(!el) return null; return {m:+el.dataset.midi, morph:isTop(el,e), el};};
-    function handle(m,morph,e){
-      const S=ensure(); if(!S||m==null) return;
-      if(S.build){
-        if(G.buildTouched.has(m)) return; G.buildTouched.add(m);
-        if(S.shapeNotes.has(m)){S.shapeNotes.delete(m); try{highlightKey(m,'shape',false)}catch(_){ }} else {S.shapeNotes.add(m); try{highlightKey(m,'shape',true)}catch(_){ }}
-        return;
-      }
-      if(S.arp?.enabled){
-        if(m!==G.last){ if(G.last!=null) try{releaseNoteByDisplay(G.last)}catch(_){ } try{pressNoteByDisplay(m)}catch(_){ } G.last=m; }
-        return;
-      }
-      const mode=(S.voiceMode||'poly').toLowerCase();
-      if(mode==='poly'){
-        if(G.started.has(m)) {paintMorph(m,morph); return;}
-        beginVoice(m,morph); G.started.add(m); G.last=m; G.lastMorph=morph; paintMorph(m,morph); return;
-      }
-      if(mode==='mono'){
-        if(m===G.last && morph===G.lastMorph) return;
-        if(G.last!=null) {releaseVoice(G.last,true); paintMorph(G.last,false);}
-        G.voice=beginVoice(m,morph); G.last=m; G.lastMorph=morph; paintMorph(m,morph); return;
-      }
-      // LEGATO: one voice glides note-to-note. If moving into/out of top morph, restart gently so the tone truly changes.
-      if(mode==='legato'){
-        if(G.last==null){G.voice=beginVoice(m,morph); G.last=m; G.lastMorph=morph; paintMorph(m,morph); return;}
-        if(m===G.last && morph===G.lastMorph) return;
-        if(morph!==G.lastMorph){releaseVoice(G.last,true); paintMorph(G.last,false); G.voice=beginVoice(m,morph); G.last=m; G.lastMorph=morph; paintMorph(m,morph); return;}
-        const v=G.voice || S.activeNotes.get(G.last);
-        if(v && glideVoice(v,m)){
-          S.activeNotes.delete(G.last); S.activeNotes.set(m,v); try{highlightKey(G.last,'lit',false); highlightKey(m,'lit',true)}catch(_){ } paintMorph(G.last,false); paintMorph(m,morph); G.last=m; G.lastMorph=morph; return;
-        }
-        releaseVoice(G.last,true); paintMorph(G.last,false); G.voice=beginVoice(m,morph); G.last=m; G.lastMorph=morph; paintMorph(m,morph);
-      }
-    }
-    function end(){
-      const S=ensure(); if(!G.active) return; G.active=false;
-      try{c.releasePointerCapture(G.pid)}catch(_){ }
-      if(!S?.build){
-        if(S?.arp?.enabled){ if(G.last!=null) try{releaseNoteByDisplay(G.last)}catch(_){ }}
-        else if((S?.voiceMode||'poly')==='poly'){ G.started.forEach(m=>releaseVoice(m,false)); }
-        else if(G.last!=null){ releaseVoice(G.last,false); }
-      }
-      qsa('#chroma .hid-v23-morphing').forEach(el=>el.classList.remove('hid-v23-morphing'));
-      G.pid=null; G.last=null; G.lastMorph=false; G.voice=null; G.started.clear(); G.buildTouched.clear();
-    }
-    c.addEventListener('pointerdown',e=>{const hit=noteAtEvent(e); if(!hit) return; G.active=true; G.pid=e.pointerId; G.last=null; G.started.clear(); G.buildTouched.clear(); try{c.setPointerCapture(G.pid)}catch(_){ } e.preventDefault(); e.stopPropagation(); handle(hit.m,hit.morph,e);},{passive:false,capture:true});
-    c.addEventListener('pointermove',e=>{if(!G.active||e.pointerId!==G.pid) return; const hit=noteAtEvent(e); if(!hit) return; e.preventDefault(); e.stopPropagation(); handle(hit.m,hit.morph,e);},{passive:false,capture:true});
-    ['pointerup','pointercancel','lostpointercapture'].forEach(type=>c.addEventListener(type,e=>{if(!G.active||e.pointerId===G.pid||type==='lostpointercapture'){e.preventDefault?.();e.stopPropagation?.();end();}},{passive:false,capture:true}));
-  }
-  function overrideBuild(){
-    try{const fn=function(){return buildChromaV23()}; fn.__hidV23=true; eval('buildChroma=fn');}catch(_){window.buildChroma=buildChromaV23;}
-    try{const oldRefresh=(typeof refreshShortcuts==='function')?refreshShortcuts:null; if(oldRefresh&&!oldRefresh.__hidV23){const fn=function(){try{oldRefresh.apply(this,arguments)}catch(_){} try{qsa('#chroma .chroma-key').forEach(el=>{const sc=el.querySelector('.chroma-sc'); if(sc) sc.textContent=shortcut(+el.dataset.midi)||'';});}catch(_){ }}; fn.__hidV23=true; eval('refreshShortcuts=fn');}}catch(_){ }
-  }
-  function hookChromaButton(){
-    const btn=$('btn-chroma'); if(btn&&!btn.__hidV23){btn.__hidV23=true; btn.addEventListener('click',()=>setTimeout(()=>{try{buildChromaV23();installControls();}catch(_){ }},50),true);}
-  }
-  function boot(){
-    if(!ensure()) return false;
-    try{installControls(); overrideBuild(); /* V29 owns chroma gesture */ buildChromaV23(); hookChromaButton(); syncControls();}catch(e){console.warn('V23 chroma boot issue',e)}
-    return true;
-  }
-  async function poll(){for(let i=0;i<90;i++){if(boot()) break; await sleep(250);} const t=setInterval(boot,1200); setTimeout(()=>clearInterval(t),45000);}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poll,{once:true}); else poll();
-  window.HID_V23_REBUILD_CHROMA=boot;
-})();
-</script>
-
-
-
-<!-- H.I.D. V24 — final chromatic scale-mode + stuck-note safety repair -->
-<style id="hid-v24-chroma-scale-safety-style">
-  .hid-v24-chroma-strip{
-    position:relative;z-index:35;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-    padding:5px 7px;margin:3px 8px;border:1px solid var(--stroke);
-    background:linear-gradient(180deg,rgba(0,255,213,.09),rgba(0,0,0,.88));
-    box-shadow:0 0 12px var(--window-glow,rgba(0,255,213,.26)),inset 0 0 14px rgba(0,0,0,.55);
-    border-radius:4px;font-family:'VT323',monospace;
-  }
-  .hid-v24-chroma-strip .hid-v24-label{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--neon3);text-shadow:0 0 5px var(--neon3);letter-spacing:.12em;margin-right:2px;white-space:nowrap}
-  .hid-v24-chroma-strip label{font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-  .hid-v24-chroma-strip select{font-size:12px;min-height:26px;max-width:min(230px,42vw);padding:3px 6px;background:#050510;color:var(--neon);border-color:var(--stroke)}
-  .hid-v24-chroma-strip .hid-v24-status{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--neon);text-shadow:0 0 4px var(--neon);min-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hid-v24-chroma-strip .btn.tiny{min-height:26px;padding:4px 8px}
-  .hid-v24-chroma-panel{position:absolute;left:0;bottom:calc(100% + 8px);z-index:3200;width:min(680px,96vw);max-height:min(72vh,560px);overflow:auto;display:none;padding:10px;border:1px solid var(--stroke);border-radius:6px;background:linear-gradient(180deg,rgba(4,4,14,.985),rgba(0,0,0,.985));box-shadow:0 0 30px var(--window-glow,rgba(0,255,213,.38)),0 18px 44px rgba(0,0,0,.82)}
-  .hid-v24-chroma-panel.open{display:block}
-  .hid-v24-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-family:'Press Start 2P',monospace;font-size:8px;color:var(--neon);text-shadow:0 0 6px var(--neon);letter-spacing:.12em}
-  .hid-v24-panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
-  .hid-v24-card{display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid rgba(0,255,213,.18);background:rgba(0,255,213,.04);border-radius:4px}
-  .hid-v24-card label{font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
-  .hid-v24-note{font-size:12px;color:var(--dim);line-height:1.35;letter-spacing:.04em;margin-top:8px}.hid-v24-note b{color:var(--neon3)}
-  body.hid-v24-chroma-ready .chroma{align-items:stretch!important;background:radial-gradient(ellipse at 50% 10%,rgba(255,255,255,.07),transparent 38%),radial-gradient(ellipse at center,#080817,#000)!important;border-top:1px solid rgba(0,255,213,.24);border-bottom:1px solid rgba(0,255,213,.18);gap:2px;padding:4px;min-height:100%;touch-action:none;overflow:visible;display:flex}
-  body.hid-v24-chroma-ready .chroma-key{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;height:100%!important;min-height:124px!important;padding:5px 2px 8px!important;border:1px solid rgba(255,255,255,.085)!important;border-radius:7px 7px 2px 2px!important;background:linear-gradient(180deg,rgba(255,255,255,.1),hsla(var(--bar-hue,180),100%,46%,.38) 48%,rgba(0,0,0,.94))!important;box-shadow:inset 0 0 14px rgba(0,0,0,.78),0 0 5px rgba(0,0,0,.3)!important;overflow:hidden;transition:transform .06s ease,filter .14s ease,box-shadow .2s ease,background .2s ease;touch-action:none;flex:0 0 var(--hid-v24-bar-w,34px)!important;min-width:var(--hid-v24-bar-w,34px)!important;user-select:none;-webkit-user-select:none}
-  body.hid-v24-chroma-ready .chroma-key::before{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:var(--bar-fill,36%);border-radius:5px 5px 1px 1px;background:linear-gradient(180deg,rgba(255,255,255,.92),hsla(var(--bar-hue,180),100%,62%,.9) 34%,hsla(var(--bar-hue,180),100%,42%,.72));box-shadow:0 0 13px hsla(var(--bar-hue,180),100%,62%,.72),inset 0 0 12px rgba(255,255,255,.16);opacity:.48;transform-origin:bottom;transition:height .16s ease,opacity .16s ease,filter .16s ease}
-  body.hid-v24-chroma-ready .chroma-key::after{content:attr(data-degree);position:absolute;top:5px;left:3px;right:3px;text-align:center;font-family:'VT323',monospace;font-size:12px;color:rgba(255,255,255,.82);letter-spacing:.05em;text-shadow:0 0 5px rgba(0,0,0,.85);pointer-events:none}
-  body.hid-v24-chroma-ready .chroma-key .chroma-nm{position:relative;z-index:2;font-family:'VT323',monospace;font-size:clamp(11px,1.7vw,15px);color:#fff!important;text-shadow:0 0 5px hsla(var(--bar-hue,180),100%,62%,.9),0 0 12px #000;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.02em;margin-bottom:6px;white-space:nowrap;pointer-events:none}
-  body.hid-v24-chroma-ready .chroma-key .chroma-sc{position:relative;z-index:2;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,.74)!important;background:rgba(0,0,0,.45);padding:1px 3px;border-radius:2px;min-height:13px;pointer-events:none}
-  body.hid-v24-chroma-ready .chroma-key .hid-v24-top-zone{position:absolute;left:0;right:0;top:0;height:var(--hid-v24-top-zone,36%);background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.025));border-bottom:1px dashed rgba(255,255,255,.16);pointer-events:none;opacity:.68}
-  body.hid-v24-chroma-ready .chroma-key.lit{transform:translateY(-2px) scale(1.016);filter:brightness(1.36) saturate(1.58);box-shadow:0 0 18px hsla(var(--bar-hue,180),100%,62%,.98),0 0 42px hsla(var(--bar-hue,180),100%,50%,.44),inset 0 0 18px rgba(255,255,255,.18)!important;background:linear-gradient(180deg,rgba(255,255,255,.30),hsla(var(--bar-hue,180),100%,56%,.94) 48%,rgba(0,0,0,.85))!important}
-  body.hid-v24-chroma-ready .chroma-key.lit::before{height:96%;opacity:1;filter:brightness(1.24)}
-  body.hid-v24-chroma-ready .chroma-key.hid-v24-morphing{box-shadow:0 0 22px rgba(255,255,255,.92),0 0 50px hsla(var(--bar-hue,180),100%,62%,.75),0 0 84px rgba(255,0,170,.36),inset 0 0 22px rgba(255,255,255,.22)!important;filter:brightness(1.52) saturate(1.9)}
-  body.hid-v24-chroma-ready .chroma-key.hid-v24-afterglow{animation:hidV24BarFade .72s ease-out forwards}
-  @keyframes hidV24BarFade{0%{filter:brightness(1.32) saturate(1.45);box-shadow:0 0 18px hsla(var(--bar-hue,180),100%,62%,.86),0 0 40px hsla(var(--bar-hue,180),100%,50%,.38),inset 0 0 18px rgba(255,255,255,.12)}100%{filter:brightness(1) saturate(1);box-shadow:inset 0 0 14px rgba(0,0,0,.78),0 0 5px rgba(0,0,0,.3)}}
-  @media(max-width:700px){.hid-v24-chroma-strip{gap:4px;padding:4px;margin:3px 6px}.hid-v24-chroma-strip select{max-width:38vw}.hid-v24-chroma-strip .hid-v24-status{display:none}.hid-v24-chroma-panel{left:auto;right:0;width:96vw}.hid-v24-chroma-ready .chroma-key{min-height:106px!important}.hid-v24-label{width:100%}}
-</style>
-<script id="hid-v24-chroma-scale-stuck-note-fix">
-(function(){
-  'use strict';
-  if(window.__HID_V24_CHROMA_SCALE_STUCK_FIX__) return;
-  window.__HID_V24_CHROMA_SCALE_STUCK_FIX__=true;
-
-  const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const SCALES={
-    chromatic:{name:'Chromatic / Every Note',ints:[0,1,2,3,4,5,6,7,8,9,10,11],deg:['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7']},
-    major:{name:'Major / Ionian',ints:[0,2,4,5,7,9,11],deg:['1','2','3','4','5','6','7']},
-    minor:{name:'Natural Minor / Aeolian',ints:[0,2,3,5,7,8,10],deg:['1','2','♭3','4','5','♭6','♭7']},
-    dorian:{name:'Dorian',ints:[0,2,3,5,7,9,10],deg:['1','2','♭3','4','5','6','♭7']},
-    phrygian:{name:'Phrygian',ints:[0,1,3,5,7,8,10],deg:['1','♭2','♭3','4','5','♭6','♭7']},
-    lydian:{name:'Lydian',ints:[0,2,4,6,7,9,11],deg:['1','2','3','#4','5','6','7']},
-    mixolydian:{name:'Mixolydian',ints:[0,2,4,5,7,9,10],deg:['1','2','3','4','5','6','♭7']},
-    locrian:{name:'Locrian',ints:[0,1,3,5,6,8,10],deg:['1','♭2','♭3','4','♭5','♭6','♭7']},
-    majorPent:{name:'Major Pentatonic',ints:[0,2,4,7,9],deg:['1','2','3','5','6']},
-    minorPent:{name:'Minor Pentatonic',ints:[0,3,5,7,10],deg:['1','♭3','4','5','♭7']},
-    blues:{name:'Blues',ints:[0,3,5,6,7,10],deg:['1','♭3','4','♭5','5','♭7']},
-    harmonicMinor:{name:'Harmonic Minor',ints:[0,2,3,5,7,8,11],deg:['1','2','♭3','4','5','♭6','7']},
-    melodicMinor:{name:'Melodic Minor',ints:[0,2,3,5,7,9,11],deg:['1','2','♭3','4','5','6','7']},
-    dorianB2:{name:'Dorian ♭2',ints:[0,1,3,5,7,9,10],deg:['1','♭2','♭3','4','5','6','♭7']},
-    lydianAug:{name:'Lydian Augmented',ints:[0,2,4,6,8,9,11],deg:['1','2','3','#4','#5','6','7']},
-    lydianDom:{name:'Lydian Dominant',ints:[0,2,4,6,7,9,10],deg:['1','2','3','#4','5','6','♭7']},
-    mixoB6:{name:'Mixolydian ♭6',ints:[0,2,4,5,7,8,10],deg:['1','2','3','4','5','♭6','♭7']},
-    locrianNat2:{name:'Locrian ♮2',ints:[0,2,3,5,6,8,10],deg:['1','2','♭3','4','♭5','♭6','♭7']},
-    altered:{name:'Altered / Super Locrian',ints:[0,1,3,4,6,8,10],deg:['1','♭9','#9','3','#11','♭13','♭7']},
-    phrygianDom:{name:'Phrygian Dominant',ints:[0,1,4,5,7,8,10],deg:['1','♭2','3','4','5','♭6','♭7']},
-    doubleHarmonic:{name:'Double Harmonic Major',ints:[0,1,4,5,7,8,11],deg:['1','♭2','3','4','5','♭6','7']},
-    hungarianMinor:{name:'Hungarian Minor',ints:[0,2,3,6,7,8,11],deg:['1','2','♭3','#4','5','♭6','7']},
-    wholeTone:{name:'Whole Tone',ints:[0,2,4,6,8,10],deg:['1','2','3','#4','#5','♭7']},
-    diminishedHW:{name:'Diminished H-W',ints:[0,1,3,4,6,7,9,10],deg:['1','♭2','♭3','3','♭5','5','6','♭7']},
-    diminishedWH:{name:'Diminished W-H',ints:[0,2,3,5,6,8,9,11],deg:['1','2','♭3','4','♭5','♭6','6','7']},
-    bebopDom:{name:'Bebop Dominant',ints:[0,2,4,5,7,9,10,11],deg:['1','2','3','4','5','6','♭7','7']},
-    egyptian:{name:'Egyptian Pentatonic',ints:[0,2,5,7,10],deg:['1','2','4','5','♭7']},
-    japanese:{name:'Japanese In Sen',ints:[0,1,5,7,10],deg:['1','♭2','4','5','♭7']}
-  };
-  const ROOTS=NOTE_NAMES.map((n,pc)=>({n,pc}));
-  const $=id=>document.getElementById(id);
-  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number.isFinite(+v)?+v:min));
-  const S=()=>{try{return typeof STATE!=='undefined'?STATE:null}catch(_){return null}};
-  const noteName=m=>{try{return nName(m)+octOf(m)}catch(_){return NOTE_NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1)}};
-  const shortcut=m=>{try{return shortcutFor(m)||''}catch(_){return ''}};
-  const say=m=>{try{typeof toast==='function'?toast(m):console.log(m)}catch(_){}};
-
-  const G={active:false,pid:null,last:null,lastMorph:false,started:new Set(),held:new Set(),voice:null,installed:false};
-
-  function ensure(){
-    const st=S(); if(!st) return null;
-    if(!st.voiceMode) st.voiceMode='poly';
-    if(!st.pianoView) st.pianoView={follow:true,keyCount:37,keyWidth:42,baseOffset:-2,keySlideMode:'scroll'};
-    if(!st.chromaV24){
-      const old=st.chromaV23||st.chromaV19||{};
-      st.chromaV24={
-        root:old.root||'C',
-        scale:(old.scale&&SCALES[old.scale])?old.scale:'mixolydian',
-        layout:old.layout==='chromatic'?'scale':(old.layout||'scale'),
-        colorMode:old.colorMode||'rainbow',
-        hue:old.hue??178,
-        topMorph:old.topMorph!==false,
-        topZone:old.topZone??.36,
-        morphAmount:old.morphAmount??.78
-      };
-    }
-    st.chromaV23=Object.assign({},st.chromaV24);
-    return st;
-  }
-  function pcOfRoot(){const st=ensure(); return ROOTS.find(x=>x.n===(st?.chromaV24?.root||'C'))?.pc??0;}
-  function scale(){const st=ensure(); return SCALES[st?.chromaV24?.scale]||SCALES.mixolydian;}
-  function physicalBounds(){try{const vals=Object.values(KB_NOTES||{}).map(Number).filter(Number.isFinite); if(vals.length)return {lo:Math.min(...vals),hi:Math.max(...vals)}}catch(_){} return {lo:48,hi:78}}
-  function viewStart(){const st=ensure(); if(!st) return 48; const pv=st.pianoView||{}; if(pv.follow===false) return clamp(pv.startMidi||48,0,127); const b=physicalBounds(); return clamp(Math.round((b.lo||48)+(st.octave||0)*12+(st.transpose||0)+(pv.baseOffset||0)),0,127)}
-  function keyCount(){const st=ensure(); return clamp(st?.pianoView?.keyCount||37,8,88)}
-  function barWidth(){const st=ensure(); return Math.max(18,Math.round(clamp(st?.pianoView?.keyWidth||42,22,96)*.82))}
-  function scaleList(start,count){
-    const sc=scale(), pc=pcOfRoot(), all=[];
-    for(let oct=-2;oct<=10;oct++) for(let i=0;i<sc.ints.length;i++){const m=pc+12*(oct+1)+sc.ints[i]; if(m>=0&&m<=127)all.push({m,degree:sc.deg[i]||String(i+1),idx:i,inScale:true});}
-    all.sort((a,b)=>a.m-b.m); let pos=all.findIndex(x=>x.m>=start); if(pos<0)pos=Math.max(0,all.length-count); return all.slice(pos,pos+count);
-  }
-  function chromaList(start,count){
-    const sc=scale(), pc=pcOfRoot();
-    return Array.from({length:count},(_,i)=>{const m=clamp(start+i,0,127), rel=((m-pc)%12+12)%12, idx=sc.ints.indexOf(rel); return {m,idx,inScale:idx>=0,degree:idx>=0?(sc.deg[idx]||String(idx+1)):(SCALES.chromatic.deg[rel]||'')};});
-  }
-  function hueFor(item,i,total){const st=ensure(), cfg=st?.chromaV24||{}; return cfg.colorMode==='single'?clamp(cfg.hue??178,0,360):(Math.round((i/Math.max(1,total-1))*330+12)%360);}
-
-  function buildChromaV24(){
-    const c=$('chroma'), st=ensure(); if(!c||!st) return;
-    const cfg=st.chromaV24, start=viewStart(), count=keyCount(), w=barWidth();
-    const list=(cfg.layout==='scale'&&cfg.scale!=='chromatic')?scaleList(start,count):chromaList(start,count);
-    document.body.classList.add('hid-v24-chroma-ready','hid-v23-chroma-ready','hid-v19-chroma-bars');
-    c.innerHTML=''; c.style.width=(list.length*w)+'px'; c.style.minWidth=(list.length*w)+'px';
-    c.style.setProperty('--hid-v24-bar-w',w+'px'); c.style.setProperty('--hid-v23-bar-w',w+'px'); c.style.setProperty('--hid-v19-bar-w',w+'px');
-    c.style.setProperty('--hid-v24-top-zone',Math.round(clamp(cfg.topZone??.36,.12,.72)*100)+'%');
-    list.forEach((item,i)=>{
-      const k=document.createElement('div'), hue=hueFor(item,i,list.length), fill=26+Math.round((((item.m%12)+12)%12)/11*44);
-      k.className='chroma-key hid-v24-bar';
-      k.dataset.midi=item.m; k.dataset.degree=item.degree||''; k.dataset.inScale=item.inScale?'1':'0';
-      k.style.setProperty('--bar-hue',String(hue)); k.style.setProperty('--bar-fill',fill+'%');
-      k.innerHTML=`<span class="hid-v24-top-zone"></span><span class="chroma-nm">${noteName(item.m)}</span><span class="chroma-sc">${shortcut(item.m)}</span>`;
-      c.appendChild(k);
-    });
-    syncUI();
-  }
-
-  function installUI(){
-    const st=ensure(); if(!st) return false;
-    let host=$('hid-v18-control-strip')||document.querySelector('.piano-controls')||$('piano-host'); if(!host) return false;
-    let wrap=$('hid-v24-chroma-strip');
-    if(!wrap){
-      wrap=document.createElement('div'); wrap.id='hid-v24-chroma-strip'; wrap.className='hid-v24-chroma-strip';
-      wrap.innerHTML=`
-        <span class="hid-v24-label">CHROMA MODE</span>
-        <label>Root</label><select id="hid-v24-root"></select>
-        <label>Scale/Mode</label><select id="hid-v24-scale"></select>
-        <label>Order</label><select id="hid-v24-layout"><option value="scale">Scale degrees only</option><option value="chromatic">Every note / show scale tones</option></select>
-        <label>Voice</label><select id="hid-v24-voice"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select>
-        <button class="btn tiny gold" id="hid-v24-more-btn">SCALE SETUP</button>
-        <button class="btn tiny warn" id="hid-v24-release-btn">RELEASE CHROMA</button>
-        <span class="hid-v24-status" id="hid-v24-status">READY</span>
-        <div class="hid-v24-chroma-panel" id="hid-v24-panel">
-          <div class="hid-v24-panel-head"><span>CHROMATIC BARS · TRUE SCALE/MODE ORDER</span><button class="btn tiny warn" id="hid-v24-close">CLOSE</button></div>
-          <div class="hid-v24-panel-grid">
-            <div class="hid-v24-card"><label>Root Note</label><select id="hid-v24-root-2"></select></div>
-            <div class="hid-v24-card"><label>Scale / Mode</label><select id="hid-v24-scale-2"></select></div>
-            <div class="hid-v24-card"><label>Note Order</label><select id="hid-v24-layout-2"><option value="scale">Scale degrees only</option><option value="chromatic">Every note / show scale tones</option></select></div>
-            <div class="hid-v24-card"><label>Voice Mode</label><select id="hid-v24-voice-2"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato">LEGATO</option></select></div>
-            <div class="hid-v24-card"><label>Color Mode</label><select id="hid-v24-color"><option value="rainbow">Hue order: every bar different</option><option value="single">Single glowing hue</option></select></div>
-            <div class="hid-v24-card"><label>Single Hue</label><input id="hid-v24-hue" type="range" min="0" max="360" step="1"><span class="v" id="hid-v24-hue-v">178°</span></div>
-            <div class="hid-v24-card"><label>Top Morph</label><select id="hid-v24-topmorph"><option value="on">ON — dreamy top-zone morph</option><option value="off">OFF</option></select></div>
-            <div class="hid-v24-card"><label>Top Zone Size</label><input id="hid-v24-topzone" type="range" min="12" max="72" step="1"><span class="v" id="hid-v24-topzone-v">36%</span></div>
-            <div class="hid-v24-card"><label>Morph Amount</label><input id="hid-v24-morph" type="range" min="0" max="100" step="1"><span class="v" id="hid-v24-morph-v">78%</span></div>
-          </div>
-          <div class="hid-v24-note"><b>Scale degrees only</b> makes the chromatic bars play only the chosen root + mode in perfect order — for example C Phrygian, F# Mixolydian, D Dorian, altered, diminished, whole tone, pentatonic, blues, and more. <b>Release Chroma</b>, Master Kill, Stop All, and Sustain Off now clear held chromatic notes.</div>
-        </div>`;
-      host.insertBefore(wrap,host.firstChild||null);
-      const fill=(id,items)=>{const el=$(id); if(!el) return; el.innerHTML=''; items.forEach(([v,n])=>el.insertAdjacentHTML('beforeend',`<option value="${v}">${n}</option>`));};
-      const roots=ROOTS.map(r=>[r.n,r.n]), scales=Object.entries(SCALES).map(([k,v])=>[k,v.name]);
-      ['hid-v24-root','hid-v24-root-2'].forEach(id=>fill(id,roots)); ['hid-v24-scale','hid-v24-scale-2'].forEach(id=>fill(id,scales));
-      const bind=(ids,fn)=>ids.forEach(id=>{const el=$(id); if(el) el.onchange=e=>{fn(e.target.value); buildChromaV24();};});
-      bind(['hid-v24-root','hid-v24-root-2'],v=>{const st=ensure(); st.chromaV24.root=v; say('Chromatic root: '+v);});
-      bind(['hid-v24-scale','hid-v24-scale-2'],v=>{const st=ensure(); st.chromaV24.scale=v; st.chromaV24.layout='scale'; say('Chromatic scale/mode: '+(SCALES[v]?.name||v));});
-      bind(['hid-v24-layout','hid-v24-layout-2'],v=>{ensure().chromaV24.layout=v;});
-      bind(['hid-v24-voice','hid-v24-voice-2'],v=>{ensure().voiceMode=v; say('Chroma voice mode: '+v.toUpperCase());});
-      bind(['hid-v24-color'],v=>{ensure().chromaV24.colorMode=v;});
-      const panel=$('hid-v24-panel'); $('hid-v24-more-btn').onclick=()=>panel?.classList.toggle('open'); $('hid-v24-close').onclick=()=>panel?.classList.remove('open'); $('hid-v24-release-btn').onclick=()=>hardReleaseChroma(true);
-      const topMorph=$('hid-v24-topmorph'); if(topMorph) topMorph.onchange=e=>{ensure().chromaV24.topMorph=e.target.value==='on'; buildChromaV24();};
-      const hue=$('hid-v24-hue'); if(hue) hue.oninput=e=>{ensure().chromaV24.hue=+e.target.value; buildChromaV24();};
-      const tz=$('hid-v24-topzone'); if(tz) tz.oninput=e=>{ensure().chromaV24.topZone=clamp(+e.target.value/100,.12,.72); buildChromaV24();};
-      const ma=$('hid-v24-morph'); if(ma) ma.oninput=e=>{ensure().chromaV24.morphAmount=clamp(+e.target.value/100,0,1); syncUI();};
-    }
-    syncUI(); return true;
-  }
-  function setVal(id,v){const el=$(id); if(el&&String(el.value)!==String(v)) el.value=v;}
-  function syncUI(){
-    const st=ensure(); if(!st) return; const c=st.chromaV24, sc=SCALES[c.scale]||SCALES.mixolydian;
-    ['hid-v24-root','hid-v24-root-2'].forEach(id=>setVal(id,c.root||'C'));
-    ['hid-v24-scale','hid-v24-scale-2'].forEach(id=>setVal(id,c.scale||'mixolydian'));
-    ['hid-v24-layout','hid-v24-layout-2'].forEach(id=>setVal(id,c.layout||'scale'));
-    ['hid-v24-voice','hid-v24-voice-2'].forEach(id=>setVal(id,st.voiceMode||'poly'));
-    setVal('hid-v24-color',c.colorMode||'rainbow'); setVal('hid-v24-hue',c.hue??178); setVal('hid-v24-topmorph',c.topMorph===false?'off':'on'); setVal('hid-v24-topzone',Math.round((c.topZone??.36)*100)); setVal('hid-v24-morph',Math.round((c.morphAmount??.78)*100));
-    const status=$('hid-v24-status'); if(status) status.textContent=(c.root||'C')+' '+sc.name.split('/')[0].trim()+' · '+((c.layout||'scale')==='scale'?'SCALE ONLY':'ALL NOTES')+' · '+(st.voiceMode||'poly').toUpperCase();
-    const hv=$('hid-v24-hue-v'); if(hv) hv.textContent=(c.hue??178)+'°'; const tv=$('hid-v24-topzone-v'); if(tv) tv.textContent=Math.round((c.topZone??.36)*100)+'%'; const mv=$('hid-v24-morph-v'); if(mv) mv.textContent=Math.round((c.morphAmount??.78)*100)+'%';
-    try{if(st.chromaV23)Object.assign(st.chromaV23,c); if(st.chromaV19)Object.assign(st.chromaV19,c);}catch(_){ }
-  }
-
-  function makeMorphSnap(midi,topStrength){
-    const st=ensure(); let patch=null;
-    try{patch=JSON.parse(JSON.stringify(BANKS[st.bank].patches[st.patchIdx]));}catch(_){patch={osc:[{t:'sawtooth',o:0,d:0,g:.7}],env:{a:.01,d:.32,s:.72,r:.4},filt:{t:'lowpass',co:6200,Q:2.6},fEnv:{a:.02,d:.35,s:.55,r:.4,amt:1600},lfo:{r:.32,d:.18,t:'cutoff'},drive:.06};}
-    const amt=clamp(topStrength,0,1); patch.osc=Array.isArray(patch.osc)?patch.osc.map(o=>Object.assign({},o,{g:clamp((o.g??1)*(1-amt*.14),0,1.35)})):[{t:'sawtooth',o:0,d:0,g:.7}];
-    patch.osc.push({t:'sine',o:2,d:7,g:.16+.2*amt},{t:'triangle',o:1,d:-5,g:.1+.18*amt});
-    patch.env=Object.assign({a:.01,d:.32,s:.7,r:.38},patch.env||{}); patch.env.a=Math.max(.006,Math.min(.055,patch.env.a+amt*.018)); patch.env.r=Math.max(patch.env.r||.35,.42+amt*.3);
-    patch.filt=Object.assign({t:'lowpass',co:5200,Q:2.4},patch.filt||{}); patch.filt.co=clamp((patch.filt.co||4200)+2200+amt*4800,1400,19000); patch.filt.Q=clamp((patch.filt.Q||2.2)+amt*2.4,1.2,8.8);
-    patch.fEnv=Object.assign({a:.02,d:.42,s:.55,r:.4,amt:1400},patch.fEnv||{}); patch.fEnv.amt=clamp((patch.fEnv.amt||1200)+amt*2600,200,9200); patch.lfo={r:.18+amt*.72,d:.16+amt*.26,t:'cutoff'}; patch.drive=clamp((patch.drive||0)+amt*.06,0,.52);
-    return {patch,amp:Object.assign({},st.amp||{}),filt:Object.assign({},st.filt||{}),mod:Object.assign({},st.mod||{})};
-  }
-  function beginVoice(midi,morph){
-    try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function')initAudio();}catch(_){ }
-    const st=ensure(); if(!st) return null; const strength=(st.chromaV24?.morphAmount??.78)*(morph?1:0); const snap=morph?makeMorphSnap(midi,strength):null;
-    let v=null; try{v=typeof startVoice==='function'?startVoice(midi,.78,snap):null;}catch(e){console.warn('V24 chroma start failed',e)}
-    if(v){v.__hidV24Chroma=true; v.midi=midi; try{st.activeNotes.set(midi,v)}catch(_){ } G.held.add(midi); try{highlightKey(midi,'lit',true)}catch(_){ } try{recordEvent({type:'on',midi,vel:.78}); if(st.padArmedRec>=0) padCaptureNote(midi,'on'); updateTape(); if(st.viz?.active) vizPulse(midi,morph?1.8:1)}catch(_){ }}
-    return v;
-  }
-  function releaseVoice(midi,force=false){
-    const st=ensure(); if(!st) return; if(st.sustain&&!force) return;
-    const v=st.activeNotes?.get(midi); if(v){try{v.fadeOut?v.fadeOut(force?10:34):v.release&&v.release()}catch(_){ }}
-    try{st.activeNotes.delete(midi)}catch(_){ } G.held.delete(midi);
-    try{highlightKey(midi,'lit',false); const el=document.querySelector(`#chroma .chroma-key[data-midi="${midi}"]`); if(el){el.classList.remove('hid-v24-morphing','hid-v23-morphing'); el.classList.add('hid-v24-afterglow'); setTimeout(()=>el.classList.remove('hid-v24-afterglow'),760);}}catch(_){ }
-    try{recordEvent({type:'off',midi}); if(st.padArmedRec>=0) padCaptureNote(midi,'off');}catch(_){ }
-  }
-  function glideVoice(v,newMidi){
-    try{if(!v||!v.oscs||typeof ctx==='undefined'||!ctx)return false; const st=ensure(); const oldMidi=Number.isFinite(+v.midi)?+v.midi:newMidi; const oldF=typeof freqOf==='function'?freqOf(oldMidi):440*Math.pow(2,(oldMidi-69)/12); const newF=typeof freqOf==='function'?freqOf(newMidi):440*Math.pow(2,(newMidi-69)/12); const tau=clamp(st?.mod?.glide??st?.modWheel?.glide??.08,.015,.85); v.oscs.forEach(o=>{const osc=o.osc; if(!osc?.frequency)return; const ratio=clamp((osc.frequency.value||oldF)/Math.max(1,oldF),.125,8); osc.frequency.cancelScheduledValues(ctx.currentTime); osc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);}); if(v.fmOsc?.frequency){const ratio=clamp((v.fmOsc.frequency.value||oldF)/Math.max(1,oldF),.125,24); v.fmOsc.frequency.cancelScheduledValues(ctx.currentTime); v.fmOsc.frequency.setTargetAtTime(newF*ratio,ctx.currentTime,tau);} v.midi=newMidi; return true;}catch(_){return false;}
-  }
-  function paint(m,on){try{const el=document.querySelector(`#chroma .chroma-key[data-midi="${m}"]`); if(el)el.classList.toggle('hid-v24-morphing',!!on);}catch(_){ }}
-  function barFromPoint(x,y){const els=document.elementsFromPoint(x,y)||[]; return els.find(el=>el?.classList?.contains('chroma-key')&&el.closest?.('#chroma')&&el.dataset?.midi);}
-  function isTop(el,y){const st=ensure(); if(!el||st?.chromaV24?.topMorph===false)return false; const r=el.getBoundingClientRect(); return ((y-r.top)/Math.max(1,r.height))<=clamp(st.chromaV24.topZone??.36,.12,.72);}
-  function handle(m,morph){
-    const st=ensure(); if(!st||m==null) return;
-    if(st.build){ if(G.started.has(m))return; G.started.add(m); if(st.shapeNotes.has(m)){st.shapeNotes.delete(m);try{highlightKey(m,'shape',false)}catch(_){ }}else{st.shapeNotes.add(m);try{highlightKey(m,'shape',true)}catch(_){ }} return; }
-    if(st.arp?.enabled){ if(m!==G.last){ if(G.last!=null) releaseVoice(G.last,true); beginVoice(m,morph); G.last=m; G.lastMorph=morph;} return; }
-    const mode=(st.voiceMode||'poly').toLowerCase();
-    if(mode==='poly'){ if(G.started.has(m)){paint(m,morph);return;} beginVoice(m,morph); G.started.add(m); G.last=m; G.lastMorph=morph; paint(m,morph); return; }
-    if(mode==='mono'){ if(m===G.last&&morph===G.lastMorph)return; if(G.last!=null){releaseVoice(G.last,true);paint(G.last,false);} G.voice=beginVoice(m,morph); G.last=m; G.lastMorph=morph; paint(m,morph); return; }
-    if(G.last==null){G.voice=beginVoice(m,morph);G.last=m;G.lastMorph=morph;paint(m,morph);return;}
-    if(m===G.last&&morph===G.lastMorph)return;
-    if(morph!==G.lastMorph){releaseVoice(G.last,true);paint(G.last,false);G.voice=beginVoice(m,morph);G.last=m;G.lastMorph=morph;paint(m,morph);return;}
-    const v=G.voice||st.activeNotes?.get(G.last); if(v&&glideVoice(v,m)){try{st.activeNotes.delete(G.last);st.activeNotes.set(m,v)}catch(_){ } G.held.delete(G.last); G.held.add(m); try{highlightKey(G.last,'lit',false);highlightKey(m,'lit',true)}catch(_){ } paint(G.last,false); paint(m,morph); G.last=m; G.lastMorph=morph; return;}
-    releaseVoice(G.last,true);paint(G.last,false);G.voice=beginVoice(m,morph);G.last=m;G.lastMorph=morph;paint(m,morph);
-  }
-  function endPointer(force=false){
-    const st=ensure(); if(!G.active&&!force) return; G.active=false;
-    if(st&&!st.build){ if((st.voiceMode||'poly').toLowerCase()==='poly'){G.started.forEach(m=>releaseVoice(m,false));} else if(G.last!=null){releaseVoice(G.last,false);} }
-    qsa('#chroma .hid-v24-morphing,#chroma .hid-v23-morphing').forEach(el=>el.classList.remove('hid-v24-morphing','hid-v23-morphing'));
-    G.pid=null; G.last=null; G.lastMorph=false; G.voice=null; G.started.clear();
-  }
-  function eventInChroma(e){const c=$('chroma'); if(!c||!c.classList.contains('active'))return null; const el=barFromPoint(e.clientX,e.clientY); return el?{el,m:+el.dataset.midi,morph:isTop(el,e.clientY)}:null;}
-  function installGesture(){
-    if(G.installed) return; G.installed=true;
-    document.addEventListener('pointerdown',e=>{const hit=eventInChroma(e); if(!hit)return; G.active=true; G.pid=e.pointerId; G.last=null; G.started.clear(); try{$('chroma').setPointerCapture(e.pointerId)}catch(_){ } e.preventDefault(); e.stopImmediatePropagation(); handle(hit.m,hit.morph);},{capture:true,passive:false});
-    document.addEventListener('pointermove',e=>{if(!G.active||e.pointerId!==G.pid)return; const hit=eventInChroma(e); if(!hit)return; e.preventDefault(); e.stopImmediatePropagation(); handle(hit.m,hit.morph);},{capture:true,passive:false});
-    ['pointerup','pointercancel','lostpointercapture'].forEach(type=>document.addEventListener(type,e=>{if(G.active&&(type==='lostpointercapture'||e.pointerId===G.pid)){e.preventDefault?.();e.stopImmediatePropagation?.();endPointer(false);}},{capture:true,passive:false}));
-  }
-  function hardReleaseChroma(force=false){
-    const st=ensure(); if(!st)return;
-    const notes=new Set(G.held);
-    try{st.activeNotes?.forEach((v,m)=>{if(v&&v.__hidV24Chroma)notes.add(m);});}catch(_){ }
-    notes.forEach(m=>releaseVoice(m,force));
-    qsa('#chroma .lit,#chroma .hid-v24-morphing,#chroma .hid-v23-morphing').forEach(el=>el.classList.remove('lit','hid-v24-morphing','hid-v23-morphing'));
-    G.held.clear(); G.started.clear(); G.last=null; G.voice=null;
-  }
-  function hardReleaseAll(reason='kill'){
-    const st=S(); try{if(st?.activeNotes){st.activeNotes.forEach((v,m)=>{try{v?.fadeOut?v.fadeOut(8):v?.release&&v.release()}catch(_){ } try{highlightKey(m,'lit',false)}catch(_){ }}); st.activeNotes.clear();}}catch(_){ }
-    try{qsa('.wkey.lit,.bkey.lit,.chroma-key.lit,.hid-v24-morphing,.hid-v23-morphing').forEach(el=>el.classList.remove('lit','hid-v24-morphing','hid-v23-morphing'));}catch(_){ }
-    G.held.clear(); G.started.clear(); G.last=null; G.voice=null;
-  }
-  function overrideGlobals(){
-    try{const old=typeof killAllVoices==='function'?killAllVoices:null; if(old&&!old.__hidV24){const fn=function(){hardReleaseAll('kill'); try{return old.apply(this,arguments)}finally{setTimeout(()=>hardReleaseAll('kill-late'),30)}}; fn.__hidV24=true; eval('killAllVoices=fn');}}catch(_){ }
-    try{const old=typeof stopAll==='function'?stopAll:null; if(old&&!old.__hidV24){const fn=function(){hardReleaseAll('stop'); try{return old.apply(this,arguments)}finally{setTimeout(()=>hardReleaseAll('stop-late'),30)}}; fn.__hidV24=true; eval('stopAll=fn');}}catch(_){ }
-    try{const fn=function(){return buildChromaV24()}; fn.__hidV24=true; eval('buildChroma=fn');}catch(_){window.buildChroma=buildChromaV24;}
-  }
-  function hookButtons(){
-    const kill=$('kill-btn'); if(kill&&!kill.__hidV24){kill.__hidV24=true; kill.addEventListener('click',()=>hardReleaseAll('kill-button'),true);}
-    const stop=$('btn-stop'); if(stop&&!stop.__hidV24){stop.__hidV24=true; stop.addEventListener('click',()=>hardReleaseAll('stop-button'),true);}
-    const sus=$('btn-sustain'); if(sus&&!sus.__hidV24){sus.__hidV24=true; sus.addEventListener('click',()=>setTimeout(()=>{try{if(!S()?.sustain)hardReleaseChroma(true);}catch(_){}},0));}
-    ['blur','pagehide','visibilitychange'].forEach(ev=>{if(document.__hidV24BlurHooked)return;});
-    if(!document.__hidV24BlurHooked){document.__hidV24BlurHooked=true; window.addEventListener('blur',()=>hardReleaseChroma(true)); window.addEventListener('pagehide',()=>hardReleaseAll('pagehide')); document.addEventListener('visibilitychange',()=>{if(document.hidden)hardReleaseChroma(true)});}
-  }
-  function boot(){
-    if(!ensure()) return false;
-    installUI(); /* V29 owns chroma gesture */ overrideGlobals(); hookButtons(); buildChromaV24(); syncUI(); return true;
-  }
-  async function start(){for(let i=0;i<120;i++){try{if(boot())break;}catch(e){console.warn('V24 chroma boot',e)} await new Promise(r=>setTimeout(r,250));} const t=setInterval(()=>{try{boot()}catch(_){ }},1200); setTimeout(()=>clearInterval(t),60000);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-  window.HID_V24_RELEASE_CHROMA=()=>hardReleaseChroma(true);
-  window.HID_V24_REBUILD_CHROMA=()=>boot();
-})();
-</script>
-
-
-
+<!-- Removed obsolete hid-v19-chromatic-bars-scales in V30 cleanup. -->
+<!-- Removed obsolete hid-v19b-chroma-refresh-hooks in V30 cleanup. -->
+<!-- Removed obsolete superseded chromatic layer in V30 cleanup. -->
+<!-- Removed obsolete superseded chromatic layer in V30 cleanup. -->
 <!-- H.I.D. V25 — manual pad arming + chromatic gesture capture -->
 <style id="hid-v25-pad-chroma-record-style">
   .spad-wrap{position:relative}
@@ -11307,6 +10534,219 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',poll,{once:true});else poll();
   window.HID_V29_RELEASE_CHROMA=()=>hardRelease(true);
   window.HID_V29_RESET_TO_HOME=resetRuntimeToHome;
+})();
+</script>
+
+
+
+<!-- H.I.D. V30 — build-mode/key-layout repair, duplicate chroma cleanup, spatial close cleanup, code-polish supervisor -->
+<style id="hid-v30-polish-style">
+  /* V30 keeps the active chroma controls to a single clean strip. */
+  #hid-v23-more,#hid-v23-more-btn,#hid-v24-panel,#hid-v24-more-btn,
+  .hid-v23-chroma-controls,.hid-v24-chroma-controls{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  #hid-v28-chroma-strip{z-index:18!important;gap:6px!important;box-shadow:0 0 12px rgba(0,255,213,.14)}
+  #hid-v28-chroma-strip .hid-v28-label::after{content:' / MODE';}
+  body.hid-v30-polished .piano-wrap{background:radial-gradient(ellipse at center bottom,rgba(0,255,213,.055),#000 72%)!important;}
+  body.hid-v30-polished .piano{margin-left:0!important;margin-right:0!important;transform:translateZ(0);}
+  body.hid-v30-polished .wkey.shape, body.hid-v30-polished .bkey.shape,
+  body.hid-v30-polished .chroma-key.shape{outline:2px solid var(--neon3)!important;filter:saturate(1.35) brightness(1.16)!important;}
+  body.hid-v30-polished #win-spatial.hid-v30-closing{opacity:.45;pointer-events:none;filter:saturate(.4) brightness(.75)}
+</style>
+<script id="hid-v30-build-layout-3d-cleanup">
+(function(){
+  'use strict';
+  if(window.__HID_V30_BUILD_LAYOUT_3D_CLEANUP__) return;
+  window.__HID_V30_BUILD_LAYOUT_3D_CLEANUP__=true;
+
+  // Mark older chromatic engines as installed so they can't be re-lazy-loaded and duplicate controls again.
+  window.__HID_V19_CHROMATIC_BARS__=true;
+  window.__HID_V19B_CHROMA_HOOKS__=true;
+  window.__HID_V23_CHROMA_SCALE_MORPH__=true;
+  window.__HID_V24_CHROMA_SCALE_STUCK_FIX__=true;
+
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(+v)?+v:a));
+  function S(){try{return STATE}catch(_){return null}}
+  function safeToast(msg){try{typeof toast==='function'?toast(msg):console.log(msg)}catch(_){}}
+  function ensureAudio(){try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function')initAudio(); if(typeof ctx!=='undefined'&&ctx&&ctx.state==='suspended')ctx.resume().catch(()=>{});}catch(_){}}
+  function nameOf(m){try{return nName(m)+octOf(m)}catch(_){const N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];return N[((m%12)+12)%12]+(Math.floor(m/12)-1)}}
+  function isBlk(m){try{return isBlack(m)}catch(_){return [1,3,6,8,10].includes(((m%12)+12)%12)}}
+
+  function deDupeChromaControls(){
+    try{
+      const keep=$('#hid-v28-chroma-strip');
+      ['#hid-v23-more','#hid-v24-panel'].forEach(sel=>$$(sel).forEach(n=>n.remove()));
+      // Remove any duplicated V28 strip, keeping the newest/first mounted one.
+      const strips=$$('#hid-v28-chroma-strip,.hid-v28-chroma-strip');
+      let seen=false;
+      strips.forEach(n=>{ if(!seen && (n.id==='hid-v28-chroma-strip'||n.classList.contains('hid-v28-chroma-strip'))){seen=true; if(n.id!=='hid-v28-chroma-strip')n.id='hid-v28-chroma-strip';} else n.remove(); });
+      const strip=$('#hid-v28-chroma-strip')||keep;
+      if(strip){
+        strip.querySelector('.hid-v28-label')?.setAttribute('title','Choose root note, scale/mode, chromatic/scale order, and voice mode.');
+        const scale=$('#hid-v28-scale');
+        if(scale && !scale.__hidV30Audited){
+          scale.__hidV30Audited=true;
+          const required={phrygian:'Phrygian',mixolydian:'Mixolydian',dorian:'Dorian',lydian:'Lydian',locrian:'Locrian',altered:'Altered / Super Locrian'};
+          Object.entries(required).forEach(([v,t])=>{if(!Array.from(scale.options).some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=t;scale.appendChild(o);}});
+        }
+      }
+    }catch(e){console.warn('V30 chroma control cleanup skipped',e)}
+  }
+
+  function highlightActual(m,cls,on){
+    try{
+      $$(`.wkey[data-midi="${m}"],.bkey[data-midi="${m}"],.chroma-key[data-midi="${m}"]`).forEach(el=>el.classList.toggle(cls,!!on));
+    }catch(_){ }
+  }
+  function refreshBuildHighlights(){
+    try{
+      const st=S(); if(!st||!st.shapeNotes) return;
+      $$('.wkey.shape,.bkey.shape,.chroma-key.shape').forEach(el=>el.classList.remove('shape'));
+      Array.from(st.shapeNotes).forEach(m=>highlightActual(+m,'shape',true));
+      const btn=$('#btn-build'); if(btn) btn.classList.toggle('on',!!st.build);
+    }catch(_){ }
+  }
+  function toggleShapeNoteActual(m){
+    const st=S(); if(!st) return;
+    if(!st.shapeNotes) st.shapeNotes=new Set();
+    if(st.shapeNotes.has(m)){st.shapeNotes.delete(m);highlightActual(m,'shape',false);}
+    else{st.shapeNotes.add(m);highlightActual(m,'shape',true);}
+    try{if(typeof updateTape==='function')updateTape();}catch(_){ }
+  }
+
+  // V18 displays true visible MIDI numbers. The original key handler adds octave/transpose again,
+  // which breaks build-mode highlighting after the dynamic keyboard layout is active. This capture
+  // layer owns piano touches and passes the displayed MIDI directly to the engine.
+  function installPianoActualMidiHandler(){
+    const piano=$('#piano'); if(!piano || piano.__hidV30ActualMidi) return;
+    piano.__hidV30ActualMidi=true;
+    let active=false,pid=null,last=null;
+    function keyFromEvent(e){
+      const els=document.elementsFromPoint(e.clientX,e.clientY)||[];
+      return els.find(el=>el&&el.closest&&el.closest('#piano')&&(el.classList.contains('wkey')||el.classList.contains('bkey'))&&el.dataset&&el.dataset.midi);
+    }
+    function downOn(el,e){
+      const st=S(); if(!st) return;
+      const m=+el.dataset.midi; if(!Number.isFinite(m)) return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation&&e.stopImmediatePropagation();
+      ensureAudio(); active=true; pid=e.pointerId; last=m;
+      try{piano.setPointerCapture(pid)}catch(_){ }
+      if(st.build){toggleShapeNoteActual(m); return;}
+      try{if(typeof pressNoteByDisplay==='function')pressNoteByDisplay(m);else if(typeof pressNote==='function')pressNote(m);}catch(err){console.warn('V30 piano press recovered',err)}
+    }
+    function move(e){
+      const st=S(); if(!active||e.pointerId!==pid||!st) return;
+      const mode=st?.pianoView?.keySlideMode;
+      if(mode!=='play') return;
+      const el=keyFromEvent(e); if(!el) return;
+      const m=+el.dataset.midi; if(!Number.isFinite(m)||m===last) return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation&&e.stopImmediatePropagation();
+      if(st.build){last=m; toggleShapeNoteActual(m); return;}
+      try{ if(last!=null) releaseNoteByDisplay(last); pressNoteByDisplay(m); }catch(_){ }
+      last=m;
+    }
+    function up(e){
+      const st=S(); if(!active||(pid!=null&&e.pointerId!==pid)) return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation&&e.stopImmediatePropagation();
+      if(last!=null && !st?.build){try{releaseNoteByDisplay(last)}catch(_){ }}
+      try{piano.releasePointerCapture(pid)}catch(_){ }
+      active=false; pid=null; last=null;
+    }
+    piano.addEventListener('pointerdown',e=>{const el=e.target.closest?.('.wkey,.bkey'); if(el&&el.closest('#piano'))downOn(el,e);},{capture:true,passive:false});
+    piano.addEventListener('pointermove',move,{capture:true,passive:false});
+    ['pointerup','pointercancel','lostpointercapture'].forEach(t=>piano.addEventListener(t,up,{capture:true,passive:false}));
+  }
+
+  function normalizePianoLayout(){
+    try{
+      const piano=$('#piano'), wrap=$('.piano-wrap'), st=S(); if(!piano||!wrap||!st) return;
+      const whites=$$('#piano .wkey'); if(!whites.length) return;
+      const requested=clamp(st?.pianoView?.keyWidth||42,24,96);
+      const wrapW=Math.max(1,wrap.clientWidth||0);
+      // Fill the visible area if chosen key thickness would leave a large dead zone on the right.
+      const actual=Math.max(requested, Math.floor(wrapW/whites.length));
+      const blackW=Math.max(18,Math.round(actual*.58));
+      const total=whites.length*actual;
+      piano.style.width=total+'px'; piano.style.minWidth=total+'px'; piano.style.maxWidth='none'; piano.style.marginLeft='0'; piano.style.marginRight='0';
+      whites.forEach(k=>{k.style.flex='0 0 '+actual+'px';k.style.minWidth=actual+'px';});
+      $$('#piano .bkey').forEach(b=>{
+        const m=+b.dataset.midi; let prev=0;
+        const start=Math.min(...$$('#piano [data-midi]').map(e=>+e.dataset.midi).filter(Number.isFinite));
+        for(let x=start;x<m;x++) if(!isBlk(x)) prev++;
+        b.style.width=blackW+'px'; b.style.left=Math.max(0,prev*actual-blackW/2)+'px';
+      });
+      refreshBuildHighlights();
+    }catch(e){console.warn('V30 piano normalize skipped',e)}
+  }
+
+  function installPianoObserver(){
+    const piano=$('#piano'); if(!piano||piano.__hidV30Observed) return;
+    piano.__hidV30Observed=true;
+    let t=0;
+    const schedule=()=>{clearTimeout(t);t=setTimeout(()=>{installPianoActualMidiHandler();normalizePianoLayout();refreshBuildHighlights();},30)};
+    new MutationObserver(schedule).observe(piano,{childList:true,subtree:false,attributes:false});
+    schedule();
+  }
+
+  function spatialHardOff(){
+    try{
+      if(typeof __spatialAnimRaf!=='undefined' && __spatialAnimRaf){cancelAnimationFrame(__spatialAnimRaf); __spatialAnimRaf=null;}
+    }catch(_){ }
+    try{
+      if(typeof spatialFX!=='undefined' && spatialFX){
+        spatialFX.enabled=false; spatialFX.dragId=null;
+        if(spatialFX.nodes){
+          const n=spatialFX.nodes, now=(typeof ctx!=='undefined'&&ctx)?ctx.currentTime:0;
+          ['spWet','spFb','spLfoGain','spTone'].forEach(k=>{try{n[k]?.gain?.cancelScheduledValues(now);n[k]?.gain?.setTargetAtTime(0,now,.025)}catch(_){ }});
+          try{n.spDry?.gain?.setTargetAtTime(1,now,.025)}catch(_){ }
+        }
+        if(Array.isArray(spatialFX.points)) spatialFX.points.forEach(p=>{try{p.nodes?.out?.gain?.setTargetAtTime(0,ctx.currentTime,.025)}catch(_){ }});
+        try{if(typeof applySpatialFX==='function')applySpatialFX();}catch(_){ }
+      }
+    }catch(e){console.warn('V30 spatial hard off skipped',e)}
+  }
+  function installSpatialCloseFix(){
+    if(window.__HID_V30_SPATIAL_CLOSE_FIX__) return; window.__HID_V30_SPATIAL_CLOSE_FIX__=true;
+    try{
+      if(typeof toggleWindow==='function'&&!toggleWindow.__hidV30){
+        const old=toggleWindow;
+        const fn=function(id,force){
+          try{
+            if(id==='spatial'){
+              const w=(typeof WIN!=='undefined'&&WIN.spatial)?WIN.spatial:null;
+              const visible=w?!w.el.classList.contains('hidden'):false;
+              const want=force===undefined?!visible:force;
+              if(!want) spatialHardOff();
+            }
+          }catch(_){ }
+          const r=old.apply(this,arguments);
+          try{ if(id==='spatial'&&force===false){setTimeout(()=>{const w=WIN?.spatial?.el;if(w){w.classList.add('hidden');w.classList.remove('hid-v30-closing');}},25);} }catch(_){ }
+          return r;
+        };
+        fn.__hidV30=true; toggleWindow=fn;
+      }
+    }catch(_){ }
+    document.addEventListener('click',e=>{
+      const close=e.target?.closest?.('#win-spatial .win-btn.close');
+      if(!close) return;
+      try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation&&e.stopImmediatePropagation();}catch(_){ }
+      const w=$('#win-spatial'); if(w)w.classList.add('hid-v30-closing');
+      spatialHardOff();
+      setTimeout(()=>{try{if(typeof toggleWindow==='function')toggleWindow('spatial',false); const el=$('#win-spatial'); if(el){el.classList.add('hidden');el.classList.remove('hid-v30-closing');} const lb=document.querySelector('.launcher-btn[data-w="spatial"]'); if(lb)lb.classList.remove('open');}catch(_){ }},20);
+    },{capture:true,passive:false});
+    document.addEventListener('click',e=>{ if(e.target?.closest?.('#spatial-toggle')){ setTimeout(()=>{try{ if(typeof spatialFX!=='undefined'&&spatialFX&&!spatialFX.enabled) spatialHardOff(); }catch(_){ }},35); } },true);
+  }
+
+  function boot(){
+    document.body?.classList.add('hid-v30-polished');
+    deDupeChromaControls(); installPianoObserver(); installPianoActualMidiHandler(); normalizePianoLayout(); refreshBuildHighlights(); installSpatialCloseFix();
+  }
+  function loop(){boot(); setTimeout(boot,250); setTimeout(boot,1000);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loop,{once:true});else loop();
+  setInterval(()=>{try{boot()}catch(_){ }},1500);
+  window.HID_V30_REFRESH=boot;
+  window.HID_V30_SPATIAL_HARD_OFF=spatialHardOff;
 })();
 </script>
 
