@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hold It Down">
 <meta name="theme-color" content="#000000">
-<title>HOLD IT DOWN — Mario Garcia</title>
+<title>HOLD IT DOWN — Mario Garcia</title>\n<script id="hid-v29-hard-reset-preboot">\n/* V29: start clean on every reload from the homepage. Saved .hidproject files are not affected.\n   Add ?keepstate=1 only for debugging if you intentionally want browser state kept. */\n(function(){\n  try{\n    var keep=/[?&]keepstate=1\\b/.test(location.search);\n    if(!keep){\n      var kill=[];\n      for(var i=0;i<localStorage.length;i++){\n        var k=localStorage.key(i);\n        if(/^hid/i.test(k)||/^hold-it-down/i.test(k)||/^HID/.test(k)||/RemoteV|Color_|HostColors|Chroma|Layout|windowLayout/i.test(k)) kill.push(k);\n      }\n      kill.forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});\n      try{sessionStorage.clear()}catch(e){}\n      window.__HID_V29_BOOT_HARD_RESET__=true;\n    }\n  }catch(e){console.warn('HID V29 hard-reset preboot skipped',e)}\n})();\n</script>\n
 <link rel="preload" as="style" href="https://fonts.googleapis.com?display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link href="https://fonts.googleapis.com?display=swap" rel="stylesheet"></noscript>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10139,7 +10139,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   }
   function boot(){
     if(!ensure()) return false;
-    try{installControls(); overrideBuild(); installGesture(); buildChromaV23(); hookChromaButton(); syncControls();}catch(e){console.warn('V23 chroma boot issue',e)}
+    try{installControls(); overrideBuild(); /* V29 owns chroma gesture */ buildChromaV23(); hookChromaButton(); syncControls();}catch(e){console.warn('V23 chroma boot issue',e)}
     return true;
   }
   async function poll(){for(let i=0;i<90;i++){if(boot()) break; await sleep(250);} const t=setInterval(boot,1200); setTimeout(()=>clearInterval(t),45000);}
@@ -10433,7 +10433,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   }
   function boot(){
     if(!ensure()) return false;
-    installUI(); installGesture(); overrideGlobals(); hookButtons(); buildChromaV24(); syncUI(); return true;
+    installUI(); /* V29 owns chroma gesture */ overrideGlobals(); hookButtons(); buildChromaV24(); syncUI(); return true;
   }
   async function start(){for(let i=0;i<120;i++){try{if(boot())break;}catch(e){console.warn('V24 chroma boot',e)} await new Promise(r=>setTimeout(r,250));} const t=setInterval(()=>{try{boot()}catch(_){ }},1200); setTimeout(()=>clearInterval(t),60000);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
@@ -11061,7 +11061,7 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
     ['killAllVoices','stopAll','releaseAllSmooth'].forEach(name=>{try{const old=eval(name); if(typeof old==='function'&&!old.__hidV28){const fn=function(){hardReleaseChroma(true); const r=old.apply(this,arguments); hardReleaseChroma(true); return r;}; fn.__hidV28=true; eval(name+'=fn');}}catch(_){ }});
     const kill=$('#kill-btn'); if(kill&&!kill.__hidV28){kill.__hidV28=true; kill.addEventListener('click',()=>setTimeout(()=>hardReleaseChroma(true),0),true);}
   }
-  function bootChroma(){if(!S())return false; ensureCfg(); installControls(); renderBars(); installGesture(); wrapKill(); syncControls(); return true;}
+  function bootChroma(){if(!S())return false; ensureCfg(); installControls(); renderBars(); /* V29 owns chroma gesture */ wrapKill(); syncControls(); return true;}
 
   async function loadLazy(id){const n=document.getElementById(id); if(!n||n.__hidLoaded) return true; try{const sc=document.createElement('script'); sc.textContent=(n.textContent||'')+'\n//# sourceURL='+id+'.js'; document.body.appendChild(sc); n.__hidLoaded=true; return true;}catch(e){console.warn('V28 lazy load failed',id,e); return false;}}
   async function openRemoteSafe(ev){
@@ -11095,6 +11095,218 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
   window.HID_V28_RESTORE_FEATURES=()=>{bootChroma();bindRemote();quietLoader();};
   window.HID_V28_RELEASE_CHROMA=()=>hardReleaseChroma(true);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loop,{once:true}); else loop();
+})();
+</script>
+
+
+
+<!-- H.I.D. V29 — clean chromatic legato engine + hard reset supervisor -->
+<style id="hid-v29-clean-chroma-style">
+  body.hid-v29-chroma-engine #chroma .chroma-key.hid-v29-legato-source{outline:1px solid rgba(255,230,0,.85);box-shadow:0 0 18px rgba(255,230,0,.55),inset 0 0 14px rgba(255,255,255,.18)!important}
+  body.hid-v29-chroma-engine #chroma .chroma-key.hid-v29-afterglow{animation:hidV29Afterglow .55s ease-out forwards}
+  @keyframes hidV29Afterglow{0%{filter:brightness(1.4) saturate(1.55);transform:translateY(-1px)}100%{filter:brightness(1) saturate(1);transform:none}}
+  #hid-v29-reset-note{position:fixed;right:10px;bottom:10px;z-index:99999;padding:5px 8px;border:1px solid rgba(0,255,213,.25);background:rgba(0,0,0,.68);color:var(--neon);font-family:'VT323',monospace;font-size:11px;letter-spacing:.08em;pointer-events:none;opacity:.0;transition:opacity .25s}
+  #hid-v29-reset-note.show{opacity:.75}
+</style>
+<script id="hid-v29-clean-chroma-legato-reset">
+(function(){
+  'use strict';
+  if(window.__HID_V29_CLEAN_CHROMA__) return;
+  window.__HID_V29_CLEAN_CHROMA__=true;
+
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(+v)?+v:a));
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function st(){try{return STATE}catch(_){return null}}
+  function ctxNow(){try{return ctx&&ctx.currentTime||0}catch(_){return 0}}
+  function call(name,...args){try{const fn=eval(name); if(typeof fn==='function') return fn(...args)}catch(_){ } }
+  function freq(m){try{return freqOf(m)}catch(_){return 440*Math.pow(2,(m-69)/12)}}
+  function notify(msg){try{let n=$('#hid-v29-reset-note'); if(!n){n=document.createElement('div');n.id='hid-v29-reset-note';document.body.appendChild(n)} n.textContent=msg; n.classList.add('show'); clearTimeout(n._t); n._t=setTimeout(()=>n.classList.remove('show'),1300);}catch(_){}}
+  function ensureAudio(){try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function')initAudio(); if(ctx&&ctx.state==='suspended')ctx.resume().catch(()=>{});}catch(_){}}
+
+  // Every true browser reload begins from a blank performance state. This clears runtime residue that
+  // can survive BFCache/page restores and then shows the homepage instead of a stale playing screen.
+  function resetRuntimeToHome(){
+    try{
+      const S=st();
+      if(S){
+        try{if(typeof killAllVoices==='function')killAllVoices()}catch(_){ }
+        try{if(typeof stopAll==='function')stopAll()}catch(_){ }
+        try{S.activeNotes&&S.activeNotes.clear&&S.activeNotes.clear()}catch(_){ }
+        try{S.shapeNotes&&S.shapeNotes.clear&&S.shapeNotes.clear()}catch(_){ }
+        try{S.chromatic=false;S.build=false;S.sustain=false;S.octave=0;S.transpose=0;S.voiceMode='poly';}catch(_){ }
+      }
+      document.documentElement.classList.remove('hid-entered');
+      document.body&&document.body.classList.remove('hid-entered');
+      const app=$('#app'), launch=$('#launch');
+      if(app&&!app.dataset.hidV29UserLaunched){app.classList.remove('active');app.style.display='none';app.setAttribute('aria-hidden','true');}
+      if(launch&&!app?.dataset.hidV29UserLaunched){launch.style.display='grid';launch.style.pointerEvents='auto';launch.removeAttribute('aria-hidden');}
+    }catch(e){console.warn('V29 runtime reset skipped',e)}
+  }
+  function markLaunched(){const app=$('#app'); if(app)app.dataset.hidV29UserLaunched='1';}
+  ['pointerdown','click','touchstart'].forEach(type=>document.addEventListener(type,e=>{if(e.target&&e.target.closest&&e.target.closest('#launch-btn,#prelaunch-continue')) markLaunched();},{capture:true,passive:true}));
+  window.addEventListener('pageshow',e=>{try{if(e.persisted)resetRuntimeToHome()}catch(_){ }});
+
+  const G={active:false,pid:null,last:null,voice:null,held:new Map(),started:new Set(),lastMorph:false};
+
+  function chromaActive(){const c=$('#chroma'); return !!(c&&c.classList.contains('active')&&getComputedStyle(c).display!=='none');}
+  function barAt(x,y){
+    const els=document.elementsFromPoint(x,y)||[];
+    return els.find(el=>el&&el.closest&&el.closest('#chroma')&&el.classList&&el.classList.contains('chroma-key')&&el.dataset&&el.dataset.midi);
+  }
+  function isTopZone(el,y){
+    try{const S=st(); const cfg=S?.chromaV24||S?.chromaV23||{}; if(cfg.topMorph===false||cfg.morph===false) return false; const r=el.getBoundingClientRect(); return ((y-r.top)/Math.max(1,r.height))<=clamp(cfg.topZone??.36,.1,.8);}catch(_){return false}
+  }
+  function paint(m,on,morph=false){
+    try{
+      const el=$(`#chroma .chroma-key[data-midi="${m}"]`);
+      if(!el) return;
+      el.classList.toggle('lit',!!on);
+      el.classList.toggle('morph',!!on&&!!morph);
+      el.classList.toggle('hid-v29-legato-source',!!on&&!!morph);
+      if(!on){el.classList.add('hid-v29-afterglow'); setTimeout(()=>el.classList.remove('hid-v29-afterglow'),580);}
+    }catch(_){ }
+  }
+  function applyMorph(v,morph,amt){
+    try{
+      if(!v||!v.filt||!ctx) return;
+      const t=ctx.currentTime;
+      if(v._hidV29BaseCut==null) v._hidV29BaseCut=clamp(v.filt.frequency.value||1800,80,18000);
+      if(v._hidV29BaseQ==null) v._hidV29BaseQ=clamp(v.filt.Q.value||.8,.01,18);
+      const a=morph?clamp(amt??.72,0,1):0;
+      const targetCut=clamp(v._hidV29BaseCut*(1+2.2*a)+2600*a,80,19000);
+      const targetQ=clamp(v._hidV29BaseQ+6.5*a,.05,18);
+      v.filt.frequency.cancelScheduledValues(t); v.filt.frequency.setTargetAtTime(targetCut,t,.07);
+      v.filt.Q.cancelScheduledValues(t); v.filt.Q.setTargetAtTime(targetQ,t,.08);
+      if(v.oscs){
+        v.oscs.forEach((o,i)=>{try{const osc=o.osc;if(!osc||!osc.detune)return;if(o._hidV29BaseDet==null)o._hidV29BaseDet=osc._origDetune||osc.detune.value||0; osc.detune.cancelScheduledValues(t); osc.detune.setTargetAtTime(o._hidV29BaseDet+(i%2?5:-3)*a,t,.06);}catch(_){ }});
+      }
+    }catch(_){ }
+  }
+  function startVoiceClean(m,morph){
+    ensureAudio();
+    const S=st(); if(!S) return null;
+    let v=null;
+    try{v=startVoice(m,.84);}
+    catch(e){console.warn('V29 chroma start failed',e);return null;}
+    if(!v) return null;
+    v.__hidV29Chroma=true; v.__hidV28Chroma=true; v.__hidV24Chroma=true; v.midi=m;
+    // Capture stable oscillator frequency ratios once. Reusing these ratios prevents cumulative detune drift.
+    try{const f=freq(m); v._hidV29OscRatios=(v.oscs||[]).map(o=>clamp((o.osc.frequency.value||f)/Math.max(1,f),.125,16)); if(v.fmOsc)v._hidV29FmRatio=clamp((v.fmOsc.frequency.value||f)/Math.max(1,f),.125,32);}catch(_){ }
+    try{S.activeNotes.set(m,v)}catch(_){ }
+    G.held.set(m,v); paint(m,true,morph); applyMorph(v,morph,S?.chromaV24?.morphAmt??S?.chromaV23?.morphAmount??.72);
+    try{recordEvent({type:'on',midi:m,vel:.84}); if(S.padArmedRec>=0&&typeof padCaptureNote==='function')padCaptureNote(m,'on'); if(S.viz?.active&&typeof vizPulse==='function')vizPulse(m,morph?1.6:1);}catch(_){ }
+    return v;
+  }
+  function releaseVoiceClean(m,force=false){
+    const S=st(); const v=G.held.get(m)||S?.activeNotes?.get?.(m); if(!v) return;
+    if(S?.sustain&&!force) return;
+    try{v.fadeOut?v.fadeOut(force?14:34):v.release&&v.release()}catch(_){ }
+    try{S?.activeNotes?.delete?.(m)}catch(_){ }
+    G.held.delete(m); G.started.delete(m); paint(m,false,false);
+    try{recordEvent({type:'off',midi:m}); if(S?.padArmedRec>=0&&typeof padCaptureNote==='function')padCaptureNote(m,'off');}catch(_){ }
+  }
+  function hardRelease(force=true){
+    try{Array.from(G.held.keys()).forEach(m=>releaseVoiceClean(m,force));}catch(_){ }
+    try{const S=st(); S?.activeNotes?.forEach?.((v,m)=>{if(v&&v.__hidV29Chroma)releaseVoiceClean(m,true)});}catch(_){ }
+    $$('#chroma .lit,#chroma .morph,#chroma .hid-v29-legato-source').forEach(el=>el.classList.remove('lit','morph','hid-v29-legato-source'));
+    G.active=false; G.pid=null; G.last=null; G.voice=null; G.started.clear(); G.held.clear(); G.lastMorph=false;
+  }
+  function glideVoiceClean(v,oldMidi,newMidi,morph){
+    try{
+      if(!v||!ctx) return false;
+      const t=ctx.currentTime, newF=freq(newMidi);
+      if(!v._hidV29OscRatios){const oldF=freq(oldMidi); v._hidV29OscRatios=(v.oscs||[]).map(o=>clamp((o.osc.frequency.value||oldF)/Math.max(1,oldF),.125,16)); if(v.fmOsc)v._hidV29FmRatio=clamp((v.fmOsc.frequency.value||oldF)/Math.max(1,oldF),.125,32);}
+      const tau=clamp(st()?.mod?.glide??st()?.modWheel?.glide??.075,.018,.85);
+      (v.oscs||[]).forEach((o,i)=>{try{const ratio=v._hidV29OscRatios[i]||1; o.osc.frequency.cancelScheduledValues(t); o.osc.frequency.setTargetAtTime(newF*ratio,t,tau);}catch(_){ }});
+      if(v.fmOsc&&v.fmOsc.frequency){v.fmOsc.frequency.cancelScheduledValues(t); v.fmOsc.frequency.setTargetAtTime(newF*(v._hidV29FmRatio||1),t,tau);}
+      applyMorph(v,morph,st()?.chromaV24?.morphAmt??st()?.chromaV23?.morphAmount??.72);
+      v.midi=newMidi;
+      return true;
+    }catch(e){console.warn('V29 glide failed',e);return false;}
+  }
+  function toggleBuildNote(m){
+    const S=st(); if(!S) return;
+    if(G.started.has(m)) return; G.started.add(m);
+    try{if(S.shapeNotes.has(m)){S.shapeNotes.delete(m);highlightKey(m,'shape',false);}else{S.shapeNotes.add(m);highlightKey(m,'shape',true);}}catch(_){ }
+  }
+  function handle(m,morph){
+    const S=st(); if(!S||!Number.isFinite(m)) return;
+    if(S.build){toggleBuildNote(m);return;}
+    if(S.arp?.enabled){
+      if(G.last!==m){try{if(G.last!=null)releaseNoteByDisplay(G.last); pressNoteByDisplay(m);}catch(_){ }}
+      G.last=m; return;
+    }
+    const mode=String(S.voiceMode||'poly').toLowerCase();
+    if(mode==='poly'){
+      if(!G.held.has(m)){startVoiceClean(m,morph); G.started.add(m);} else {applyMorph(G.held.get(m),morph,S?.chromaV24?.morphAmt??.72); paint(m,true,morph);}
+      G.last=m; G.lastMorph=morph; return;
+    }
+    if(mode==='mono'){
+      if(G.last===m&&G.lastMorph===morph) return;
+      Array.from(G.held.keys()).forEach(x=>releaseVoiceClean(x,true));
+      G.voice=startVoiceClean(m,morph); G.last=m; G.lastMorph=morph; return;
+    }
+    // LEGATO: one continuous voice with fixed oscillator ratios; no cumulative frequency-ratio drift.
+    if(!G.voice||!G.held.has(G.last)){
+      hardRelease(true);
+      G.voice=startVoiceClean(m,morph); G.last=m; G.lastMorph=morph; return;
+    }
+    if(G.last===m){applyMorph(G.voice,morph,S?.chromaV24?.morphAmt??.72); paint(m,true,morph); G.lastMorph=morph; return;}
+    const old=G.last;
+    if(glideVoiceClean(G.voice,old,m,morph)){
+      try{S.activeNotes.delete(old); S.activeNotes.set(m,G.voice);}catch(_){ }
+      G.held.delete(old); G.held.set(m,G.voice);
+      paint(old,false,false); paint(m,true,morph);
+      try{recordEvent({type:'glide',from:old,to:m,midi:m}); if(S.padArmedRec>=0&&typeof padCaptureNote==='function')padCaptureNote(m,'glide',{from:old,to:m,morph:!!morph});}catch(_){ }
+      G.last=m; G.lastMorph=morph;
+    }else{
+      releaseVoiceClean(old,true); G.voice=startVoiceClean(m,morph); G.last=m; G.lastMorph=morph;
+    }
+  }
+  function hitFromEvent(e){if(!chromaActive())return null; const b=barAt(e.clientX,e.clientY); if(!b)return null; const m=+b.dataset.midi; if(!Number.isFinite(m)) return null; return {m,morph:isTopZone(b,e.clientY)};}
+  function eat(e){try{e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}catch(_){ }}
+  function installGesture(){
+    if(window.__HID_V29_GESTURE_ON__) return; window.__HID_V29_GESTURE_ON__=true;
+    window.addEventListener('pointerdown',e=>{const h=hitFromEvent(e); if(!h)return; eat(e); G.active=true; G.pid=e.pointerId; G.last=null; G.started.clear(); try{$('#chroma')?.setPointerCapture(e.pointerId)}catch(_){ } handle(h.m,h.morph);},{capture:true,passive:false});
+    window.addEventListener('pointermove',e=>{if(!G.active||e.pointerId!==G.pid)return; const h=hitFromEvent(e); if(!h)return; eat(e); handle(h.m,h.morph);},{capture:true,passive:false});
+    ['pointerup','pointercancel','lostpointercapture'].forEach(type=>window.addEventListener(type,e=>{if(!G.active||type==='lostpointercapture'||e.pointerId===G.pid){eat(e); const S=st(); if(!S?.build && !S?.sustain){if(String(S?.voiceMode||'poly').toLowerCase()==='poly')Array.from(G.held.keys()).forEach(m=>releaseVoiceClean(m,false)); else if(G.last!=null)releaseVoiceClean(G.last,false);} G.active=false; G.pid=null; G.last=null; G.voice=null; G.started.clear();}}, {capture:true,passive:false}));
+    window.addEventListener('blur',()=>hardRelease(true),{capture:true});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)hardRelease(true)},{capture:true});
+  }
+  function wrapKillAndSustain(){
+    if(!window.__HID_V29_KILL_WRAP__){
+      window.__HID_V29_KILL_WRAP__=true;
+      ['killAllVoices','stopAll','releaseAllSmooth'].forEach(name=>{try{const old=eval(name); if(typeof old==='function'&&!old.__hidV29){const fn=function(){hardRelease(true); const r=old.apply(this,arguments); setTimeout(()=>hardRelease(true),15); return r;}; fn.__hidV29=true; eval(name+'=fn');}}catch(_){ }});
+      const kill=$('#kill-btn'); if(kill&&!kill.__hidV29){kill.__hidV29=true; kill.addEventListener('click',()=>setTimeout(()=>hardRelease(true),0),true);}
+      const sus=$('#btn-sustain'); if(sus&&!sus.__hidV29){sus.__hidV29=true; sus.addEventListener('click',()=>setTimeout(()=>{try{if(!st()?.sustain)hardRelease(true)}catch(_){ }},0),true);}
+    }
+  }
+  function syncScaleDefaults(){
+    try{
+      const S=st(); if(!S) return;
+      if(!S.chromaV24) S.chromaV24={root:0,scale:'mixolydian',layout:'scale',color:'rainbow',hue:178,morph:true,morphAmt:.7,topZone:.38};
+      if(!S.chromaV24.scale) S.chromaV24.scale='mixolydian';
+      if(!S.chromaV24.layout) S.chromaV24.layout='scale';
+      if(!S.voiceMode) S.voiceMode='poly';
+    }catch(_){ }
+  }
+  function boot(){
+    if(!st()) return false;
+    syncScaleDefaults();
+    document.body.classList.add('hid-v29-chroma-engine');
+    installGesture(); wrapKillAndSustain();
+    try{window.HID_V28_RESTORE_FEATURES&&window.HID_V28_RESTORE_FEATURES()}catch(_){ }
+    return true;
+  }
+  async function poll(){
+    for(let i=0;i<180;i++){try{if(boot())break;}catch(e){console.warn('V29 boot issue',e)} await sleep(250)}
+    setInterval(()=>{try{boot()}catch(_){ }},1500);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',poll,{once:true});else poll();
+  window.HID_V29_RELEASE_CHROMA=()=>hardRelease(true);
+  window.HID_V29_RESET_TO_HOME=resetRuntimeToHome;
 })();
 </script>
 
