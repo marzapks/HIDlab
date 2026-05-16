@@ -11347,5 +11347,362 @@ document.addEventListener('visibilitychange', ()=>{
 })();
 </script>
 
+
+<!-- ===== HID V33 PROJECT SAVE/LOAD REPAIR ===== -->
+<script>
+(function(){
+if(window.__HID_PROJECT_V33__) return;
+window.__HID_PROJECT_V33__ = true;
+
+const HID_PROJECT_VERSION = 33;
+
+function q(sel){ return document.querySelector(sel); }
+function qa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function safeJSON(value){
+  try { return JSON.parse(JSON.stringify(value, function(k,v){
+    if(typeof v === 'function') return undefined;
+    if(v instanceof AudioNode) return undefined;
+    if(v instanceof AudioBuffer) return undefined;
+    if(v instanceof HTMLElement) return undefined;
+    if(v instanceof EventTarget) return undefined;
+    return v;
+  })); } catch(e){ return null; }
+}
+
+function collectCSSVars(){
+  const root = getComputedStyle(document.documentElement);
+  const vars = {};
+  [
+    '--bg','--neon','--neon2','--neon3','--text','--dim',
+    '--white-key','--black-key','--panel','--stroke',
+    '--window-glow','--hid-window-glow','--hid-white-key-solid','--hid-black-key-solid'
+  ].forEach(v=>{
+    const val = root.getPropertyValue(v).trim();
+    if(val) vars[v]=val;
+  });
+  return vars;
+}
+
+function applyCSSVars(vars){
+  if(!vars || typeof vars !== 'object') return;
+  Object.entries(vars).forEach(([k,v])=>{
+    if(k && typeof v === 'string') document.documentElement.style.setProperty(k,v);
+  });
+}
+
+function collectInputs(){
+  const data = {};
+  qa('input, select, textarea').forEach((el,i)=>{
+    if(!el.id && !el.name) return;
+    const key = el.id || el.name;
+    if(!key) return;
+    if(el.type === 'file') return;
+    if(el.type === 'checkbox') data[key] = !!el.checked;
+    else if(el.type === 'radio') { if(el.checked) data[key] = el.value; }
+    else data[key] = el.value;
+  });
+  return data;
+}
+
+function applyInputs(data){
+  if(!data || typeof data !== 'object') return;
+  Object.entries(data).forEach(([key,val])=>{
+    const els = qa('#'+CSS.escape(key)+', [name="'+String(key).replace(/"/g,'\\"')+'"]');
+    els.forEach(el=>{
+      if(el.type === 'file') return;
+      if(el.type === 'checkbox') el.checked = !!val;
+      else if(el.type === 'radio') el.checked = (el.value == val);
+      else el.value = val;
+      try { el.dispatchEvent(new Event('input', {bubbles:true})); } catch(e){}
+      try { el.dispatchEvent(new Event('change', {bubbles:true})); } catch(e){}
+    });
+  });
+}
+
+async function audioBufferToWavDataURL(buffer){
+  if(!buffer || typeof buffer.numberOfChannels !== 'number') return null;
+  const numCh = Math.min(buffer.numberOfChannels, 2);
+  const sampleRate = buffer.sampleRate || 44100;
+  const length = buffer.length;
+  const bytesPerSample = 2;
+  const blockAlign = numCh * bytesPerSample;
+  const wav = new ArrayBuffer(44 + length * blockAlign);
+  const view = new DataView(wav);
+  let offset = 0;
+  function str(s){ for(let i=0;i<s.length;i++) view.setUint8(offset++, s.charCodeAt(i)); }
+  str('RIFF'); view.setUint32(offset, 36 + length * blockAlign, true); offset+=4;
+  str('WAVE'); str('fmt '); view.setUint32(offset,16,true); offset+=4;
+  view.setUint16(offset,1,true); offset+=2;
+  view.setUint16(offset,numCh,true); offset+=2;
+  view.setUint32(offset,sampleRate,true); offset+=4;
+  view.setUint32(offset,sampleRate*blockAlign,true); offset+=4;
+  view.setUint16(offset,blockAlign,true); offset+=2;
+  view.setUint16(offset,16,true); offset+=2;
+  str('data'); view.setUint32(offset,length*blockAlign,true); offset+=4;
+  for(let i=0;i<length;i++){
+    for(let c=0;c<numCh;c++){
+      let sample = buffer.getChannelData(c)[i] || 0;
+      sample = Math.max(-1, Math.min(1, sample));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      offset += 2;
+    }
+  }
+  const blob = new Blob([wav], {type:'audio/wav'});
+  return await new Promise(resolve=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = ()=>resolve(null);
+    r.readAsDataURL(blob);
+  });
+}
+
+function findLikelyProjectState(){
+  const out = {};
+  const names = [
+    'STATE','APP_STATE','HID_STATE','PROJECT','project','settings',
+    'pads','PAD_STATE','padState','slots','SLOTS',
+    'arpState','ARP','chromaState','CHROMA','visualizerState',
+    'fxState','FX','soundState','SOUND','uiColors'
+  ];
+  names.forEach(name=>{
+    try{
+      if(window[name] !== undefined) out[name] = safeJSON(window[name]);
+    }catch(e){}
+  });
+  return out;
+}
+
+async function collectPadAudioData(project){
+  project.embeddedAudio = project.embeddedAudio || {};
+  const seen = new Set();
+  function walk(obj,path,depth){
+    if(!obj || depth>6) return;
+    if(seen.has(obj)) return;
+    if(typeof obj !== 'object') return;
+    seen.add(obj);
+    if(typeof AudioBuffer !== 'undefined' && obj instanceof AudioBuffer){
+      project.embeddedAudio[path] = obj;
+      return;
+    }
+    for(const k in obj){
+      try{
+        const v = obj[k];
+        if(typeof AudioBuffer !== 'undefined' && v instanceof AudioBuffer){
+          project.embeddedAudio[path+'.'+k] = v;
+        }else if(v && typeof v === 'object'){
+          walk(v,path+'.'+k,depth+1);
+        }
+      }catch(e){}
+    }
+  }
+  ['pads','PAD_STATE','padState','STATE'].forEach(n=>{
+    try{ if(window[n]) walk(window[n], n, 0); }catch(e){}
+  });
+  const entries = Object.entries(project.embeddedAudio);
+  const encoded = {};
+  for(const [path,buf] of entries){
+    try{
+      encoded[path] = await audioBufferToWavDataURL(buf);
+    }catch(e){}
+  }
+  project.embeddedAudio = encoded;
+}
+
+async function makeProject(){
+  const project = {
+    app:'Hold It Down',
+    type:'hidproject',
+    version:HID_PROJECT_VERSION,
+    created:new Date().toISOString(),
+    cssVars:collectCSSVars(),
+    inputs:collectInputs(),
+    localStorage:{},
+    state:findLikelyProjectState(),
+    notes:'Full project file generated by HID V33 project system.'
+  };
+
+  try{
+    Object.keys(localStorage).forEach(k=>{
+      if(/^hid|hold|app|mario|pad|chroma|arp|fx|sound|ui|window|project/i.test(k)){
+        project.localStorage[k] = localStorage.getItem(k);
+      }
+    });
+  }catch(e){}
+
+  await collectPadAudioData(project);
+  return project;
+}
+
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+async function saveProjectFile(){
+  try{
+    const project = await makeProject();
+    const text = JSON.stringify(project, null, 2);
+    const blob = new Blob([text], {type:'application/json'});
+    const name = 'hold-it-down-project-' + new Date().toISOString().replace(/[:.]/g,'-') + '.hidproject';
+    downloadBlob(blob,name);
+    toast('Project saved: .hidproject');
+  }catch(err){
+    console.error(err);
+    alert('Project save failed: ' + (err && err.message ? err.message : err));
+  }
+}
+
+function decodeProjectText(text){
+  let obj = null;
+  try { obj = JSON.parse(text); } catch(e){}
+  if(!obj){
+    // Some iOS file flows may wrap JSON as text/plain with whitespace/BOM.
+    const cleaned = text.replace(/^\uFEFF/,'').trim();
+    obj = JSON.parse(cleaned);
+  }
+  return obj;
+}
+
+function restoreProject(project){
+  if(!project || typeof project !== 'object') throw new Error('Invalid project file.');
+
+  applyCSSVars(project.cssVars);
+  applyInputs(project.inputs);
+
+  if(project.localStorage && typeof project.localStorage === 'object'){
+    try{
+      Object.entries(project.localStorage).forEach(([k,v])=>{
+        if(typeof v === 'string') localStorage.setItem(k,v);
+      });
+    }catch(e){}
+  }
+
+  if(project.state && typeof project.state === 'object'){
+    Object.entries(project.state).forEach(([k,v])=>{
+      try{
+        if(window[k] !== undefined && v !== null){
+          if(Array.isArray(window[k]) && Array.isArray(v)){
+            window[k].splice(0, window[k].length, ...v);
+          }else if(window[k] && typeof window[k] === 'object' && !Array.isArray(window[k])){
+            Object.assign(window[k], v);
+          }else{
+            window[k] = v;
+          }
+        }
+      }catch(e){}
+    });
+  }
+
+  // Ask existing app subsystems to rebuild if they exist.
+  [
+    'renderPads','renderPadGrid','refreshPads','renderPiano','buildPiano','updatePiano',
+    'renderChroma','buildChroma','renderWindows','applyTheme','refreshUI','updateUI',
+    'renderSlots','renderArp','rebuildChromaBars'
+  ].forEach(fn=>{
+    try{ if(typeof window[fn] === 'function') window[fn](); }catch(e){}
+  });
+
+  document.dispatchEvent(new CustomEvent('hid-project-loaded',{detail:{project}}));
+  toast('Project loaded.');
+}
+
+async function loadProjectFile(file){
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const project = decodeProjectText(text);
+    restoreProject(project);
+  }catch(err){
+    console.error(err);
+    alert('Project load failed. Make sure this is a .hidproject file saved from this app.\\n\\n' + (err && err.message ? err.message : err));
+  }
+}
+
+function toast(msg){
+  let t = document.getElementById('hidProjectToast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'hidProjectToast';
+    t.style.cssText = 'position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9999999;background:rgba(0,0,0,.86);color:#fff;border:1px solid rgba(0,255,213,.6);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 18px rgba(0,255,213,.25);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2600);
+}
+
+function installProjectControls(){
+  // Replace or supplement any old save/load buttons with fresh reliable controls.
+  const labels = ['SAVE','SAVE PROJECT','PROJECT SAVE'];
+  const loadLabels = ['LOAD','LOAD PROJECT','OPEN PROJECT','IMPORT'];
+  const buttons = Array.from(document.querySelectorAll('button,.btn,.launcher-btn'));
+
+  buttons.forEach(btn=>{
+    const txt = (btn.textContent||'').trim().toUpperCase();
+    if(labels.some(l=>txt===l || txt.includes(l))){
+      btn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); saveProjectFile(); };
+      btn.dataset.hidProjectV33 = 'save';
+    }
+    if(loadLabels.some(l=>txt===l || txt.includes(l))){
+      btn.onclick = function(e){ e.preventDefault(); e.stopPropagation(); openProjectPicker(); };
+      btn.dataset.hidProjectV33 = 'load';
+    }
+  });
+
+  let input = document.getElementById('hidProjectFileInputV33');
+  if(!input){
+    input = document.createElement('input');
+    input.id='hidProjectFileInputV33';
+    input.type='file';
+    input.accept='.hidproject,.hidproj,.hold,.json,application/json,text/json,text/plain';
+    input.style.display='none';
+    input.addEventListener('change', e=>{
+      const f = e.target.files && e.target.files[0];
+      loadProjectFile(f);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+
+  if(!document.getElementById('hidProjectSaveLoadDock')){
+    const dock=document.createElement('div');
+    dock.id='hidProjectSaveLoadDock';
+    dock.style.cssText='position:fixed;left:12px;bottom:12px;z-index:999998;display:flex;gap:6px;background:rgba(0,0,0,.55);border:1px solid rgba(0,255,213,.25);border-radius:12px;padding:6px;backdrop-filter:blur(8px);';
+    dock.innerHTML='<button id="hidSaveProjectV33" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(0,255,213,.55);background:#071014;color:#dff;font-size:12px;">SAVE PROJECT</button><button id="hidLoadProjectV33" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(0,255,213,.55);background:#071014;color:#dff;font-size:12px;">LOAD PROJECT</button>';
+    document.body.appendChild(dock);
+    document.getElementById('hidSaveProjectV33').onclick=saveProjectFile;
+    document.getElementById('hidLoadProjectV33').onclick=openProjectPicker;
+  }
+}
+
+function openProjectPicker(){
+  const input = document.getElementById('hidProjectFileInputV33');
+  if(input) input.click();
+}
+
+window.HID_SAVE_PROJECT_V33 = saveProjectFile;
+window.HID_LOAD_PROJECT_FILE_V33 = loadProjectFile;
+window.HID_OPEN_PROJECT_PICKER_V33 = openProjectPicker;
+
+window.addEventListener('load', ()=>{
+  setTimeout(installProjectControls, 500);
+  setTimeout(installProjectControls, 2000);
+});
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(installProjectControls, 200);
+});
+
+})();
+</script>
+
 </body>
 </html>
