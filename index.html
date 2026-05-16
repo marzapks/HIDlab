@@ -11704,5 +11704,267 @@ document.addEventListener('DOMContentLoaded', ()=>{
 })();
 </script>
 
+
+<!-- ===== HID V34 PAD/SAMPLER AUDIO UPLOAD REPAIR ===== -->
+<script>
+(function(){
+if(window.__HID_PAD_UPLOAD_V34__) return;
+window.__HID_PAD_UPLOAD_V34__ = true;
+
+var SUPPORTED_ACCEPT = 'audio/*,video/*,.mp3,.wav,.m4a,.aac,.aif,.aiff,.flac,.ogg,.oga,.opus,.caf,.mp4,.mov,.webm,.mkv';
+
+function toast(msg){
+  var t=document.getElementById('hidUploadToastV34');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidUploadToastV34';
+    t.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.88);color:#dff;border:1px solid rgba(0,255,213,.65);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 18px rgba(0,255,213,.35);max-width:88vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(function(){t.style.display='none';},2800);
+}
+
+function getAudioContext(){
+  try{
+    if(window.audioCtx) return window.audioCtx;
+    if(window.ctx) return window.ctx;
+    if(window.AUDIO_CTX) return window.AUDIO_CTX;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    var c = new Ctx();
+    window.audioCtx = window.audioCtx || c;
+    window.ctx = window.ctx || c;
+    return c;
+  }catch(e){ return null; }
+}
+
+async function decodeFile(file){
+  var ctx = getAudioContext();
+  if(!ctx) throw new Error('WebAudio is not available on this device/browser.');
+  if(ctx.state === 'suspended'){
+    try{ await ctx.resume(); }catch(e){}
+  }
+  var arr = await file.arrayBuffer();
+  try{
+    return await ctx.decodeAudioData(arr.slice(0));
+  }catch(err){
+    throw new Error('Could not decode "'+file.name+'". Try WAV, MP3, M4A, AAC, AIFF, FLAC, OGG, MP4, MOV, or WEBM if supported by your browser.');
+  }
+}
+
+function getPadArrays(){
+  var candidates = [];
+  ['pads','PAD_STATE','padState','samplerPads','SAMPLE_PADS','samples','padData'].forEach(function(name){
+    try{ if(Array.isArray(window[name])) candidates.push(window[name]); }catch(e){}
+  });
+  try{
+    if(window.STATE){
+      ['pads','samplerPads','samples','padData'].forEach(function(k){
+        if(Array.isArray(window.STATE[k])) candidates.push(window.STATE[k]);
+      });
+    }
+  }catch(e){}
+  var arr = candidates.sort(function(a,b){return b.length-a.length;})[0];
+  if(!arr){
+    arr = [];
+    window.pads = arr;
+    try{ if(window.STATE) window.STATE.pads = arr; }catch(e){}
+  }
+  return arr;
+}
+
+function isPadEmpty(p){
+  if(!p) return true;
+  return !(p.buffer || p.audioBuffer || p.sampleBuffer || p.fileData || p.dataURL ||
+    p.sequence || p.notes || p.chord || p.patchSnapshot || p.loaded || p.name || p.label);
+}
+
+function ensurePadCount(arr, minCount){
+  while(arr.length < minCount){
+    arr.push({type:'empty',name:'',label:'',volume:1,fxSend:0,pitchBendEnabled:true,pbUp:2,pbDn:2});
+  }
+}
+
+function findNextAvailablePad(arr){
+  ensurePadCount(arr, 16);
+  for(var i=0;i<arr.length;i++){
+    if(isPadEmpty(arr[i])) return i;
+  }
+  arr.push({type:'empty',name:'',label:'',volume:1,fxSend:0,pitchBendEnabled:true,pbUp:2,pbDn:2});
+  return arr.length-1;
+}
+
+function shortName(name){
+  return String(name||'Audio').replace(/\.[^.]+$/,'').slice(0,24);
+}
+
+function fileToDataURL(file){
+  return new Promise(function(resolve){
+    var r=new FileReader();
+    r.onload=function(){resolve(r.result);};
+    r.onerror=function(){resolve(null);};
+    r.readAsDataURL(file);
+  });
+}
+
+function createSamplePad(file, buffer, dataURL){
+  return {
+    type:'sample',
+    kind:'audio-upload',
+    loaded:true,
+    name:shortName(file.name),
+    label:shortName(file.name),
+    fileName:file.name,
+    mime:file.type || '',
+    size:file.size || 0,
+    duration:buffer && buffer.duration ? buffer.duration : 0,
+    buffer:buffer,
+    audioBuffer:buffer,
+    sampleBuffer:buffer,
+    dataURL:dataURL || null,
+    volume:1,
+    fxSend:0,
+    pan:0,
+    transpose:0,
+    octave:0,
+    loop:false,
+    oneShot:true,
+    pitchBendEnabled:true,
+    pbUp:2,
+    pbDn:2,
+    createdAt:new Date().toISOString()
+  };
+}
+
+function assignPad(index, pad){
+  var arr = getPadArrays();
+  ensurePadCount(arr, index+1);
+  arr[index] = Object.assign({}, arr[index]||{}, pad);
+  try{ if(window.STATE && Array.isArray(window.STATE.pads)) window.STATE.pads[index] = arr[index]; }catch(e){}
+  return arr[index];
+}
+
+function callRefresh(){
+  ['renderPads','renderPadGrid','refreshPads','updatePads','buildPads','renderSampler','refreshSampler','renderWindows','refreshUI'].forEach(function(fn){
+    try{ if(typeof window[fn] === 'function') window[fn](); }catch(e){}
+  });
+  document.dispatchEvent(new CustomEvent('hid-pads-updated-v34'));
+}
+
+async function uploadFiles(files){
+  var list = Array.from(files||[]);
+  if(!list.length) return;
+  var ok=0, fail=0;
+  for(var i=0;i<list.length;i++){
+    var file=list[i];
+    try{
+      var buffer = await decodeFile(file);
+      var dataURL = await fileToDataURL(file);
+      var arr = getPadArrays();
+      var idx = findNextAvailablePad(arr);
+      assignPad(idx, createSamplePad(file, buffer, dataURL));
+      ok++;
+      toast('Loaded "'+file.name+'" → Pad '+(idx+1));
+      callRefresh();
+    }catch(err){
+      console.error(err);
+      fail++;
+      toast(err.message || ('Could not load '+file.name));
+    }
+  }
+  if(ok>1 || fail) toast('Audio upload complete: '+ok+' loaded'+(fail?(', '+fail+' failed'):''));
+}
+
+function openUploader(){
+  var input=document.getElementById('hidPadAudioUploadV34');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidPadAudioUploadV34';
+    input.type='file';
+    input.multiple=true;
+    input.accept=SUPPORTED_ACCEPT;
+    input.style.display='none';
+    input.addEventListener('change', function(e){
+      uploadFiles(e.target.files);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+function installUploadButtons(){
+  Array.from(document.querySelectorAll('button,.btn,.launcher-btn')).forEach(function(btn){
+    var txt=(btn.textContent||'').trim().toUpperCase();
+    if((txt.indexOf('UPLOAD')>=0 || txt.indexOf('IMPORT AUDIO')>=0 || txt.indexOf('LOAD AUDIO')>=0 || txt.indexOf('AUDIO FILE')>=0 || txt.indexOf('SAMPLE')>=0) && txt.indexOf('SAVE')<0 && txt.indexOf('PROJECT')<0){
+      if(btn.dataset.hidPadUploadV34) return;
+      btn.addEventListener('click', function(e){
+        if(btn.dataset.hidPadUploadBypass) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openUploader();
+      }, true);
+      btn.dataset.hidPadUploadV34='1';
+    }
+  });
+
+  var host=null;
+  var nodes=Array.from(document.querySelectorAll('.window,.win-body,body'));
+  for(var i=0;i<nodes.length;i++){
+    var txt=(nodes[i].textContent||'').toUpperCase();
+    if(txt.indexOf('PADS')>=0 || txt.indexOf('SAMPLER')>=0){
+      host=nodes[i].querySelector('.win-body') || nodes[i];
+      break;
+    }
+  }
+  if(host && !document.getElementById('hidUploadAudioToPadBtnV34')){
+    var b=document.createElement('button');
+    b.id='hidUploadAudioToPadBtnV34';
+    b.className='btn gold';
+    b.textContent='UPLOAD AUDIO → NEXT PAD';
+    b.style.cssText='margin:4px;padding:7px 10px;min-height:34px;';
+    b.onclick=function(e){ e.preventDefault(); e.stopPropagation(); openUploader(); };
+    host.insertBefore(b, host.firstChild);
+  }
+}
+
+function installDragDrop(){
+  if(window.__HID_PAD_DROP_V34__) return;
+  window.__HID_PAD_DROP_V34__=true;
+  document.addEventListener('dragover', function(e){
+    if(e.dataTransfer && Array.from(e.dataTransfer.types||[]).indexOf('Files')>=0){
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('drop', function(e){
+    var files=Array.from(e.dataTransfer && e.dataTransfer.files || []);
+    var media=files.filter(function(f){
+      return (f.type||'').indexOf('audio/')===0 || (f.type||'').indexOf('video/')===0 || /\.(mp3|wav|m4a|aac|aif|aiff|flac|ogg|oga|opus|caf|mp4|mov|webm|mkv)$/i.test(f.name);
+    });
+    if(media.length){
+      e.preventDefault();
+      uploadFiles(media);
+    }
+  });
+}
+
+window.HID_UPLOAD_AUDIO_TO_NEXT_PAD = openUploader;
+window.HID_ASSIGN_AUDIO_FILES_TO_PADS = uploadFiles;
+
+window.addEventListener('load', function(){
+  setTimeout(installUploadButtons,600);
+  setTimeout(installUploadButtons,1800);
+  setTimeout(installDragDrop,700);
+});
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(installUploadButtons,300);
+});
+
+})();
+</script>
+
 </body>
 </html>
