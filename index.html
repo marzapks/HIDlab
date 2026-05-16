@@ -11110,244 +11110,6 @@ html.bigger-engaged .stereo-block::after{content:'LOW + AIR';position:absolute;r
 </script>
 
 
-<!-- ===== HID V32 WEB MIDI LAYER ===== -->
-<script>
-(function(){
-if(window.__HID_MIDI_V32__) return;
-window.__HID_MIDI_V32__ = true;
-
-const MIDI_STATE = {
-  enabled:false,
-  access:null,
-  inputs:new Map(),
-  sustain:false,
-  octaveOffset:0
-};
-
-function ensureMidiPanel(){
-  if(document.getElementById('hidMidiPanel')) return;
-
-  const panel=document.createElement('div');
-  panel.id='hidMidiPanel';
-  panel.style.cssText='position:fixed;right:12px;bottom:12px;z-index:999999;width:280px;background:rgba(10,10,18,.92);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px;color:white;font-family:sans-serif;box-shadow:0 0 24px rgba(0,255,255,.25);backdrop-filter:blur(12px);';
-
-  panel.innerHTML = `
-    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">MIDI CONTROL</div>
-
-    <button id="hidEnableMidiBtn"
-      style="width:100%;padding:10px;border-radius:10px;border:none;margin-bottom:10px;font-weight:700;cursor:pointer;">
-      ENABLE WEB MIDI
-    </button>
-
-    <div style="font-size:12px;opacity:.8;margin-bottom:6px;">Connected Devices</div>
-
-    <select id="hidMidiInputList"
-      style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
-    </select>
-
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <button id="hidMidiPanic" style="flex:1;padding:8px;border-radius:8px;">PANIC</button>
-    </div>
-
-    <div style="font-size:11px;opacity:.7;line-height:1.4;">
-      Notes, sustain pedal, velocity, pitch bend,
-      mod wheel, live piano + chromatic routing.
-    </div>
-  `;
-
-  document.body.appendChild(panel);
-
-  document.getElementById('hidEnableMidiBtn').onclick = initMidi;
-  document.getElementById('hidMidiPanic').onclick = ()=>{
-    if(window.HID_MASTER_KILL_NOW) HID_MASTER_KILL_NOW();
-    allNotesOff();
-  };
-}
-
-function refreshMidiInputs(){
-  const sel=document.getElementById('hidMidiInputList');
-  if(!sel) return;
-
-  sel.innerHTML='';
-
-  MIDI_STATE.inputs.forEach((input,id)=>{
-    const o=document.createElement('option');
-    o.value=id;
-    o.textContent=input.name || ('MIDI '+id);
-    sel.appendChild(o);
-  });
-
-  sel.onchange=()=>{
-    MIDI_STATE.inputs.forEach(inp=>inp.onmidimessage=null);
-
-    const input=MIDI_STATE.inputs.get(sel.value);
-    if(input){
-      input.onmidimessage=handleMidiMessage;
-    }
-  };
-
-  if(sel.options.length){
-    sel.selectedIndex=0;
-    const input=MIDI_STATE.inputs.get(sel.value);
-    if(input){
-      input.onmidimessage=handleMidiMessage;
-    }
-  }
-}
-
-async function initMidi(){
-  try{
-    const access=await navigator.requestMIDIAccess({sysex:false});
-    MIDI_STATE.access=access;
-    MIDI_STATE.enabled=true;
-
-    MIDI_STATE.inputs.clear();
-
-    access.inputs.forEach((input,id)=>{
-      MIDI_STATE.inputs.set(id,input);
-    });
-
-    access.onstatechange=()=>{
-      MIDI_STATE.inputs.clear();
-      access.inputs.forEach((input,id)=>{
-        MIDI_STATE.inputs.set(id,input);
-      });
-      refreshMidiInputs();
-    };
-
-    refreshMidiInputs();
-
-    const btn=document.getElementById('hidEnableMidiBtn');
-    if(btn){
-      btn.textContent='MIDI ENABLED';
-      btn.style.background='lime';
-      btn.style.color='black';
-    }
-  }catch(err){
-    alert('Web MIDI unavailable on this browser/device.');
-    console.error(err);
-  }
-}
-
-const activeMidiNotes = new Set();
-
-function dispatchNoteOn(note,velocity=100){
-  activeMidiNotes.add(note);
-
-  try{
-    if(window.noteOn){
-      window.noteOn(note, velocity/127);
-    }
-  }catch(e){}
-
-  try{
-    if(window.playNote){
-      window.playNote(note, velocity/127);
-    }
-  }catch(e){}
-
-  document.dispatchEvent(new CustomEvent('hid-midi-noteon',{
-    detail:{note,velocity}
-  }));
-}
-
-function dispatchNoteOff(note){
-  activeMidiNotes.delete(note);
-
-  try{
-    if(window.noteOff){
-      window.noteOff(note);
-    }
-  }catch(e){}
-
-  document.dispatchEvent(new CustomEvent('hid-midi-noteoff',{
-    detail:{note}
-  }));
-}
-
-function allNotesOff(){
-  [...activeMidiNotes].forEach(n=>dispatchNoteOff(n));
-  activeMidiNotes.clear();
-}
-
-function handlePitchBend(value14){
-  const normalized = (value14 - 8192) / 8192;
-
-  document.dispatchEvent(new CustomEvent('hid-midi-pitchbend',{
-    detail:{value:normalized}
-  }));
-}
-
-function handleModWheel(v){
-  document.dispatchEvent(new CustomEvent('hid-midi-modwheel',{
-    detail:{value:v/127}
-  }));
-}
-
-function handleMidiMessage(e){
-  const d=e.data;
-  const status=d[0];
-  const data1=d[1];
-  const data2=d[2];
-
-  const cmd=status >> 4;
-
-  if(cmd===9 && data2>0){
-    dispatchNoteOn(data1 + MIDI_STATE.octaveOffset, data2);
-    return;
-  }
-
-  if(cmd===8 || (cmd===9 && data2===0)){
-    dispatchNoteOff(data1 + MIDI_STATE.octaveOffset);
-    return;
-  }
-
-  if(cmd===14){
-    const bend=(data2<<7)+data1;
-    handlePitchBend(bend);
-    return;
-  }
-
-  if(cmd===11){
-    if(data1===64){
-      MIDI_STATE.sustain = data2 >= 64;
-
-      document.dispatchEvent(new CustomEvent('hid-midi-sustain',{
-        detail:{on:MIDI_STATE.sustain}
-      }));
-
-      if(!MIDI_STATE.sustain){
-        allNotesOff();
-      }
-    }
-
-    if(data1===1){
-      handleModWheel(data2);
-    }
-  }
-}
-
-window.HID_INIT_WEB_MIDI = initMidi;
-window.HID_ALL_NOTES_OFF = allNotesOff;
-
-window.addEventListener('load', ()=>{
-  setTimeout(()=>{
-    ensureMidiPanel();
-  },1200);
-});
-
-window.addEventListener('beforeunload', allNotesOff);
-
-document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden){
-    allNotesOff();
-  }
-});
-
-})();
-</script>
-
-
 <!-- ===== HID V33 PROJECT SAVE/LOAD REPAIR ===== -->
 <script>
 (function(){
@@ -11962,6 +11724,414 @@ window.addEventListener('load', function(){
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(installUploadButtons,300);
 });
+
+})();
+</script>
+
+
+<!-- ===== HID V35 MIDI REMOVED + PROJECT/PAD FIX ===== -->
+<script>
+(function(){
+if(window.__HID_V35_FIX__) return;
+window.__HID_V35_FIX__ = true;
+
+function toast(msg){
+  let t=document.getElementById('hidV35Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV35Toast';
+    t.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.9);color:#dff;border:1px solid rgba(0,255,213,.7);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 18px rgba(0,255,213,.35);max-width:88vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{t.style.display='none';},2800);
+}
+
+function removeMidi(){
+  ['hidMidiPanel','hidEnableMidiBtn','hidMidiInputList'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.remove();
+  });
+  document.querySelectorAll('[id*="Midi"],[id*="MIDI"],[class*="midi"],[class*="MIDI"]').forEach(el=>{
+    const txt=(el.textContent||'').toUpperCase();
+    if(txt.includes('MIDI CONTROL') || txt.includes('ENABLE WEB MIDI')) el.remove();
+  });
+  window.HID_INIT_WEB_MIDI=undefined;
+  window.HID_ALL_NOTES_OFF=undefined;
+}
+removeMidi();
+setInterval(removeMidi,2500);
+
+function getPads(){
+  let arr=null;
+  try{ if(window.STATE && Array.isArray(window.STATE.pads)) arr=window.STATE.pads; }catch(e){}
+  if(!arr){
+    ['pads','padState','samplerPads','SAMPLE_PADS','PAD_STATE'].some(name=>{
+      try{ if(Array.isArray(window[name])){ arr=window[name]; return true; } }catch(e){}
+      return false;
+    });
+  }
+  if(!arr){
+    arr=[];
+    window.pads=arr;
+    try{ if(window.STATE) window.STATE.pads=arr; }catch(e){}
+  }
+  while(arr.length<16){
+    arr.push({type:'empty',name:'',label:'',volume:1,fxSend:0,pan:0,transpose:0,octave:0,pitchBendEnabled:true,pbUp:2,pbDn:2});
+  }
+  window.pads=arr;
+  try{ if(window.STATE) window.STATE.pads=arr; }catch(e){}
+  return arr;
+}
+
+function padIsEmpty(p){
+  if(!p) return true;
+  return !(p.loaded||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.sequence||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+
+function nextPadIndex(){
+  const pads=getPads();
+  for(let i=0;i<pads.length;i++) if(padIsEmpty(pads[i])) return i;
+  pads.push({type:'empty',name:'',label:'',volume:1,fxSend:0,pan:0,transpose:0,octave:0,pitchBendEnabled:true,pbUp:2,pbDn:2});
+  return pads.length-1;
+}
+
+function refreshPads(){
+  ['renderPads','renderPadGrid','refreshPads','updatePads','buildPads','renderSampler','refreshSampler','renderWindows','refreshUI'].forEach(fn=>{
+    try{ if(typeof window[fn]==='function') window[fn](); }catch(e){}
+  });
+  document.dispatchEvent(new CustomEvent('hid-pads-updated-v35'));
+}
+
+function getAudioContext(){
+  try{
+    if(window.audioCtx) return window.audioCtx;
+    if(window.ctx) return window.ctx;
+    if(window.AUDIO_CTX) return window.AUDIO_CTX;
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx) return null;
+    const c=new Ctx();
+    window.audioCtx=window.audioCtx||c;
+    window.ctx=window.ctx||c;
+    return c;
+  }catch(e){ return null; }
+}
+
+function fileToDataURL(file){
+  return new Promise(resolve=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=()=>resolve(null);
+    r.readAsDataURL(file);
+  });
+}
+
+async function decodeFileToBuffer(file){
+  const ctx=getAudioContext();
+  if(!ctx) throw new Error('WebAudio is not available.');
+  if(ctx.state==='suspended'){ try{ await ctx.resume(); }catch(e){} }
+  const arr=await file.arrayBuffer();
+  try{
+    return await ctx.decodeAudioData(arr.slice(0));
+  }catch(e){
+    throw new Error('Could not decode '+file.name+'. Try WAV, MP3, M4A/AAC, AIFF, OGG, FLAC, MP4/MOV, or WEBM depending on browser support.');
+  }
+}
+
+async function decodeDataURLToBuffer(dataURL){
+  const ctx=getAudioContext();
+  if(!ctx) return null;
+  if(ctx.state==='suspended'){ try{ await ctx.resume(); }catch(e){} }
+  const res=await fetch(dataURL);
+  const arr=await res.arrayBuffer();
+  return await ctx.decodeAudioData(arr.slice(0));
+}
+
+function shortName(name){
+  return String(name||'Audio').replace(/\.[^.]+$/,'').slice(0,24);
+}
+
+async function addAudioFiles(files){
+  const list=Array.from(files||[]);
+  if(!list.length) return;
+  let loaded=0;
+  for(const file of list){
+    try{
+      const buffer=await decodeFileToBuffer(file);
+      const dataURL=await fileToDataURL(file);
+      const idx=nextPadIndex();
+      const pads=getPads();
+      pads[idx]={
+        type:'sample',
+        kind:'audio-upload',
+        loaded:true,
+        name:shortName(file.name),
+        label:shortName(file.name),
+        fileName:file.name,
+        mime:file.type||'',
+        size:file.size||0,
+        duration:buffer&&buffer.duration?buffer.duration:0,
+        buffer:buffer,
+        audioBuffer:buffer,
+        sampleBuffer:buffer,
+        dataURL:dataURL,
+        volume:1,
+        fxSend:0,
+        pan:0,
+        transpose:0,
+        octave:0,
+        loop:false,
+        oneShot:true,
+        pitchBendEnabled:true,
+        pbUp:2,
+        pbDn:2,
+        createdAt:new Date().toISOString()
+      };
+      loaded++;
+      refreshPads();
+      toast('Loaded '+file.name+' → Pad '+(idx+1));
+    }catch(err){
+      console.error(err);
+      toast(err.message||('Could not load '+file.name));
+    }
+  }
+  if(loaded>1) toast('Loaded '+loaded+' files into pads.');
+}
+
+function openUploader(){
+  let input=document.getElementById('hidAudioUploadV35');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidAudioUploadV35';
+    input.type='file';
+    input.multiple=true;
+    input.accept='audio/*,video/*,.mp3,.wav,.m4a,.aac,.aif,.aiff,.flac,.ogg,.oga,.opus,.caf,.mp4,.mov,.webm,.mkv';
+    input.style.display='none';
+    input.addEventListener('change',e=>{
+      addAudioFiles(e.target.files);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+function clonePad(p){
+  if(!p) return {type:'empty',name:'',label:'',volume:1,fxSend:0};
+  const c={};
+  Object.keys(p).forEach(k=>{
+    const v=p[k];
+    if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') c[k]=v;
+    else {
+      try{ c[k]=JSON.parse(JSON.stringify(v)); }
+      catch(e){ c[k]=v; }
+    }
+  });
+  c.name=(c.name||c.label||'Pad')+' copy';
+  c.label=c.name;
+  c.createdAt=new Date().toISOString();
+  return c;
+}
+
+function duplicateSelectedPad(){
+  const pads=getPads();
+  let idx=0;
+  try{ idx=Number(window.selectedPadIndex ?? window.focusedPadIndex ?? window.padFocusIndex ?? 0); }catch(e){}
+  if(!Number.isFinite(idx)||idx<0||idx>=pads.length) idx=0;
+  if(padIsEmpty(pads[idx])){
+    toast('Select/long-hold a pad with sound first.');
+    return;
+  }
+  const dest=nextPadIndex();
+  pads[dest]=clonePad(pads[idx]);
+  refreshPads();
+  toast('Duplicated Pad '+(idx+1)+' → Pad '+(dest+1));
+}
+
+function cssVars(){
+  const cs=getComputedStyle(document.documentElement);
+  const out={};
+  ['--bg','--neon','--neon2','--neon3','--text','--dim','--white-key','--black-key','--panel','--stroke','--window-glow','--hid-window-glow','--hid-white-key-solid','--hid-black-key-solid'].forEach(k=>{
+    const v=cs.getPropertyValue(k).trim();
+    if(v) out[k]=v;
+  });
+  return out;
+}
+
+function applyCssVars(vars){
+  if(!vars) return;
+  Object.keys(vars).forEach(k=>document.documentElement.style.setProperty(k,vars[k]));
+}
+
+function collectControls(){
+  const out={};
+  document.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(!el.id && !el.name) return;
+    if(el.type==='file') return;
+    const key=el.id||el.name;
+    if(el.type==='checkbox') out[key]=!!el.checked;
+    else if(el.type==='radio'){ if(el.checked) out[key]=el.value; }
+    else out[key]=el.value;
+  });
+  return out;
+}
+
+function applyControls(data){
+  if(!data) return;
+  Object.keys(data).forEach(key=>{
+    let nodes=[];
+    try{ nodes=Array.from(document.querySelectorAll('#'+CSS.escape(key)+',[name="'+String(key).replace(/"/g,'\\"')+'"]')); }catch(e){}
+    nodes.forEach(el=>{
+      if(el.type==='file') return;
+      if(el.type==='checkbox') el.checked=!!data[key];
+      else if(el.type==='radio') el.checked=(el.value==data[key]);
+      else el.value=data[key];
+      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+      try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+    });
+  });
+}
+
+function stripPadForSave(p){
+  const out={};
+  Object.keys(p||{}).forEach(k=>{
+    if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') return;
+    const v=p[k];
+    try{ out[k]=JSON.parse(JSON.stringify(v)); }catch(e){}
+  });
+  return out;
+}
+
+function saveProject(){
+  try{
+    const project={
+      app:'Hold It Down',
+      type:'hidproject',
+      version:35,
+      createdAt:new Date().toISOString(),
+      cssVars:cssVars(),
+      controls:collectControls(),
+      pads:getPads().map(stripPadForSave),
+      state:{}
+    };
+    ['STATE','arpState','chromaState','fxState','soundState','uiColors'].forEach(n=>{
+      try{
+        if(window[n]!==undefined) project.state[n]=JSON.parse(JSON.stringify(window[n],(k,v)=>{
+          if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') return undefined;
+          return v;
+        }));
+      }catch(e){}
+    });
+    const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='hold-it-down-project-'+new Date().toISOString().replace(/[:.]/g,'-')+'.hidproject';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1200);
+    toast('Project saved.');
+  }catch(err){
+    console.error(err);
+    alert('Save failed: '+(err.message||err));
+  }
+}
+
+async function loadProjectFile(file){
+  if(!file) return;
+  try{
+    const text=await file.text();
+    const project=JSON.parse(text.replace(/^\uFEFF/,'').trim());
+    if(!project || (project.type!=='hidproject' && project.app!=='Hold It Down')) throw new Error('Not a Hold It Down project file.');
+    applyCssVars(project.cssVars);
+    applyControls(project.controls||project.inputs);
+    const pads=getPads();
+    pads.length=0;
+    (project.pads||[]).forEach(p=>pads.push(p||{}));
+    while(pads.length<16) pads.push({type:'empty',name:'',label:'',volume:1,fxSend:0});
+    for(let i=0;i<pads.length;i++){
+      if(pads[i] && pads[i].dataURL){
+        try{
+          const buf=await decodeDataURLToBuffer(pads[i].dataURL);
+          pads[i].buffer=buf; pads[i].audioBuffer=buf; pads[i].sampleBuffer=buf; pads[i].loaded=true;
+        }catch(e){ console.warn('Could not restore audio pad',i,e); }
+      }
+    }
+    if(project.state){
+      Object.keys(project.state).forEach(k=>{
+        try{
+          if(window[k] && typeof window[k]==='object') Object.assign(window[k],project.state[k]);
+          else window[k]=project.state[k];
+        }catch(e){}
+      });
+    }
+    refreshPads();
+    toast('Project loaded.');
+  }catch(err){
+    console.error(err);
+    alert('Load failed. Choose a .hidproject saved from this app.\\n\\n'+(err.message||err));
+  }
+}
+
+function openProjectLoader(){
+  let input=document.getElementById('hidProjectLoaderV35');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidProjectLoaderV35';
+    input.type='file';
+    input.accept='.hidproject,.hidproj,.hold,.json,application/json,text/plain';
+    input.style.display='none';
+    input.addEventListener('change',e=>{
+      loadProjectFile(e.target.files&&e.target.files[0]);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+function installControls(){
+  removeMidi();
+
+  document.querySelectorAll('button,.btn,.launcher-btn').forEach(btn=>{
+    const txt=(btn.textContent||'').trim().toUpperCase();
+    if(txt.includes('SAVE') && txt.includes('PROJECT')){
+      btn.onclick=e=>{e.preventDefault();e.stopPropagation();saveProject();};
+    }else if((txt.includes('LOAD')||txt.includes('OPEN')||txt.includes('IMPORT')) && txt.includes('PROJECT')){
+      btn.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectLoader();};
+    }else if((txt.includes('UPLOAD')||txt.includes('IMPORT AUDIO')||txt.includes('LOAD AUDIO')||txt.includes('AUDIO FILE')) && !txt.includes('PROJECT')){
+      btn.onclick=e=>{e.preventDefault();e.stopPropagation();openUploader();};
+    }else if(txt.includes('DUPLICATE') || txt==='DUP'){
+      btn.onclick=e=>{e.preventDefault();e.stopPropagation();duplicateSelectedPad();};
+    }
+  });
+
+  if(!document.getElementById('hidV35Dock')){
+    const dock=document.createElement('div');
+    dock.id='hidV35Dock';
+    dock.style.cssText='position:fixed;left:12px;bottom:12px;z-index:999998;display:flex;gap:6px;flex-wrap:wrap;background:rgba(0,0,0,.56);border:1px solid rgba(0,255,213,.25);border-radius:12px;padding:6px;backdrop-filter:blur(8px);';
+    dock.innerHTML='<button id="hidV35Save" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(0,255,213,.55);background:#071014;color:#dff;font-size:12px;">SAVE PROJECT</button><button id="hidV35Load" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(0,255,213,.55);background:#071014;color:#dff;font-size:12px;">LOAD PROJECT</button><button id="hidV35Upload" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(255,230,0,.65);background:#141207;color:#ffd;font-size:12px;">UPLOAD AUDIO → PAD</button><button id="hidV35Dup" style="padding:7px 9px;border-radius:8px;border:1px solid rgba(255,230,0,.65);background:#141207;color:#ffd;font-size:12px;">DUP PAD</button>';
+    document.body.appendChild(dock);
+    document.getElementById('hidV35Save').onclick=saveProject;
+    document.getElementById('hidV35Load').onclick=openProjectLoader;
+    document.getElementById('hidV35Upload').onclick=openUploader;
+    document.getElementById('hidV35Dup').onclick=duplicateSelectedPad;
+  }
+}
+
+window.HID_SAVE_PROJECT=saveProject;
+window.HID_OPEN_PROJECT_LOADER=openProjectLoader;
+window.HID_UPLOAD_AUDIO_TO_NEXT_PAD=openUploader;
+window.HID_DUPLICATE_SELECTED_PAD=duplicateSelectedPad;
+
+window.addEventListener('load',()=>{
+  setTimeout(installControls,300);
+  setTimeout(installControls,1500);
+  setTimeout(installControls,3500);
+});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(installControls,200));
 
 })();
 </script>
