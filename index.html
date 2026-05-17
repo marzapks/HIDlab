@@ -1652,6 +1652,57 @@ body.hid-v44-playable .piano-host{
 }
 </style>
 
+
+<style id="hid-v47-keyboard-pad-fix-css">
+.spad.hid-v47-selected{
+  outline:2px solid var(--neon3)!important;
+  outline-offset:-2px;
+  box-shadow:0 0 18px rgba(255,230,0,.75), inset 0 0 18px rgba(255,230,0,.18)!important;
+}
+.spad.hid-v47-triggered{
+  filter:brightness(1.35) saturate(1.25);
+  box-shadow:0 0 20px rgba(0,255,213,.78), inset 0 0 18px rgba(0,255,213,.18)!important;
+}
+body.piano-kbd-disabled .wkey .wkey-sc,
+body.piano-kbd-disabled .bkey .bkey-sc{
+  opacity:.28!important;
+}
+</style>
+
+
+<style id="hid-v48-chroma-keyboard-css">
+.hid-v48-kbd-tag{
+  position:absolute;
+  left:50%;
+  top:6px;
+  transform:translateX(-50%);
+  z-index:5;
+  font-family:'VT323',monospace;
+  font-size:12px;
+  line-height:1;
+  padding:2px 4px;
+  border:1px solid rgba(255,230,0,.5);
+  background:rgba(0,0,0,.62);
+  color:var(--neon3);
+  text-shadow:0 0 6px var(--neon3);
+  border-radius:4px;
+  pointer-events:none;
+}
+.hid-v48-kbd-active{
+  filter:brightness(1.72) saturate(1.7)!important;
+  box-shadow:0 0 20px rgba(255,230,0,.9), inset 0 0 30px rgba(255,230,0,.42)!important;
+}
+#hidV48ChromaKeyStatus{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  color:var(--neon3);
+  letter-spacing:.08em;
+  padding:2px 6px;
+  border:1px solid rgba(255,230,0,.35);
+  background:rgba(255,230,0,.05);
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -10202,6 +10253,1134 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
 document.addEventListener('hid-v45-pads-updated',()=>setTimeout(()=>{installControls();addKeyTags();},80));
 document.addEventListener('visibilitychange',()=>{if(document.hidden){state.active.clear();qa('.hid-v46-key-active').forEach(e=>e.classList.remove('hid-v46-key-active'));}});
+})();
+</script>
+
+
+<!-- ===== HID V47 HARDWARE KEYBOARD + PAD RESTART FIX ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V47_KEYBOARD_PAD_FIX__) return;
+window.__HID_V47_KEYBOARD_PAD_FIX__ = true;
+
+const PAD_KEY_CODE_TO_IDX = {
+  Digit1:0, Digit2:1, Digit3:2, Digit4:3, Digit5:4,
+  Digit6:5, Digit7:6, Digit8:7, Digit9:8, Digit0:9,
+  Numpad1:0, Numpad2:1, Numpad3:2, Numpad4:3, Numpad5:4,
+  Numpad6:5, Numpad7:6, Numpad8:7, Numpad9:8, Numpad0:9
+};
+const KEY_TO_MIDI = {
+  KeyZ:48,KeyS:49,KeyX:50,KeyD:51,KeyC:52,KeyV:53,KeyG:54,KeyB:55,KeyH:56,KeyN:57,KeyJ:58,KeyM:59,
+  Comma:60,KeyL:61,Period:62,Semicolon:63,Slash:64,
+  KeyQ:60,Digit2:61,KeyW:62,Digit3:63,KeyE:64,KeyR:65,Digit5:66,KeyT:67,Digit6:68,KeyY:69,Digit7:70,KeyU:71,
+  KeyI:72,Digit9:73,KeyO:74,Digit0:75,KeyP:76,Equal:78
+};
+const v47 = {
+  padKeysEnabled:true,
+  padMode:'restart',
+  downNotes:new Map(),
+  activeSampleNodes:new Map()
+};
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function isTextTarget(t){return !!(t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]'))}
+function toast47(msg){
+  try{ if(typeof window.toast==='function') return window.toast(msg); }catch(e){}
+  let t=q('#hidV47Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV47Toast';
+    t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.92);color:#ffd;border:1px solid rgba(255,230,0,.65);padding:9px 13px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 16px rgba(255,230,0,.25);';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',1800);
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads && Array.isArray(window.pads)) pads=window.pads;
+  if(!pads){pads=[]; if(S) S.pads=pads; window.pads=pads;}
+  while(pads.length<16) pads.push(null);
+  return pads;
+}
+function padEmpty(p){
+  return !p || !(p.loaded||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label||p.kind||p.type);
+}
+function audioCtx47(){
+  try{ if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{ if(window.ctx) return window.ctx; if(window.audioCtx) return window.audioCtx; }catch(e){}
+  try{ if(typeof initAudio==='function') initAudio(); if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; window.audioCtx=window.audioCtx||new C(); return window.audioCtx; }catch(e){return null}
+}
+function ensureAudio47(){
+  const c=audioCtx47();
+  if(c && c.state==='suspended') c.resume?.().catch(()=>{});
+  return c;
+}
+function padEl(idx){
+  return q(`#pads-grid .spad[data-idx="${idx}"]`) ||
+         q(`#pads-grid .spad[data-drag-index="${idx}"]`) ||
+         qa('#pads-grid .spad')[idx] ||
+         qa('.spad')[idx];
+}
+function markSelectedPad(idx){
+  qa('.spad.hid-v47-selected').forEach(e=>e.classList.remove('hid-v47-selected'));
+  const el=padEl(idx);
+  if(el) el.classList.add('hid-v47-selected');
+}
+function flashPad(idx){
+  const el=padEl(idx);
+  if(!el) return;
+  el.classList.add('hid-v47-triggered','playing');
+  setTimeout(()=>el.classList.remove('hid-v47-triggered','playing'),150);
+}
+function setSelectedPad(idx){
+  const S=getS();
+  if(!S) return;
+  S.padCycleIdx=idx;
+  S.padEditingIdx=idx;
+  S.padControlScope='pad';
+  try{ S.transposeTarget='pad'; }catch(e){}
+  markSelectedPad(idx);
+}
+function hydratePadIfNeeded(p){
+  if(!p) return Promise.resolve(null);
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b) return Promise.resolve(b);
+  if(typeof window.HID_V45_HYDRATE_PAD==='function') return window.HID_V45_HYDRATE_PAD(p);
+  if(typeof window.HID_V43_HYDRATE_PADS==='function') return window.HID_V43_HYDRATE_PADS().then(()=>p.buffer||p.audioBuffer||p.sampleBuffer);
+  return Promise.resolve(null);
+}
+function stopActiveSample(idx){
+  const set=v47.activeSampleNodes.get(idx);
+  if(set){
+    for(const node of Array.from(set)){
+      try{ node.src?.stop?.(0); }catch(e){}
+      try{ node.stop?.(0); }catch(e){}
+    }
+    set.clear();
+    v47.activeSampleNodes.delete(idx);
+  }
+  const S=getS();
+  try{
+    const p=getPads()[idx];
+    if(S?.sampler?.activeSources && p){
+      for(const node of Array.from(S.sampler.activeSources)){
+        if(node.padIdx===idx || node.padCfg===p){
+          try{ node.src?.stop?.(0); }catch(e){}
+          S.sampler.activeSources.delete(node);
+        }
+      }
+    }
+  }catch(e){}
+}
+function stopPadReal(idx,smooth=true){
+  stopActiveSample(idx);
+  try{ if(typeof padStop==='function') padStop(idx,smooth); }catch(e){}
+  try{ if(typeof window.padStop==='function') window.padStop(idx,smooth); }catch(e){}
+  const S=getS();
+  try{
+    S?.padPlayingVoices?.get?.(idx)?.voices?.forEach?.(v=>{try{v.fadeOut?v.fadeOut(40):v.release?.()}catch(e){}});
+    S?.padPlayingVoices?.delete?.(idx);
+    const seq=S?.padPlayingSequences?.get?.(idx);
+    if(seq){
+      seq.stopped=true;
+      seq.timers?.forEach?.(clearTimeout);
+      seq.allVoices?.forEach?.(v=>{try{v.fadeOut?v.fadeOut(40):v.release?.()}catch(e){}});
+      S.padPlayingSequences.delete(idx);
+    }
+  }catch(e){}
+  padEl(idx)?.classList.remove('sustained','playing','hid-v47-triggered');
+}
+function tagLatestSampleNode(idx,p){
+  const S=getS();
+  try{
+    const active=S?.sampler?.activeSources;
+    if(active && active.size){
+      const last=Array.from(active).pop();
+      if(last){
+        last.padIdx=idx;
+        last.padCfg=p;
+        last.wheelEnabled=!(p?.wheelEnabled===false||p?.pitchBendEnabled===false);
+        if(!v47.activeSampleNodes.has(idx)) v47.activeSampleNodes.set(idx,new Set());
+        v47.activeSampleNodes.get(idx).add(last);
+      }
+    }
+  }catch(e){}
+}
+async function startPadReal(idx){
+  const pads=getPads();
+  const p=pads[idx];
+  if(!p || padEmpty(p)){
+    try{ if(typeof padArmCapture==='function') padArmCapture(idx); }catch(e){}
+    toast47('Pad '+(idx+1)+' is empty.');
+    return false;
+  }
+  setSelectedPad(idx);
+  flashPad(idx);
+  ensureAudio47();
+
+  const kind=p.kind||p.type;
+  if(kind==='sample' || p.dataURL || p.audioDataUrl || p.audioDataURL || p.buffer || p.audioBuffer || p.sampleBuffer){
+    const b=await hydratePadIfNeeded(p);
+    if(!b){
+      toast47('Pad '+(idx+1)+' audio is missing.');
+      return false;
+    }
+    p.buffer=b; p.audioBuffer=b; p.sampleBuffer=b; p.loaded=true;
+    try{
+      if(typeof playSampleBuffer==='function') playSampleBuffer(b,1,p);
+      else if(typeof window.playSampleBuffer==='function') window.playSampleBuffer(b,1,p);
+      tagLatestSampleNode(idx,p);
+      return true;
+    }catch(e){
+      console.warn('V47 sample play failed',e);
+      toast47('Could not play Pad '+(idx+1));
+      return false;
+    }
+  }
+
+  try{
+    if(typeof padPlay==='function'){
+      padPlay(idx,!!p.sustain);
+      return true;
+    }
+  }catch(e){}
+  try{
+    if(typeof padTrigger==='function'){
+      padTrigger(idx);
+      return true;
+    }
+  }catch(e){}
+  try{
+    if(typeof window.padTrigger==='function'){
+      window.padTrigger(idx);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+function padIsActive(idx){
+  const S=getS();
+  if(v47.activeSampleNodes.has(idx) && v47.activeSampleNodes.get(idx).size) return true;
+  try{ if(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx)) return true; }catch(e){}
+  return false;
+}
+async function padKeyTrigger(idx){
+  if(v47.padMode==='toggle' && padIsActive(idx)){
+    stopPadReal(idx,true);
+    return;
+  }
+  if(v47.padMode==='restart') stopPadReal(idx,true);
+  // On restart, give stopped sample sources a tiny moment to close before retriggering.
+  setTimeout(()=>startPadReal(idx), v47.padMode==='restart'?22:0);
+}
+function keyboardPianoOn(){
+  const S=getS();
+  return !S || S.keyboardPiano!==false;
+}
+function setKeyboardPiano(on){
+  const S=getS(); if(!S) return;
+  S.keyboardPiano=!!on;
+  document.body.classList.toggle('piano-kbd-disabled',!S.keyboardPiano);
+  try{ if(typeof updateKeyboardPianoUI==='function') updateKeyboardPianoUI(); }catch(e){}
+  try{ if(typeof refreshShortcuts==='function') refreshShortcuts(); }catch(e){}
+  if(!S.keyboardPiano) releaseAllKeyboardNotes();
+  toast47('Keyboard piano '+(S.keyboardPiano?'ON':'OFF'));
+}
+function toggleKeyboardPianoV47(){
+  const S=getS(); if(!S) return;
+  setKeyboardPiano(!S.keyboardPiano);
+}
+function keyboardMidi(code){
+  const S=getS();
+  const base=KEY_TO_MIDI[code];
+  if(base===undefined) return null;
+  return base + ((S?.octave||0)*12) + (S?.transpose||0);
+}
+function pressKeyboardNote(code){
+  const S=getS(); if(!S || !keyboardPianoOn()) return;
+  if(v47.downNotes.has(code)) return;
+  const m=keyboardMidi(code);
+  if(m==null) return;
+  v47.downNotes.set(code,m);
+  ensureAudio47();
+
+  try{
+    if(S.sampler?.keyMap?.has?.(m)){
+      const idx=S.sampler.keyMap.get(m);
+      const s=S.sampler.buffers?.[idx];
+      if(s?.buffer && typeof playSampleBuffer==='function') playSampleBuffer(s.buffer,1);
+    }
+  }catch(e){}
+
+  if(S.build){
+    try{
+      if(!(S.shapeNotes instanceof Set)) S.shapeNotes=new Set(Array.isArray(S.shapeNotes)?S.shapeNotes:[]);
+      if(S.shapeNotes.has(m)){S.shapeNotes.delete(m); if(typeof highlightKey==='function') highlightKey(m,'shape',false);}
+      else{S.shapeNotes.add(m); if(typeof highlightKey==='function') highlightKey(m,'shape',true);}
+    }catch(e){}
+    return;
+  }
+
+  try{ if(typeof pressNoteByDisplay==='function') pressNoteByDisplay(m); return; }catch(e){}
+  try{ if(typeof startVoice==='function'){ const voice=startVoice(m,.86); S.activeNotes?.set?.(m,voice); if(typeof highlightKey==='function') highlightKey(m,'lit',true); } }catch(e){}
+}
+function releaseKeyboardNote(code){
+  const S=getS(); if(!S) return;
+  const m=v47.downNotes.get(code) ?? keyboardMidi(code);
+  v47.downNotes.delete(code);
+  if(m==null || S.build) return;
+  try{ if(typeof releaseNoteByDisplay==='function') releaseNoteByDisplay(m); return; }catch(e){}
+  try{
+    const voice=S.activeNotes?.get?.(m);
+    if(voice){ voice.fadeOut?voice.fadeOut(80):voice.release?.(); S.activeNotes.delete(m); }
+    if(typeof highlightKey==='function') highlightKey(m,'lit',false);
+  }catch(e){}
+}
+function releaseAllKeyboardNotes(){
+  for(const code of Array.from(v47.downNotes.keys())) releaseKeyboardNote(code);
+  v47.downNotes.clear();
+  try{ if(typeof downKeys!=='undefined' && downKeys?.clear) downKeys.clear(); }catch(e){}
+}
+function handleKeyDown(e){
+  if(e.defaultPrevented && e.code!=='Backquote') return;
+  if(isTextTarget(e.target)) return;
+
+  // Always repair/toggle live keyboard shortcut.
+  if(e.code==='Backquote'){
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if(!e.repeat) toggleKeyboardPianoV47();
+    return;
+  }
+
+  // Number pads take priority when pad-key mode is enabled.
+  if(v47.padKeysEnabled && e.code in PAD_KEY_CODE_TO_IDX && !e.ctrlKey && !e.metaKey && !e.altKey){
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if(!e.repeat) padKeyTrigger(PAD_KEY_CODE_TO_IDX[e.code]);
+    return;
+  }
+
+  // Hardware piano fallback/repair.
+  if(KEY_TO_MIDI[e.code]!==undefined && !e.ctrlKey && !e.metaKey && !e.altKey){
+    if(!keyboardPianoOn()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    pressKeyboardNote(e.code);
+    return;
+  }
+}
+function handleKeyUp(e){
+  if(isTextTarget(e.target)) return;
+  if(KEY_TO_MIDI[e.code]!==undefined){
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    releaseKeyboardNote(e.code);
+  }
+}
+function installKeyboardLayer(){
+  if(document.__hidV47KeyboardLayer) return;
+  document.__hidV47KeyboardLayer=true;
+  window.addEventListener('keydown',handleKeyDown,true);
+  document.addEventListener('keydown',handleKeyDown,true);
+  window.addEventListener('keyup',handleKeyUp,true);
+  document.addEventListener('keyup',handleKeyUp,true);
+}
+function installPadKeyControls(){
+  const host = q('#hidV46PadKeyControls') || q('#win-sampler .win-body') || q('.sampler-toolbar') || q('.piano-controls');
+  if(!host) return;
+
+  let controls=q('#hidV47PadKeyStatus');
+  if(!controls){
+    controls=document.createElement('div');
+    controls.id='hidV47PadKeyStatus';
+    controls.style.cssText='display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px;padding:6px;border:1px solid rgba(255,230,0,.32);background:rgba(255,230,0,.04);font-family:VT323,monospace;font-size:12px;color:var(--neon3);';
+    controls.innerHTML=`
+      <button class="btn tiny gold" id="hidV47PadKeysToggle">PAD KEYS: ON</button>
+      <button class="btn tiny" id="hidV47PadKeyMode">MODE: RESTART</button>
+      <span>1–9,0 trigger pads. Backquote toggles live piano keys.</span>
+    `;
+    if(host.id==='hidV46PadKeyControls') host.appendChild(controls);
+    else host.insertBefore(controls,host.firstChild);
+  }
+  const toggle=q('#hidV47PadKeysToggle');
+  const mode=q('#hidV47PadKeyMode');
+  if(toggle && !toggle.__v47){
+    toggle.__v47=true;
+    toggle.onclick=e=>{
+      e.preventDefault();
+      v47.padKeysEnabled=!v47.padKeysEnabled;
+      toggle.textContent='PAD KEYS: '+(v47.padKeysEnabled?'ON':'OFF');
+      toggle.classList.toggle('on',v47.padKeysEnabled);
+    };
+    toggle.classList.toggle('on',v47.padKeysEnabled);
+  }
+  if(mode && !mode.__v47){
+    mode.__v47=true;
+    mode.onclick=e=>{
+      e.preventDefault();
+      v47.padMode=v47.padMode==='restart'?'toggle':'restart';
+      mode.textContent='MODE: '+(v47.padMode==='restart'?'RESTART':'TOGGLE');
+      toast47(v47.padMode==='restart'?'Number keys restart pads every tap':'Number keys toggle pads off/on');
+    };
+  }
+}
+function syncFromV46Controls(){
+  const sel=q('#hidV46PadKeyMode');
+  if(sel && !sel.__v47Sync){
+    sel.__v47Sync=true;
+    sel.addEventListener('change',()=>{ if(sel.value==='toggle'||sel.value==='restart') v47.padMode=sel.value; },true);
+  }
+}
+function addTags(){
+  qa('#pads-grid .spad,.spad').forEach((el,i)=>{
+    if(i>9) return;
+    let tag=el.querySelector('.hid-v46-keytag,.hid-v47-keytag');
+    if(!tag){
+      tag=document.createElement('span');
+      tag.className='hid-v47-keytag hid-v46-keytag';
+      if(getComputedStyle(el).position==='static') el.style.position='relative';
+      el.appendChild(tag);
+    }
+    tag.textContent=i===9?'0':String(i+1);
+  });
+}
+function init(){
+  installKeyboardLayer();
+  installPadKeyControls();
+  syncFromV46Controls();
+  addTags();
+}
+window.HID_V47_PAD_RESTART=idx=>{v47.padMode='restart'; return padKeyTrigger(idx);};
+window.HID_V47_PAD_TOGGLE=idx=>{v47.padMode='toggle'; return padKeyTrigger(idx);};
+window.HID_V47_TOGGLE_KEYBOARD_PIANO=toggleKeyboardPianoV47;
+window.HID_V47_RELEASE_KEYBOARD=releaseAllKeyboardNotes;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3000);});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,180));
+document.addEventListener('pointerdown',()=>setTimeout(init,60),true);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAllKeyboardNotes(); });
+window.addEventListener('blur',releaseAllKeyboardNotes);
+})();
+</script>
+
+
+<!-- ===== HID V48 CHROMATIC BAR WIRELESS KEYBOARD MAP ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V48_CHROMA_KBD__) return;
+window.__HID_V48_CHROMA_KBD__ = true;
+
+const CHROMA_CODES = [
+  'KeyA','KeyS','KeyD','KeyF','KeyG','KeyH','KeyJ','KeyK','KeyL','Semicolon','Quote'
+];
+const CHROMA_LABELS = ['A','S','D','F','G','H','J','K','L',';','\''];
+const run = {
+  active:false,
+  held:new Map(),
+  legatoVoice:null,
+  legatoMidi:null,
+  polyVoices:new Map()
+};
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function isTextTarget(t){return !!(t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]'))}
+function ctxV48(){
+  try{ if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{ if(window.ctx) return window.ctx; if(window.audioCtx) return window.audioCtx; }catch(e){}
+  try{ if(typeof initAudio==='function') initAudio(); if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{
+    const C=window.AudioContext||window.webkitAudioContext;
+    if(!C) return null;
+    window.audioCtx=window.audioCtx||new C();
+    return window.audioCtx;
+  }catch(e){return null}
+}
+function ensureAudio(){
+  const c=ctxV48();
+  try{ if(c && c.state==='suspended') c.resume(); }catch(e){}
+  return c;
+}
+function freq(m){
+  try{return typeof freqOf==='function'?freqOf(m):440*Math.pow(2,(m-69)/12)}catch(e){return 440*Math.pow(2,(m-69)/12)}
+}
+function chromaIsActive(){
+  if(document.body.classList.contains('hid-v41-chroma-on')) return true;
+  if(document.body.classList.contains('hid-v40-chroma-on')) return true;
+  if(document.body.classList.contains('hid-v39-chroma-on')) return true;
+  const S=getS();
+  if(S && (S.chromatic || S.v41Chroma?.on || S.v40Chroma?.on || S.v39Chroma?.on)) return true;
+  return false;
+}
+function visibleBars(){
+  const candidates = [
+    '#hidV41ChromaSurface .hid-v41-bar',
+    '#hidV40ChromaPanel .hid-v40-bar',
+    '#hidV39ChromaPanel .hid-v39-bar',
+    '#chroma.active .chroma-key',
+    '#chroma .chroma-key'
+  ];
+  for(const sel of candidates){
+    const bars=qa(sel).filter(el=>{
+      const r=el.getBoundingClientRect();
+      return r.width>0 && r.height>0;
+    });
+    if(bars.length) return bars;
+  }
+  return [];
+}
+function midiForBar(bar){
+  let m = Number(bar.dataset.midi ?? bar.dataset.realMidi ?? bar.getAttribute('data-midi'));
+  if(!Number.isFinite(m)) m = 60;
+  const S=getS();
+  return m + ((S?.octave||0)*12) + (S?.transpose||0);
+}
+function currentVoiceMode(){
+  const S=getS();
+  return String(
+    q('#hidV41Voice')?.value ||
+    q('#hidV40Voice')?.value ||
+    q('#hidV39Voice')?.value ||
+    S?.v41Chroma?.voice ||
+    S?.v40Chroma?.voice ||
+    S?.v39Chroma?.voice ||
+    S?.voiceMode ||
+    'legato'
+  ).toLowerCase();
+}
+function light(bar,on){
+  if(!bar) return;
+  bar.classList.toggle('lit',!!on);
+  bar.classList.toggle('hid-v48-kbd-active',!!on);
+  if(!on){
+    bar.classList.add('fade');
+    setTimeout(()=>bar.classList.remove('fade'),340);
+  }
+}
+function startVoice(m,vel=.84){
+  ensureAudio();
+  try{
+    if(typeof ensureAudioReady==='function') ensureAudioReady();
+    if(typeof startVoice==='function'){
+      const v=startVoice(m,vel);
+      if(v){
+        const base=freq(m);
+        v.__v48Ratios=(v.oscs||[]).map(o=>{
+          try{return o.osc.frequency.value/base}catch(e){return 1}
+        });
+        try{ getS()?.activeNotes?.set?.(m,v); }catch(e){}
+      }
+      return v;
+    }
+  }catch(e){console.warn('V48 start voice failed',e)}
+  return null;
+}
+function releaseVoice(m,v,fast=false){
+  try{ if(v) fast && v.fadeOut ? v.fadeOut(26) : v.release ? v.release() : v.fadeOut?.(40); }catch(e){}
+  try{ getS()?.activeNotes?.delete?.(m); }catch(e){}
+}
+function glideVoice(v,toMidi){
+  if(!v) return;
+  const c=ctxV48(); if(!c) return;
+  const now=c.currentTime;
+  let glide=.09;
+  try{ glide=Math.max(.045,Math.min(.42,((getS()?.modWheel?.glide)||.06)*2.5)); }catch(e){}
+  const target=freq(toMidi);
+  try{
+    (v.oscs||[]).forEach((o,i)=>{
+      const ratio=(v.__v48Ratios&&v.__v48Ratios[i])||1;
+      o.osc.frequency.cancelScheduledValues(now);
+      o.osc.frequency.setTargetAtTime(target*ratio,now,glide);
+    });
+    if(v.fmOsc){
+      v.fmOsc.frequency.cancelScheduledValues(now);
+      v.fmOsc.frequency.setTargetAtTime(target,now,glide);
+    }
+    v.midi=toMidi;
+  }catch(e){console.warn('V48 glide failed',e)}
+}
+function buildToggle(bar,m){
+  const S=getS(); if(!S) return;
+  if(!(S.shapeNotes instanceof Set)) S.shapeNotes=new Set(Array.isArray(S.shapeNotes)?S.shapeNotes:[]);
+  if(S.shapeNotes.has(m)){
+    S.shapeNotes.delete(m);
+    bar.classList.remove('shape');
+  }else{
+    S.shapeNotes.add(m);
+    bar.classList.add('shape');
+  }
+  try{ if(typeof updateShapeHighlights==='function') updateShapeHighlights(); }catch(e){}
+}
+function recordPad(type,midi,extra={}){
+  const S=getS(); if(!S) return;
+  try{ if(typeof recordEvent==='function') recordEvent({type,midi,...extra}); }catch(e){}
+  try{
+    if(S.padArmedRec>=0){
+      if(!S.padCaptureStart){
+        S.padCaptureStart=ctxV48()?.currentTime||performance.now()/1000;
+        S.padCaptureEvents=[];
+      }
+      const t=(ctxV48()?.currentTime||performance.now()/1000)-S.padCaptureStart;
+      S.padCaptureEvents.push({t,type:type==='glide'?'glide':type,midi,...extra});
+      if(S.padCaptureTimer){clearTimeout(S.padCaptureTimer);S.padCaptureTimer=null;}
+    }
+  }catch(e){}
+}
+function triggerBarDown(code){
+  const idx=CHROMA_CODES.indexOf(code);
+  if(idx<0) return false;
+  const bars=visibleBars();
+  const bar=bars[idx];
+  if(!bar) return true; // consume key if chroma active even with no matching visible bar
+  const m=midiForBar(bar);
+  const S=getS();
+  const mode=currentVoiceMode();
+
+  run.held.set(code,{bar,m,mode});
+  if(S?.build){
+    buildToggle(bar,m);
+    light(bar,true);
+    setTimeout(()=>light(bar,false),110);
+    return true;
+  }
+
+  if(mode==='poly'){
+    const v=startVoice(m,.84);
+    run.polyVoices.set(code,{m,v,bar});
+    light(bar,true);
+    recordPad('on',m,{displayMidi:Number(bar.dataset.midi),mode,key:code});
+  }else if(mode==='mono'){
+    releaseAllChromaKeys(true);
+    const v=startVoice(m,.84);
+    run.legatoVoice=v;
+    run.legatoMidi=m;
+    light(bar,true);
+    recordPad('on',m,{displayMidi:Number(bar.dataset.midi),mode,key:code});
+  }else{
+    // true keyboard legato: first key starts voice; later keys glide same voice.
+    if(!run.legatoVoice){
+      run.legatoVoice=startVoice(m,.84);
+      recordPad('on',m,{displayMidi:Number(bar.dataset.midi),mode,key:code});
+    }else if(run.legatoMidi!==m){
+      glideVoice(run.legatoVoice,m);
+      recordPad('glide',m,{from:run.legatoMidi,to:m,displayMidi:Number(bar.dataset.midi),mode,key:code});
+      try{
+        const S=getS();
+        if(S?.activeNotes instanceof Map){S.activeNotes.delete(run.legatoMidi);S.activeNotes.set(m,run.legatoVoice);}
+      }catch(e){}
+    }
+    run.legatoMidi=m;
+    light(bar,true);
+  }
+  return true;
+}
+function triggerBarUp(code){
+  const held=run.held.get(code);
+  if(!held) return false;
+  run.held.delete(code);
+  const mode=held.mode||currentVoiceMode();
+
+  if(mode==='poly'){
+    const pv=run.polyVoices.get(code);
+    if(pv){
+      releaseVoice(pv.m,pv.v,false);
+      light(pv.bar,false);
+      recordPad('off',pv.m,{key:code,mode});
+      run.polyVoices.delete(code);
+    }
+    return true;
+  }
+
+  light(held.bar,false);
+
+  // In legato/mono, release only when no mapped chroma keys are still down.
+  if(run.held.size===0){
+    releaseVoice(run.legatoMidi,run.legatoVoice,false);
+    recordPad('off',run.legatoMidi,{key:code,mode});
+    run.legatoVoice=null;
+    run.legatoMidi=null;
+  }else{
+    // If another key remains down, glide to the most recent held key.
+    const last=Array.from(run.held.values()).pop();
+    if(last && run.legatoVoice && last.m!==run.legatoMidi){
+      glideVoice(run.legatoVoice,last.m);
+      recordPad('glide',last.m,{from:run.legatoMidi,to:last.m,mode,key:'held'});
+      run.legatoMidi=last.m;
+      light(last.bar,true);
+    }
+  }
+  return true;
+}
+function releaseAllChromaKeys(fast=false){
+  for(const [code,pv] of Array.from(run.polyVoices.entries())){
+    releaseVoice(pv.m,pv.v,fast);
+    light(pv.bar,false);
+  }
+  run.polyVoices.clear();
+  if(run.legatoVoice){
+    releaseVoice(run.legatoMidi,run.legatoVoice,fast);
+    run.legatoVoice=null;
+    run.legatoMidi=null;
+  }
+  for(const h of run.held.values()) light(h.bar,false);
+  run.held.clear();
+}
+function handleDown(e){
+  if(!chromaIsActive()) return;
+  if(isTextTarget(e.target)) return;
+  if(!CHROMA_CODES.includes(e.code)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  if(e.repeat) return;
+  triggerBarDown(e.code);
+}
+function handleUp(e){
+  if(!chromaIsActive()) return;
+  if(!CHROMA_CODES.includes(e.code)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  triggerBarUp(e.code);
+}
+function addKeyboardTags(){
+  const bars=visibleBars();
+  bars.forEach((bar,i)=>{
+    if(i>=CHROMA_LABELS.length) return;
+    if(bar.querySelector('.hid-v48-kbd-tag')) return;
+    if(getComputedStyle(bar).position==='static') bar.style.position='relative';
+    const tag=document.createElement('span');
+    tag.className='hid-v48-kbd-tag';
+    tag.textContent=CHROMA_LABELS[i];
+    bar.appendChild(tag);
+  });
+}
+function installStatus(){
+  const controls=q('#hidV41ChromaControls')||q('#hidV40ChromaControls')||q('#hidV39ChromaControls');
+  if(!controls || q('#hidV48ChromaKeyStatus')) return;
+  const s=document.createElement('span');
+  s.id='hidV48ChromaKeyStatus';
+  s.textContent='A S D F G H J K L ; \' → first 11 bars';
+  controls.appendChild(s);
+}
+function init(){
+  addKeyboardTags();
+  installStatus();
+}
+if(!window.__HID_V48_LISTENERS__){
+  window.__HID_V48_LISTENERS__=true;
+  window.addEventListener('keydown',handleDown,true);
+  document.addEventListener('keydown',handleDown,true);
+  window.addEventListener('keyup',handleUp,true);
+  document.addEventListener('keyup',handleUp,true);
+}
+window.HID_V48_RELEASE_CHROMA_KEYS=releaseAllChromaKeys;
+window.HID_V48_REFRESH_CHROMA_KEY_TAGS=init;
+
+window.addEventListener('load',()=>{setTimeout(init,300);setTimeout(init,1400);setTimeout(init,3200);});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseAllChromaKeys(true);});
+window.addEventListener('blur',()=>releaseAllChromaKeys(true));
+})();
+</script>
+
+
+<!-- ===== HID V49 COMPACT PROJECT PACKAGE SAVE/LOAD (.hidpack) ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V49_HIDPACK__) return;
+window.__HID_V49_HIDPACK__ = true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function toast49(msg){
+  try{ if(typeof window.toast==='function') return window.toast(msg); }catch(e){}
+  let t=q('#hidV49Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV49Toast';
+    t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.94);color:#dff;border:1px solid rgba(0,255,213,.72);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 16px rgba(0,255,213,.25);max-width:88vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',2800);
+}
+
+function getPads(){
+  const S=getS();
+  let pads=S && Array.isArray(S.pads) ? S.pads : null;
+  if(!pads && Array.isArray(window.pads)) pads=window.pads;
+  if(!pads){ pads=[]; if(S) S.pads=pads; window.pads=pads; }
+  while(pads.length<16) pads.push(null);
+  return pads;
+}
+function getCtx(){
+  try{ if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{ if(window.ctx) return window.ctx; if(window.audioCtx) return window.audioCtx; }catch(e){}
+  try{ if(typeof initAudio==='function') initAudio(); if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  try{
+    const C=window.AudioContext||window.webkitAudioContext;
+    if(!C) return null;
+    window.audioCtx=window.audioCtx||new C();
+    return window.audioCtx;
+  }catch(e){return null}
+}
+async function ensureCtx(){
+  const c=getCtx();
+  if(c && c.state==='suspended') try{await c.resume()}catch(e){}
+  return c;
+}
+function safeJSON(obj){
+  try{
+    return JSON.parse(JSON.stringify(obj,(k,v)=>{
+      if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer'||k==='dataURL'||k==='audioDataURL'||k==='audioDataUrl'||k==='sampleDataURL'||k==='fileData'||k==='__hidV45Hydrating'||k==='__hidV43Hydrating') return undefined;
+      if(k && String(k).startsWith('__hidV49')) return undefined;
+      if(v instanceof Map) return Array.from(v.entries());
+      if(v instanceof Set) return Array.from(v.values());
+      return v;
+    }));
+  }catch(e){return null}
+}
+function cssVars49(){
+  const out={};
+  ['--bg','--neon','--neon2','--neon3','--text','--dim','--white-key','--black-key','--window-glow','--hid-window-glow'].forEach(k=>{
+    const v=getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+    if(v) out[k]=v;
+  });
+  return out;
+}
+
+const enc=new TextEncoder();
+const dec=new TextDecoder();
+function concat(arrs){
+  const len=arrs.reduce((n,a)=>n+a.length,0);
+  const out=new Uint8Array(len);
+  let o=0;
+  for(const a of arrs){out.set(a,o);o+=a.length}
+  return out;
+}
+function u16(v){const a=new Uint8Array(2); new DataView(a.buffer).setUint16(0,v,true); return a}
+function u32(v){const a=new Uint8Array(4); new DataView(a.buffer).setUint32(0,v>>>0,true); return a}
+function dosDateTime(){
+  const d=new Date();
+  const time=(d.getHours()<<11)|(d.getMinutes()<<5)|Math.floor(d.getSeconds()/2);
+  const date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  return {time,date};
+}
+const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t})();
+function crc32(data){
+  let c=0xffffffff;
+  for(let i=0;i<data.length;i++) c=crcTable[(c^data[i])&255]^(c>>>8);
+  return (c^0xffffffff)>>>0;
+}
+function makeZip(files){
+  let offset=0;
+  const locals=[], centrals=[];
+  const dt=dosDateTime();
+  for(const f of files){
+    const name=enc.encode(f.name);
+    const data=f.data instanceof Uint8Array?f.data:new Uint8Array(f.data);
+    const crc=crc32(data);
+    const local=concat([
+      u32(0x04034b50),u16(20),u16(0),u16(0),u16(dt.time),u16(dt.date),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data
+    ]);
+    locals.push(local);
+    const central=concat([
+      u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(dt.time),u16(dt.date),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name
+    ]);
+    centrals.push(central);
+    offset+=local.length;
+  }
+  const cd=concat(centrals);
+  const eocd=concat([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(cd.length),u32(offset),u16(0)]);
+  return concat([...locals,cd,eocd]);
+}
+function parseZip(arrayBuffer){
+  const data=new Uint8Array(arrayBuffer);
+  const view=new DataView(data.buffer,data.byteOffset,data.byteLength);
+  let eocd=-1;
+  for(let i=data.length-22;i>=Math.max(0,data.length-66000);i--){
+    if(view.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('Project package is not a valid .hidpack file.');
+  const count=view.getUint16(eocd+10,true);
+  const cdOffset=view.getUint32(eocd+16,true);
+  let ptr=cdOffset;
+  const files={};
+  for(let i=0;i<count;i++){
+    if(view.getUint32(ptr,true)!==0x02014b50) throw new Error('Invalid project package directory.');
+    const method=view.getUint16(ptr+10,true);
+    const compSize=view.getUint32(ptr+20,true);
+    const uncompSize=view.getUint32(ptr+24,true);
+    const nameLen=view.getUint16(ptr+28,true);
+    const extraLen=view.getUint16(ptr+30,true);
+    const commentLen=view.getUint16(ptr+32,true);
+    const localOffset=view.getUint32(ptr+42,true);
+    const name=dec.decode(data.slice(ptr+46,ptr+46+nameLen));
+    if(method!==0) throw new Error('This project uses compressed ZIP entries this app cannot read yet.');
+    if(view.getUint32(localOffset,true)!==0x04034b50) throw new Error('Invalid file header in project package.');
+    const lfNameLen=view.getUint16(localOffset+26,true);
+    const lfExtraLen=view.getUint16(localOffset+28,true);
+    const start=localOffset+30+lfNameLen+lfExtraLen;
+    const bytes=data.slice(start,start+compSize);
+    if(bytes.length!==uncompSize) console.warn('Project file size mismatch for',name);
+    files[name]=bytes;
+    ptr+=46+nameLen+extraLen+commentLen;
+  }
+  return files;
+}
+async function dataURLToBytes(dataURL){
+  const res=await fetch(dataURL);
+  return new Uint8Array(await res.arrayBuffer());
+}
+function extFromPad(p, fallback='wav'){
+  const fn=p?.fileName||p?.name||'sample';
+  const m=String(fn).match(/\.([a-z0-9]+)$/i);
+  if(m) return m[1].toLowerCase();
+  const mime=String(p?.mime||'');
+  if(mime.includes('mpeg')) return 'mp3';
+  if(mime.includes('mp4')||mime.includes('aac')) return 'm4a';
+  if(mime.includes('wav')) return 'wav';
+  if(mime.includes('aiff')) return 'aiff';
+  if(mime.includes('flac')) return 'flac';
+  if(mime.includes('ogg')) return 'ogg';
+  return fallback;
+}
+function audioBufferToWavBytes(buffer){
+  const ch=Math.min(buffer.numberOfChannels||1,2), len=buffer.length, rate=buffer.sampleRate, block=ch*2;
+  const ab=new ArrayBuffer(44+len*block), dv=new DataView(ab);
+  let o=0;
+  function s(x){for(let i=0;i<x.length;i++)dv.setUint8(o++,x.charCodeAt(i))}
+  s('RIFF'); dv.setUint32(o,36+len*block,true); o+=4; s('WAVE'); s('fmt '); dv.setUint32(o,16,true); o+=4;
+  dv.setUint16(o,1,true); o+=2; dv.setUint16(o,ch,true); o+=2; dv.setUint32(o,rate,true); o+=4; dv.setUint32(o,rate*block,true); o+=4; dv.setUint16(o,block,true); o+=2; dv.setUint16(o,16,true); o+=2;
+  s('data'); dv.setUint32(o,len*block,true); o+=4;
+  for(let i=0;i<len;i++)for(let c=0;c<ch;c++){let v=buffer.getChannelData(c)[i]||0;v=Math.max(-1,Math.min(1,v));dv.setInt16(o,v<0?v*0x8000:v*0x7fff,true);o+=2}
+  return new Uint8Array(ab);
+}
+window.__hidV49AudioBytes=window.__hidV49AudioBytes||{};
+
+async function makeHidpackProject(){
+  const S=getS();
+  const pads=[];
+  const files=[];
+  const audioFiles=[];
+  const rawPads=getPads();
+  for(let i=0;i<rawPads.length;i++){
+    const p=rawPads[i];
+    if(!p){pads.push(null);continue}
+    const clean=safeJSON(p)||{};
+    let bytes=null, ext='wav';
+    if(p.audioPath && window.__hidV49AudioBytes[p.audioPath]){
+      bytes=window.__hidV49AudioBytes[p.audioPath];
+      clean.audioPath=p.audioPath;
+      ext=extFromPad(p);
+    }else if(p.__hidV49AudioPath && window.__hidV49AudioBytes[p.__hidV49AudioPath]){
+      bytes=window.__hidV49AudioBytes[p.__hidV49AudioPath];
+      clean.audioPath=p.__hidV49AudioPath;
+      ext=extFromPad(p);
+    }else if(p.dataURL||p.audioDataUrl||p.audioDataURL||p.sampleDataURL||p.fileData||p.fileDataURL){
+      const url=p.dataURL||p.audioDataUrl||p.audioDataURL||p.sampleDataURL||p.fileData||p.fileDataURL;
+      bytes=await dataURLToBytes(url);
+      ext=extFromPad(p);
+      clean.audioPath=`audio/pad-${String(i+1).padStart(2,'0')}.${ext}`;
+    }else{
+      const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+      if(b){
+        bytes=audioBufferToWavBytes(b);
+        ext='wav';
+        clean.audioPath=`audio/pad-${String(i+1).padStart(2,'0')}.wav`;
+      }
+    }
+    if(bytes){
+      clean.audioPath=clean.audioPath||`audio/pad-${String(i+1).padStart(2,'0')}.${ext}`;
+      delete clean.dataURL; delete clean.audioDataUrl; delete clean.audioDataURL; delete clean.sampleDataURL; delete clean.fileData; delete clean.fileDataURL;
+      audioFiles.push({name:clean.audioPath,data:bytes});
+      window.__hidV49AudioBytes[clean.audioPath]=bytes;
+    }
+    pads.push(clean);
+  }
+  const project={type:'hidproject',package:'hidpack',app:'Hold It Down',version:49,savedAt:new Date().toISOString(),state:safeJSON(S),pads,css:cssVars49()};
+  files.push({name:'project.json',data:enc.encode(JSON.stringify(project,null,2))});
+  files.push(...audioFiles);
+  return makeZip(files);
+}
+async function saveProjectV49(){
+  try{
+    toast49('Building compact project package…');
+    const zip=await makeHidpackProject();
+    const blob=new Blob([zip],{type:'application/octet-stream'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='hold-it-down-project.hidpack';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1200);
+    const mb=(zip.length/1024/1024).toFixed(1);
+    toast49('Project saved as .hidpack ('+mb+' MB)');
+  }catch(err){
+    console.error(err);
+    alert('Project save failed: '+(err.message||err));
+  }
+}
+async function decodeAudioBytes(bytes,mime='audio/wav'){
+  const c=await ensureCtx();
+  if(!c) throw new Error('WebAudio not available.');
+  const arr=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+  return await c.decodeAudioData(arr.slice(0));
+}
+async function loadHidpack(file){
+  toast49('Reading project package…');
+  const files=parseZip(await file.arrayBuffer());
+  if(!files['project.json']) throw new Error('Missing project.json inside project package.');
+  const project=JSON.parse(dec.decode(files['project.json']));
+  return {project,files};
+}
+async function loadJsonProject(file){
+  const text=await file.text();
+  const project=JSON.parse(text.replace(/^\uFEFF/,'').trim());
+  return {project,files:null};
+}
+async function loadProjectV49(file){
+  if(!file) return;
+  try{
+    const isPack=/\.hidpack$/i.test(file.name)||/\.zip$/i.test(file.name);
+    const loaded=isPack?await loadHidpack(file):await loadJsonProject(file);
+    const d=loaded.project, files=loaded.files;
+    if(!d || d.type!=='hidproject') throw new Error('This is not a Hold It Down project file.');
+    const S=getS();
+    if(d.css) Object.entries(d.css).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+    if(S && d.state){
+      Object.assign(S,d.state);
+      if(Array.isArray(S.shapeNotes)) S.shapeNotes=new Set(S.shapeNotes);
+      if(!(S.activeNotes instanceof Map)) S.activeNotes=new Map();
+      if(!(S.padPlayingVoices instanceof Map)) S.padPlayingVoices=new Map();
+      if(!(S.padPlayingSequences instanceof Map)) S.padPlayingSequences=new Map();
+      if(S.sampler && !(S.sampler.activeSources instanceof Set)) S.sampler.activeSources=new Set();
+    }
+    const pads=getPads(); pads.length=0;
+    const incoming=Array.isArray(d.pads)?d.pads:(d.state&&Array.isArray(d.state.pads)?d.state.pads:[]);
+    let restored=0;
+    for(const raw of incoming){
+      const p=raw||null;
+      if(p){
+        let bytes=null;
+        if(p.audioPath && files && files[p.audioPath]){
+          bytes=files[p.audioPath];
+          window.__hidV49AudioBytes[p.audioPath]=bytes;
+          p.__hidV49AudioPath=p.audioPath;
+        }else if(p.dataURL||p.audioDataUrl||p.audioDataURL||p.sampleDataURL||p.fileData||p.fileDataURL){
+          // Backward compatibility for old huge JSON projects.
+          const url=p.dataURL||p.audioDataUrl||p.audioDataURL||p.sampleDataURL||p.fileData||p.fileDataURL;
+          bytes=await dataURLToBytes(url);
+        }
+        if(bytes){
+          try{
+            const b=await decodeAudioBytes(bytes,p.mime||'audio/wav');
+            p.buffer=b; p.audioBuffer=b; p.sampleBuffer=b; p.loaded=true; p.kind=p.kind||'sample'; p.type=p.type||'sample';
+            restored++;
+          }catch(e){console.warn('Could not decode pad audio',e)}
+        }
+      }
+      pads.push(p);
+    }
+    while(pads.length<16) pads.push(null);
+    if(S) S.pads=pads;
+    ['buildPadsWindow','renderPads','refreshPads','renderPadGrid','renderWindows','buildPiano','updateTape','refreshUI'].forEach(fn=>{try{if(typeof window[fn]==='function')window[fn]()}catch(e){}});
+    toast49('Project loaded. Restored '+restored+' audio pad'+(restored===1?'':'s')+'.');
+  }catch(err){
+    console.error(err);
+    alert('Could not load project. Use the .hidpack file saved from this build, or an older JSON project.\\n\\n'+(err.message||err));
+  }
+}
+function openProjectLoaderV49(){
+  let input=q('#hidV49ProjectInput');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidV49ProjectInput';
+    input.type='file';
+    input.accept='.hidpack,.json,.hidproject,.hidproj,.hold,application/json,application/octet-stream';
+    input.style.display='none';
+    input.addEventListener('change',e=>{
+      const f=e.target.files&&e.target.files[0];
+      loadProjectV49(f);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+function wireProjectButtonsV49(){
+  const save=q('#btn-save'), load=q('#btn-load');
+  if(save){
+    save.onclick=e=>{e.preventDefault();e.stopPropagation();saveProjectV49();};
+    save.title='Save compact project package (.hidpack)';
+  }
+  if(load){
+    load.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectLoaderV49();};
+    load.title='Load project package';
+  }
+  const old=q('#file-load');
+  if(old){
+    old.accept='.hidpack,.json,.hidproject,.hidproj,.hold,application/json,application/octet-stream';
+    old.onchange=e=>{
+      const f=e.target.files&&e.target.files[0];
+      loadProjectV49(f);
+      e.target.value='';
+    };
+  }
+}
+function patchUploadToKeepOriginalBytes(){
+  if(window.__HID_V49_UPLOAD_PATCHED__) return;
+  window.__HID_V49_UPLOAD_PATCHED__=true;
+  document.addEventListener('change',async e=>{
+    const input=e.target;
+    if(!input || input.type!=='file' || !input.files || !input.files.length) return;
+    if(input.id==='hidV49ProjectInput'||input.id==='file-load') return;
+    const files=Array.from(input.files||[]);
+    const media=files.filter(f=>(f.type||'').startsWith('audio/')||(f.type||'').startsWith('video/')||/\.(mp3|wav|m4a|aac|aif|aiff|flac|ogg|oga|opus|caf|mp4|mov|webm|mkv)$/i.test(f.name));
+    if(!media.length) return;
+    // After other upload systems place files into pads, attach raw bytes to matching pads for compact save.
+    setTimeout(async()=>{
+      const pads=getPads();
+      for(const f of media){
+        const p=pads.find(p=>p && p.fileName===f.name);
+        if(p){
+          const bytes=new Uint8Array(await f.arrayBuffer());
+          const ext=extFromPad(p);
+          const idx=pads.indexOf(p);
+          const path=`audio/pad-${String(idx+1).padStart(2,'0')}.${ext}`;
+          p.audioPath=path; p.__hidV49AudioPath=path;
+          window.__hidV49AudioBytes[path]=bytes;
+        }
+      }
+    },1000);
+  },true);
+}
+function initV49(){
+  wireProjectButtonsV49();
+  patchUploadToKeepOriginalBytes();
+}
+window.HID_V49_SAVE_PROJECT=saveProjectV49;
+window.HID_V49_LOAD_PROJECT_FILE=loadProjectV49;
+window.HID_V49_OPEN_PROJECT_LOADER=openProjectLoaderV49;
+
+window.addEventListener('load',()=>{setTimeout(initV49,300);setTimeout(initV49,1500);setTimeout(initV49,3500);});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(initV49,200));
+document.addEventListener('pointerdown',()=>setTimeout(initV49,60),true);
 })();
 </script>
 
