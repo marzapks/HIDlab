@@ -12136,5 +12136,210 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(installControls,200)
 })();
 </script>
 
+
+<!-- ===== HID V36 SAVE/LOAD + LEGATO FIX ===== -->
+<script>
+(function(){
+if(window.__HID_V36__) return;
+window.__HID_V36__ = true;
+
+/* remove V35 floating dock */
+(function removeDock(){
+  ['hidV35Dock','hidV35Save','hidV35Load','hidV35Upload','hidV35Dup'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.remove();
+  });
+})();
+
+function toast(msg){
+  let t=document.getElementById('hidV36Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV36Toast';
+    t.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.9);color:#dff;border:1px solid rgba(0,255,213,.7);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.display='none',2200);
+}
+
+function getPads(){
+  if(window.STATE && Array.isArray(window.STATE.pads)) return window.STATE.pads;
+  if(Array.isArray(window.pads)) return window.pads;
+  window.pads = window.pads || [];
+  return window.pads;
+}
+
+/* -------- SAVE / LOAD -------- */
+
+async function saveProject(){
+  const pads=getPads().map(function(p){
+    const out={};
+    Object.keys(p||{}).forEach(function(k){
+      const v=p[k];
+      if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') return;
+      out[k]=v;
+    });
+    return out;
+  });
+
+  const project={
+    type:'hidproject',
+    app:'Hold It Down',
+    version:36,
+    savedAt:new Date().toISOString(),
+    pads:pads,
+    state:{
+      STATE: window.STATE || null
+    }
+  };
+
+  const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='hold-it-down-project.hidproject';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  },1000);
+
+  toast('Project saved');
+}
+
+async function loadProjectFile(file){
+  try{
+    const text=await file.text();
+    const cleaned=text.replace(/^\uFEFF/,'').trim();
+    const project=JSON.parse(cleaned);
+
+    if(!project || project.type!=='hidproject'){
+      throw new Error('Invalid .hidproject file');
+    }
+
+    if(project.state && project.state.STATE && window.STATE){
+      Object.assign(window.STATE, project.state.STATE);
+    }
+
+    const pads=getPads();
+    pads.length=0;
+
+    (project.pads||[]).forEach(function(p){
+      pads.push(p||{});
+    });
+
+    ['renderPads','refreshPads','renderPadGrid','renderWindows','refreshUI','renderChroma','renderPiano'].forEach(function(fn){
+      try{
+        if(typeof window[fn]==='function') window[fn]();
+      }catch(e){}
+    });
+
+    toast('Project loaded');
+
+  }catch(err){
+    console.error(err);
+    alert('Could not load this project file.');
+  }
+}
+
+function openProjectLoader(){
+  let input=document.getElementById('hidProjectLoaderV36');
+  if(!input){
+    input=document.createElement('input');
+    input.type='file';
+    input.id='hidProjectLoaderV36';
+    input.accept='.hidproject,application/json,.json,.hold';
+    input.style.display='none';
+    input.addEventListener('change',function(e){
+      const file=e.target.files && e.target.files[0];
+      if(file) loadProjectFile(file);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+/* connect ONLY to top-bar buttons */
+function wireTopButtons(){
+  document.querySelectorAll('button,.btn').forEach(function(btn){
+    const txt=(btn.textContent||'').trim().toUpperCase();
+
+    if(txt.includes('SAVE') && txt.includes('PROJECT')){
+      btn.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        saveProject();
+      };
+    }
+
+    if((txt.includes('LOAD') || txt.includes('OPEN')) && txt.includes('PROJECT')){
+      btn.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        openProjectLoader();
+      };
+    }
+  });
+}
+
+/* -------- LEGATO FIX -------- */
+
+window.__HID_CHROMA_GLIDE_STATE__ = {
+  active:false,
+  current:null,
+  target:null
+};
+
+function smoothLegato(freq){
+  try{
+    if(window.__HID_CHROMA_GLIDE_STATE__.current && window.__HID_CHROMA_GLIDE_STATE__.current.frequency){
+      const osc=window.__HID_CHROMA_GLIDE_STATE__.current;
+      const now=(window.audioCtx||window.ctx).currentTime;
+      osc.frequency.cancelScheduledValues(now);
+      osc.frequency.linearRampToValueAtTime(freq, now + 0.08);
+    }
+  }catch(e){}
+}
+
+document.addEventListener('hid-chroma-note',function(e){
+  try{
+    const d=e.detail||{};
+    if(d.mode && String(d.mode).toLowerCase()==='legato'){
+      if(d.freq) smoothLegato(d.freq);
+    }
+  }catch(err){}
+});
+
+/* improve chroma slide capture */
+document.addEventListener('hid-chroma-slide-record',function(e){
+  try{
+    if(window.currentPadRecording){
+      window.currentPadRecording.glideData = window.currentPadRecording.glideData || [];
+      window.currentPadRecording.glideData.push({
+        time:performance.now(),
+        note:e.detail.note,
+        freq:e.detail.freq,
+        x:e.detail.x,
+        y:e.detail.y
+      });
+    }
+  }catch(err){}
+});
+
+window.HID_SAVE_PROJECT = saveProject;
+window.HID_OPEN_PROJECT_LOADER = openProjectLoader;
+
+window.addEventListener('load',function(){
+  setTimeout(wireTopButtons,600);
+  setTimeout(wireTopButtons,1800);
+});
+
+})();
+</script>
+
 </body>
 </html>
