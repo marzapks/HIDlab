@@ -1601,6 +1601,21 @@ body.hid-entered.remote-missing #hid-remote-emergency{display:block}
 body.hid-entered #launch{display:none!important;pointer-events:none!important}
 body.hid-entered #app{display:flex!important;visibility:visible!important;opacity:1!important}
 </style>
+
+<style id="hid-v37-hide-old-floating-controls">
+#hidProjectSaveLoadDock,
+#hidV35Dock,
+#hidMidiPanel,
+#hidV35Save,
+#hidV35Load,
+#hidV35Upload,
+#hidV35Dup {
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -12337,6 +12352,583 @@ window.addEventListener('load',function(){
   setTimeout(wireTopButtons,600);
   setTimeout(wireTopButtons,1800);
 });
+
+})();
+</script>
+
+
+<!-- ===== HID V37 REAL TOPBAR PROJECT/PAD + CHROMA LEGATO CONTROL ===== -->
+<script>
+(function(){
+if(window.__HID_V37_REAL_FIX__) return;
+window.__HID_V37_REAL_FIX__ = true;
+
+function $(s,r=document){return r.querySelector(s)}
+function $$(s,r=document){return Array.from(r.querySelectorAll(s))}
+function safeCall(fn,args=[]){try{ if(typeof window[fn]==='function') return window[fn](...args); }catch(e){console.warn('V37 call failed',fn,e)}}
+
+function toast(msg){
+  let t=document.getElementById('hidV37Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV37Toast';
+    t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.92);color:#dff;border:1px solid rgba(0,255,213,.7);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 18px rgba(0,255,213,.35);max-width:88vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{t.style.display='none'},2600);
+}
+
+/* kill all old floating helper docks and MIDI leftovers */
+function removeOldFloatingControls(){
+  [
+    'hidProjectSaveLoadDock','hidV35Dock','hidMidiPanel',
+    'hidV35Save','hidV35Load','hidV35Upload','hidV35Dup',
+    'hidEnableMidiBtn','hidMidiInputList'
+  ].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.remove();
+  });
+  $$('[id*="Midi"],[id*="MIDI"],[class*="midi"],[class*="MIDI"]').forEach(el=>{
+    const tx=(el.textContent||'').toUpperCase();
+    if(tx.includes('MIDI CONTROL') || tx.includes('ENABLE WEB MIDI')) el.remove();
+  });
+  window.HID_INIT_WEB_MIDI=undefined;
+  window.HID_ALL_NOTES_OFF=undefined;
+}
+removeOldFloatingControls();
+new MutationObserver(removeOldFloatingControls).observe(document.documentElement,{childList:true,subtree:true});
+
+/* ---------- PAD HELPERS ---------- */
+function getPads(){
+  let arr=null;
+  try{ if(window.STATE && Array.isArray(STATE.pads)) arr=STATE.pads; }catch(e){}
+  if(!arr && Array.isArray(window.pads)) arr=window.pads;
+  if(!arr){
+    arr=[];
+    window.pads=arr;
+    try{ if(window.STATE) STATE.pads=arr; }catch(e){}
+  }
+  while(arr.length<16){
+    arr.push(null);
+  }
+  try{ window.pads=arr; }catch(e){}
+  try{ if(window.STATE) STATE.pads=arr; }catch(e){}
+  return arr;
+}
+function padEmpty(p){
+  return !p || !(p.loaded||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.sequence||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function nextPadIndex(){
+  const pads=getPads();
+  for(let i=0;i<pads.length;i++) if(padEmpty(pads[i])) return i;
+  pads.push(null);
+  return pads.length-1;
+}
+function refreshPads(){
+  ['buildPadsWindow','renderPads','renderPadGrid','refreshPads','updatePads','buildPads','renderSampler','refreshSampler','renderWindows','refreshUI'].forEach(fn=>safeCall(fn));
+  document.dispatchEvent(new CustomEvent('hid-v37-pads-updated'));
+}
+function selectedPadIndex(){
+  try{
+    if(window.STATE && Number.isFinite(STATE.padEditingIdx) && STATE.padEditingIdx>=0) return STATE.padEditingIdx;
+    if(window.STATE && Number.isFinite(STATE.padCycleIdx) && STATE.padCycleIdx>=0) return STATE.padCycleIdx;
+  }catch(e){}
+  return 0;
+}
+
+/* ---------- AUDIO UPLOAD ---------- */
+function getAudioContext(){
+  try{
+    if(window.ctx) return ctx;
+    if(window.audioCtx) return audioCtx;
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx) return null;
+    window.audioCtx=new Ctx();
+    return window.audioCtx;
+  }catch(e){ return null; }
+}
+async function decodeFile(file){
+  const c=getAudioContext();
+  if(!c) throw new Error('WebAudio is not available.');
+  if(c.state==='suspended'){try{await c.resume()}catch(e){}}
+  const arr=await file.arrayBuffer();
+  try{return await c.decodeAudioData(arr.slice(0))}
+  catch(e){throw new Error('Could not decode '+file.name+'. Try WAV, MP3, M4A/AAC, AIFF, FLAC, OGG, MP4/MOV, or WEBM depending on browser support.')}
+}
+function fileToDataURL(file){
+  return new Promise(resolve=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=()=>resolve(null);
+    r.readAsDataURL(file);
+  });
+}
+function shortName(n){return String(n||'Audio').replace(/\.[^.]+$/,'').slice(0,28)}
+async function addAudioFiles(files){
+  const list=Array.from(files||[]);
+  if(!list.length) return;
+  let count=0;
+  for(const file of list){
+    try{
+      const buffer=await decodeFile(file);
+      const dataURL=await fileToDataURL(file);
+      const idx=nextPadIndex();
+      const pads=getPads();
+      pads[idx]={
+        type:'sample',kind:'audio-upload',loaded:true,
+        name:shortName(file.name),label:shortName(file.name),fileName:file.name,
+        mime:file.type||'',size:file.size||0,duration:buffer.duration||0,
+        buffer,audioBuffer:buffer,sampleBuffer:buffer,dataURL,
+        volume:1,fxSend:0,pan:0,transpose:0,octave:0,octaveShift:0,
+        loop:false,oneShot:true,pitchBendEnabled:true,wheelEnabled:true,pbUp:2,pbDn:2,
+        createdAt:new Date().toISOString()
+      };
+      count++;
+      toast('Audio loaded → Pad '+(idx+1));
+      refreshPads();
+    }catch(err){
+      console.error(err);
+      toast(err.message||('Could not load '+file.name));
+    }
+  }
+  if(count>1) toast(count+' audio files loaded into pads.');
+}
+function openAudioUploader(){
+  let input=document.getElementById('hidV37AudioInput');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidV37AudioInput';
+    input.type='file';
+    input.multiple=true;
+    input.accept='audio/*,video/*,.mp3,.wav,.m4a,.aac,.aif,.aiff,.flac,.ogg,.oga,.opus,.caf,.mp4,.mov,.webm,.mkv';
+    input.style.display='none';
+    input.addEventListener('change',e=>{
+      addAudioFiles(e.target.files);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+function duplicatePad(){
+  const pads=getPads();
+  const src=selectedPadIndex();
+  if(padEmpty(pads[src])){toast('Select or long-hold a loaded pad first.');return;}
+  const dest=nextPadIndex();
+  const p=pads[src];
+  const clone={};
+  Object.keys(p).forEach(k=>{
+    const v=p[k];
+    if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') clone[k]=v;
+    else {try{clone[k]=JSON.parse(JSON.stringify(v))}catch(e){clone[k]=v}}
+  });
+  clone.name=(clone.name||clone.label||('Pad '+(src+1)))+' copy';
+  clone.label=clone.name;
+  pads[dest]=clone;
+  try{ if(window.STATE){STATE.padEditingIdx=dest; STATE.padControlScope='pad';} }catch(e){}
+  refreshPads();
+  toast('Duplicated Pad '+(src+1)+' → Pad '+(dest+1));
+}
+
+/* ---------- PROJECT SAVE/LOAD ---------- */
+function cssVars(){
+  const cs=getComputedStyle(document.documentElement), out={};
+  ['--bg','--neon','--neon2','--neon3','--text','--dim','--white-key','--black-key','--panel','--stroke','--window-glow','--hid-window-glow','--hid-white-key-solid','--hid-black-key-solid'].forEach(k=>{
+    const v=cs.getPropertyValue(k).trim();
+    if(v) out[k]=v;
+  });
+  return out;
+}
+function applyCssVars(vars){ if(vars) Object.keys(vars).forEach(k=>document.documentElement.style.setProperty(k,vars[k])) }
+function controls(){
+  const out={};
+  $$('input,select,textarea').forEach(el=>{
+    if(!el.id && !el.name) return;
+    if(el.type==='file') return;
+    const key=el.id||el.name;
+    if(el.type==='checkbox') out[key]=!!el.checked;
+    else if(el.type==='radio'){ if(el.checked) out[key]=el.value }
+    else out[key]=el.value;
+  });
+  return out;
+}
+function applyControls(data){
+  if(!data) return;
+  Object.keys(data).forEach(key=>{
+    let nodes=[];
+    try{nodes=$$('#'+CSS.escape(key)+',[name="'+String(key).replace(/"/g,'\\"')+'"]')}catch(e){}
+    nodes.forEach(el=>{
+      if(el.type==='file') return;
+      if(el.type==='checkbox') el.checked=!!data[key];
+      else if(el.type==='radio') el.checked=(el.value==data[key]);
+      else el.value=data[key];
+      try{el.dispatchEvent(new Event('input',{bubbles:true}))}catch(e){}
+      try{el.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}
+    });
+  });
+}
+async function audioBufferToWavDataURL(buffer){
+  if(!buffer||!buffer.length||!buffer.sampleRate) return null;
+  const channels=Math.min(buffer.numberOfChannels||1,2);
+  const len=buffer.length, rate=buffer.sampleRate, bytes=2, block=channels*bytes;
+  const ab=new ArrayBuffer(44+len*block), view=new DataView(ab);
+  let off=0;
+  const str=s=>{for(let i=0;i<s.length;i++) view.setUint8(off++,s.charCodeAt(i))};
+  str('RIFF'); view.setUint32(off,36+len*block,true); off+=4;
+  str('WAVE'); str('fmt '); view.setUint32(off,16,true); off+=4;
+  view.setUint16(off,1,true); off+=2; view.setUint16(off,channels,true); off+=2;
+  view.setUint32(off,rate,true); off+=4; view.setUint32(off,rate*block,true); off+=4;
+  view.setUint16(off,block,true); off+=2; view.setUint16(off,16,true); off+=2;
+  str('data'); view.setUint32(off,len*block,true); off+=4;
+  for(let i=0;i<len;i++){
+    for(let c=0;c<channels;c++){
+      let s=buffer.getChannelData(c)[i]||0; s=Math.max(-1,Math.min(1,s));
+      view.setInt16(off,s<0?s*0x8000:s*0x7fff,true); off+=2;
+    }
+  }
+  return await new Promise(resolve=>{
+    const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=()=>resolve(null);
+    r.readAsDataURL(new Blob([ab],{type:'audio/wav'}));
+  });
+}
+async function cleanPadForSave(p){
+  if(!p) return null;
+  const out={};
+  Object.keys(p).forEach(k=>{
+    if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') return;
+    try{out[k]=JSON.parse(JSON.stringify(p[k]))}catch(e){}
+  });
+  if(!out.dataURL){
+    const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+    if(b) out.dataURL=await audioBufferToWavDataURL(b);
+  }
+  return out;
+}
+function safeState(){
+  try{
+    if(!window.STATE) return null;
+    return JSON.parse(JSON.stringify(STATE,(k,v)=>{
+      if(k==='buffer'||k==='audioBuffer'||k==='sampleBuffer') return undefined;
+      if(v instanceof Map) return Array.from(v.entries());
+      if(v instanceof Set) return Array.from(v.values());
+      return v;
+    }));
+  }catch(e){return null}
+}
+async function saveProject(){
+  const pads=[];
+  for(const p of getPads()) pads.push(await cleanPadForSave(p));
+  const project={
+    type:'hidproject',
+    app:'Hold It Down',
+    version:37,
+    savedAt:new Date().toISOString(),
+    cssVars:cssVars(),
+    controls:controls(),
+    pads,
+    state:safeState()
+  };
+  const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='hold-it-down-project.hidproject';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1200);
+  toast('Project saved as .hidproject');
+}
+async function decodeDataURL(dataURL){
+  if(!dataURL) return null;
+  const c=getAudioContext();
+  if(!c) return null;
+  if(c.state==='suspended'){try{await c.resume()}catch(e){}}
+  const res=await fetch(dataURL);
+  const arr=await res.arrayBuffer();
+  return await c.decodeAudioData(arr.slice(0));
+}
+async function loadProjectFile(file){
+  if(!file) return;
+  try{
+    const txt=await file.text();
+    const project=JSON.parse(txt.replace(/^\uFEFF/,'').trim());
+    if(!project || project.type!=='hidproject') throw new Error('Not a .hidproject file from this app.');
+    applyCssVars(project.cssVars);
+    applyControls(project.controls||project.inputs);
+    if(project.state && window.STATE){
+      Object.assign(STATE,project.state);
+      if(Array.isArray(project.state.shapeNotes)) STATE.shapeNotes=new Set(project.state.shapeNotes);
+      if(Array.isArray(project.state.activeNotes)) STATE.activeNotes=new Map();
+    }
+    const pads=getPads();
+    pads.length=0;
+    for(const raw of (project.pads||[])){
+      const p=raw||null;
+      if(p && p.dataURL){
+        try{
+          const buf=await decodeDataURL(p.dataURL);
+          p.buffer=buf; p.audioBuffer=buf; p.sampleBuffer=buf; p.loaded=true;
+        }catch(e){console.warn('V37 audio restore failed',e)}
+      }
+      pads.push(p);
+    }
+    while(pads.length<16) pads.push(null);
+    try{ if(window.STATE) STATE.pads=pads }catch(e){}
+    refreshPads();
+    safeCall('buildPiano'); safeCall('renderChroma'); safeCall('buildChroma');
+    toast('Project loaded.');
+  }catch(err){
+    console.error(err);
+    alert('Could not load this project. Choose the .hidproject file saved by this app.\\n\\n'+(err.message||err));
+  }
+}
+function openProjectLoader(){
+  let input=document.getElementById('hidV37ProjectInput');
+  if(!input){
+    input=document.createElement('input');
+    input.id='hidV37ProjectInput';
+    input.type='file';
+    // Do NOT restrict accept. iOS sometimes hides .hidproject when accept is restrictive.
+    input.style.display='none';
+    input.addEventListener('change',e=>{
+      const f=e.target.files&&e.target.files[0];
+      loadProjectFile(f);
+      e.target.value='';
+    });
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+/* ---------- TOPBAR ONLY CONTROLS ---------- */
+function makeBtn(id,txt,fn,cls='btn tiny gold'){
+  let b=document.getElementById(id);
+  if(!b){
+    b=document.createElement('button');
+    b.id=id;
+    b.className=cls;
+    b.textContent=txt;
+    b.style.marginLeft='4px';
+  }
+  b.onclick=e=>{e.preventDefault();e.stopPropagation();fn()};
+  return b;
+}
+function installTopbar(){
+  removeOldFloatingControls();
+  const top=$('.topbar') || $('.pb-row1') || $('#app');
+  if(!top) return false;
+  if(!document.getElementById('hidV37Badge')){
+    const badge=document.createElement('span');
+    badge.id='hidV37Badge';
+    badge.textContent='V37 ACTIVE';
+    badge.style.cssText='font-family:VT323,monospace;font-size:12px;color:#ffe600;border:1px solid rgba(255,230,0,.45);padding:3px 6px;margin-left:4px;letter-spacing:.1em;';
+    top.appendChild(badge);
+  }
+  top.appendChild(makeBtn('hidV37SaveTop','SAVE PROJECT',saveProject));
+  top.appendChild(makeBtn('hidV37LoadTop','LOAD PROJECT',openProjectLoader));
+  top.appendChild(makeBtn('hidV37AudioTop','UPLOAD AUDIO → PAD',openAudioUploader,'btn tiny'));
+  top.appendChild(makeBtn('hidV37DupTop','DUP PAD',duplicatePad,'btn tiny'));
+  return true;
+}
+function wireExistingButtons(){
+  $$('button,.btn,.launcher-btn').forEach(btn=>{
+    const txt=(btn.textContent||'').trim().toUpperCase();
+    if(btn.id&&btn.id.startsWith('hidV37')) return;
+    if(txt.includes('SAVE') && txt.includes('PROJECT')) btn.onclick=e=>{e.preventDefault();e.stopPropagation();saveProject()};
+    if((txt.includes('LOAD')||txt.includes('OPEN')) && txt.includes('PROJECT')) btn.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectLoader()};
+    if((txt.includes('UPLOAD')||txt.includes('IMPORT AUDIO')||txt.includes('LOAD AUDIO')||txt.includes('AUDIO FILE')) && !txt.includes('PROJECT')) btn.onclick=e=>{e.preventDefault();e.stopPropagation();openAudioUploader()};
+    if(txt.includes('DUPLICATE') || txt==='DUP') btn.onclick=e=>{e.preventDefault();e.stopPropagation();duplicatePad()};
+  });
+}
+
+/* ---------- CHROMATIC LEGATO OVERRIDE ---------- */
+const ChromaV37={down:false,pid:null,lastMidi:null,voice:null,ratios:null,events:[]};
+function freq(m){try{return freqOf(m)}catch(e){return 440*Math.pow(2,(m-69)/12)}}
+function voiceMode(){
+  try{
+    const s=STATE.voiceMode || STATE.chromaVoiceMode || $('#hid-v18-voice-mode')?.value || $('#hid-v24-chroma-voice')?.value || 'poly';
+    return String(s).toLowerCase();
+  }catch(e){return 'poly'}
+}
+function realMidi(m){
+  try{return m+(STATE.octave||0)*12+(STATE.transpose||0)}catch(e){return m}
+}
+function recordChroma(ev){
+  try{ if(typeof recordEvent==='function') recordEvent(ev) }catch(e){}
+  try{
+    if(window.STATE && STATE.padArmedRec>=0 && typeof padCaptureNote==='function'){
+      if(ev.type==='on') padCaptureNote(ev.midi,'on');
+      else if(ev.type==='off') padCaptureNote(ev.midi,'off');
+      else if(ev.type==='glide') padCaptureNote(ev.midi,'glide',{from:ev.from,to:ev.to,morph:!!ev.morph});
+    }
+  }catch(e){}
+}
+function paint(m,on){
+  const el=document.querySelector('.chroma-key[data-midi="'+m+'"],.chroma-key[data-real-midi="'+m+'"]');
+  if(el){
+    el.classList.toggle('lit',!!on);
+    if(!on){ el.classList.add('hid-v37-fade'); setTimeout(()=>el.classList.remove('hid-v37-fade'),380); }
+  }
+}
+function releaseVoiceObj(v,fast=false){
+  try{ if(v){ fast && v.fadeOut ? v.fadeOut(18) : v.release ? v.release() : v.fadeOut && v.fadeOut(30); } }catch(e){}
+}
+function startReal(m,vel=.82){
+  try{
+    const v=startVoice(m,vel);
+    if(v && v.oscs){
+      v.__v37Ratios=v.oscs.map(o=>{
+        try{return o.osc.frequency.value/freq(m)}catch(e){return 1}
+      });
+    }
+    try{ STATE.activeNotes.set(m,v) }catch(e){}
+    return v;
+  }catch(e){console.warn('V37 start failed',e); return null}
+}
+function glideVoice(v,from,to){
+  if(!v) return;
+  const now=(window.ctx?ctx:window.audioCtx).currentTime;
+  const glide=Math.max(.035, Math.min(.35, (STATE?.modWheel?.glide||.08)*2.2));
+  const f=freq(to);
+  try{
+    (v.oscs||[]).forEach((o,i)=>{
+      const ratio=(v.__v37Ratios&&v.__v37Ratios[i])||1;
+      o.osc.frequency.cancelScheduledValues(now);
+      o.osc.frequency.setTargetAtTime(f*ratio,now,glide);
+    });
+    if(v.fmOsc){
+      v.fmOsc.frequency.cancelScheduledValues(now);
+      v.fmOsc.frequency.setTargetAtTime(f,now,glide);
+    }
+    v.midi=to;
+  }catch(e){}
+  try{ STATE.activeNotes.delete(from); STATE.activeNotes.set(to,v) }catch(e){}
+}
+function chromaKeyAt(x,y){
+  return document.elementFromPoint(x,y)?.closest?.('.chroma-key');
+}
+function handleChromaMidi(displayMidi,phase,ev){
+  if(!Number.isFinite(displayMidi)) return;
+  const mode=voiceMode();
+  const m=realMidi(displayMidi);
+
+  if(STATE?.build){
+    if(phase==='down'){
+      try{
+        if(!STATE.shapeNotes) STATE.shapeNotes=new Set();
+        if(STATE.shapeNotes.has(m)){ STATE.shapeNotes.delete(m); paint(displayMidi,false); }
+        else { STATE.shapeNotes.add(m); paint(displayMidi,true); }
+        safeCall('updateShapeHighlights');
+      }catch(e){}
+    }
+    return;
+  }
+
+  if(phase==='down'){
+    ChromaV37.lastMidi=displayMidi;
+    if(mode==='poly'){
+      const v=startReal(m,.84); ChromaV37.voice=v; paint(displayMidi,true); recordChroma({type:'on',midi:m,vel:.84});
+    }else{
+      ChromaV37.voice=startReal(m,.84);
+      ChromaV37.lastReal=m;
+      paint(displayMidi,true); recordChroma({type:'on',midi:m,vel:.84});
+    }
+    return;
+  }
+
+  if(phase==='move' && displayMidi!==ChromaV37.lastMidi){
+    const oldDisplay=ChromaV37.lastMidi;
+    const oldReal=realMidi(oldDisplay);
+    if(mode==='poly'){
+      if(!STATE?.sustain){
+        const old=STATE?.activeNotes?.get?.(oldReal);
+        if(old) releaseVoiceObj(old,true);
+        try{STATE.activeNotes.delete(oldReal)}catch(e){}
+      }
+      paint(oldDisplay,false);
+      const v=startReal(m,.78); paint(displayMidi,true); recordChroma({type:'on',midi:m,vel:.78});
+    }else if(mode==='mono'){
+      if(ChromaV37.voice) releaseVoiceObj(ChromaV37.voice,true);
+      paint(oldDisplay,false);
+      ChromaV37.voice=startReal(m,.82);
+      recordChroma({type:'glide',from:oldReal,to:m,midi:m});
+      paint(displayMidi,true);
+    }else{
+      // true legato: one voice, no retrigger; glide oscillator frequency.
+      glideVoice(ChromaV37.voice,oldReal,m);
+      paint(oldDisplay,false); paint(displayMidi,true);
+      recordChroma({type:'glide',from:oldReal,to:m,midi:m});
+    }
+    ChromaV37.lastMidi=displayMidi;
+    ChromaV37.lastReal=m;
+  }
+}
+function endChroma(){
+  const mode=voiceMode();
+  if(!STATE?.sustain && !STATE?.build){
+    if(mode==='poly'){
+      try{
+        Array.from(STATE.activeNotes.entries()).forEach(([m,v])=>{
+          if(v && v.__v37Chroma){ releaseVoiceObj(v,false); STATE.activeNotes.delete(m); }
+        });
+      }catch(e){}
+    }else if(ChromaV37.voice){
+      releaseVoiceObj(ChromaV37.voice,false);
+      try{STATE.activeNotes.delete(ChromaV37.lastReal)}catch(e){}
+    }
+  }
+  $$('.chroma-key.lit').forEach(k=>{k.classList.remove('lit'); k.classList.add('hid-v37-fade'); setTimeout(()=>k.classList.remove('hid-v37-fade'),380)});
+  if(ChromaV37.lastReal!=null) recordChroma({type:'off',midi:ChromaV37.lastReal});
+  ChromaV37.down=false; ChromaV37.pid=null; ChromaV37.lastMidi=null; ChromaV37.lastReal=null; ChromaV37.voice=null;
+}
+function installChromaLegato(){
+  const c=$('#chroma');
+  if(!c || c.__hidV37Chroma) return;
+  c.__hidV37Chroma=true;
+  c.addEventListener('pointerdown',e=>{
+    const k=e.target.closest('.chroma-key');
+    if(!k) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    ChromaV37.down=true; ChromaV37.pid=e.pointerId;
+    try{c.setPointerCapture(e.pointerId)}catch(err){}
+    handleChromaMidi(+k.dataset.midi,'down',e);
+  },true);
+  c.addEventListener('pointermove',e=>{
+    if(!ChromaV37.down || e.pointerId!==ChromaV37.pid) return;
+    const k=chromaKeyAt(e.clientX,e.clientY);
+    if(!k) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    handleChromaMidi(+k.dataset.midi,'move',e);
+  },true);
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>{
+    c.addEventListener(type,e=>{
+      if(!ChromaV37.down) return;
+      e.preventDefault?.(); e.stopPropagation?.(); e.stopImmediatePropagation?.();
+      endChroma();
+    },true);
+  });
+}
+const style=document.createElement('style');
+style.id='hid-v37-style';
+style.textContent='.hid-v37-fade{transition:box-shadow .38s ease,filter .38s ease,background .38s ease!important;filter:brightness(1.12)!important}.chroma-key.lit{filter:brightness(1.45) saturate(1.5)!important}';
+document.head.appendChild(style);
+
+window.HID_V37_SAVE_PROJECT=saveProject;
+window.HID_V37_LOAD_PROJECT=openProjectLoader;
+window.HID_V37_UPLOAD_AUDIO=openAudioUploader;
+window.HID_V37_DUP_PAD=duplicatePad;
+
+function installAll(){
+  installTopbar();
+  wireExistingButtons();
+  installChromaLegato();
+  removeOldFloatingControls();
+}
+window.addEventListener('load',()=>{setTimeout(installAll,300);setTimeout(installAll,1500);setTimeout(installAll,3500)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(installAll,200));
+document.addEventListener('pointerdown',()=>setTimeout(installAll,60),true);
 
 })();
 </script>
