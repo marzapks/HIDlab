@@ -1704,207 +1704,186 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 </style>
 
 
-<style id="hid-v50-remote-pair-css">
-/* Hide older QR docks/overlays so the new V50 pairing flow is the only visible pairing system. */
-#hid-v12-qr-overlay,
-#hid-qr-v11-dock,
-#hid-v12-qr-btn,
-#hid-qr-v11-topbtn,
-#hid-qr-v11-launcher{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
+
+<style id="hid-v51-remote-pair-css">
+#hid-v12-qr-overlay,#hid-qr-v11-dock,#hid-v12-qr-btn,#hid-qr-v11-topbtn,#hid-qr-v11-launcher,
+#hidV50Pair,#hidV50Scan,#hidV50PairBtn{
+  display:none!important;visibility:hidden!important;pointer-events:none!important;
 }
-#hidV50Pair{
-  position:fixed;
-  inset:0;
-  display:none;
-  z-index:2147483640;
-  background:
-    radial-gradient(circle at 12% 0%,rgba(0,255,213,.14),transparent 38%),
-    radial-gradient(circle at 100% 20%,rgba(255,230,0,.08),transparent 34%),
-    linear-gradient(180deg,#05040d,#000);
-  color:var(--text);
-  font-family:'VT323',monospace;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  padding:calc(12px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom));
+#hidV51Pair{
+  position:fixed;inset:0;display:none;z-index:2147483600;
+  background:radial-gradient(circle at 15% 0%,rgba(0,255,213,.12),transparent 35%),
+             linear-gradient(180deg,#05040d,#000);
+  color:var(--text);font-family:'VT323',monospace;
+  padding:calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom));
+  overflow:auto;-webkit-overflow-scrolling:touch;
 }
-#hidV50Pair.show{display:block!important}
-.hv50-shell{
-  max-width:1120px;
-  margin:0 auto;
-  border:1px solid var(--stroke);
-  background:linear-gradient(180deg,rgba(8,6,18,.98),rgba(0,0,0,.98));
-  box-shadow:0 0 28px rgba(0,255,213,.22),inset 0 0 26px rgba(0,0,0,.65);
-  border-radius:10px;
-  overflow:hidden;
-}
-.hv50-head{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-  padding:10px;
-  border-bottom:1px solid var(--stroke);
-  background:linear-gradient(90deg,rgba(0,255,213,.16),rgba(255,230,0,.08),transparent);
-}
-.hv50-title{
-  flex:1;
-  min-width:230px;
-  font-family:'Press Start 2P',monospace;
-  font-size:10px;
-  line-height:1.45;
-  color:var(--neon);
-  text-shadow:0 0 6px var(--neon);
-  letter-spacing:.1em;
-}
-.hv50-title b{color:var(--neon3);font-weight:400;text-shadow:0 0 6px var(--neon3)}
-.hv50-status{
-  font-family:'VT323',monospace;
-  font-size:15px;
-  color:var(--dim);
-  border:1px solid rgba(0,255,213,.25);
-  background:rgba(0,0,0,.45);
-  padding:5px 8px;
-  border-radius:6px;
-}
-.hv50-status b{color:var(--neon3);font-weight:400}
-.hv50-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  padding:10px;
-}
-.hv50-card{
-  min-width:0;
-  border:1px solid var(--stroke);
-  background:rgba(0,255,213,.035);
-  padding:10px;
+#hidV51Pair.show{display:block!important}
+.hv51-shell{max-width:1060px;margin:0 auto;border:1px solid var(--stroke);background:rgba(0,0,0,.94);box-shadow:0 0 26px rgba(0,255,213,.22);border-radius:10px;overflow:hidden}
+.hv51-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border-bottom:1px solid var(--stroke);background:linear-gradient(90deg,rgba(0,255,213,.14),rgba(255,230,0,.06),transparent)}
+.hv51-title{flex:1;min-width:230px;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.45;color:var(--neon);letter-spacing:.1em;text-shadow:0 0 6px var(--neon)}
+.hv51-status{font-size:15px;color:var(--dim);border:1px solid rgba(0,255,213,.3);padding:5px 8px;border-radius:6px;background:rgba(0,0,0,.45)}
+.hv51-status b{color:var(--neon3);font-weight:400}
+.hv51-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.hv51-card{border:1px solid var(--stroke);background:rgba(0,255,213,.035);border-radius:8px;padding:10px;min-width:0}
+.hv51-card.gold{border-color:rgba(255,230,0,.38);background:rgba(255,230,0,.04)}
+.hv51-card h3{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--neon3);letter-spacing:.09em;text-shadow:0 0 5px var(--neon3);margin:0 0 8px}
+.hv51-help{color:var(--dim);font-size:15px;line-height:1.25;margin:6px 0 8px}
+.hv51-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:7px 0}
+#hidV51Pair textarea{width:100%;min-height:86px;background:#020309;border:1px solid var(--stroke);color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.3;padding:8px;resize:vertical;user-select:text;-webkit-user-select:text;border-radius:6px}
+.hv51-qr{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;border:1px dashed rgba(255,230,0,.35);background:rgba(0,0,0,.38);padding:8px;border-radius:7px;margin:8px 0;min-height:168px}
+.hv51-qr img{width:150px!important;height:150px!important;background:#fff;border:5px solid #fff;object-fit:contain;border-radius:5px}
+.hv51-meta{color:var(--neon3);font-size:15px;line-height:1.25}
+.hv51-mini{color:var(--dim);font-size:13px;line-height:1.25;margin-top:4px}
+#hidV51Scan{position:fixed;inset:0;display:none;z-index:2147483647;background:#000;color:var(--text);padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));flex-direction:column;gap:10px}
+#hidV51Scan.show{display:flex!important}
+#hidV51Scan video{flex:1;min-height:260px;width:100%;object-fit:cover;border:2px solid var(--neon);border-radius:10px;box-shadow:0 0 22px rgba(0,255,213,.45);background:#000}
+#hidV51Scan canvas{display:none}
+.hv51-scan-head{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.hv51-scan-title{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--neon3);text-shadow:0 0 6px var(--neon3);letter-spacing:.1em;line-height:1.45}
+.hv51-scan-msg{color:var(--neon);border:1px solid var(--stroke);background:rgba(0,255,213,.05);padding:8px;border-radius:6px;font-size:16px;line-height:1.25}
+@media(max-width:760px){.hv51-grid{grid-template-columns:1fr}.hv51-qr{grid-template-columns:120px 1fr;min-height:138px}.hv51-qr img{width:120px!important;height:120px!important}}
+</style>
+
+
+<style id="hid-v52-remote-performance-css">
+#hidV52RemotePerformance{
+  margin:0 10px 10px;
+  border:1px solid rgba(0,255,213,.32);
+  background:linear-gradient(180deg,rgba(0,255,213,.045),rgba(0,0,0,.55));
   border-radius:8px;
+  padding:10px;
 }
-.hv50-card.gold{border-color:rgba(255,230,0,.38);background:rgba(255,230,0,.04)}
-.hv50-card h3{
+#hidV52RemotePerformance h3{
   font-family:'Press Start 2P',monospace;
   font-size:9px;
   color:var(--neon3);
   text-shadow:0 0 5px var(--neon3);
   letter-spacing:.09em;
-  margin-bottom:8px;
+  margin:0 0 8px;
 }
-.hv50-help{
-  color:var(--dim);
-  font-size:15px;
-  line-height:1.25;
-  margin:6px 0 8px;
+.hv52-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:7px 0}
+.hv52-row label{font-family:'VT323',monospace;font-size:13px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.hv52-surface{
+  border:1px solid rgba(0,255,213,.22);
+  background:rgba(0,0,0,.45);
+  border-radius:8px;
+  padding:8px;
+  margin-top:8px;
 }
-.hv50-row{
+#hidV52Piano{
+  position:relative;
+  height:138px;
   display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  align-items:center;
-  margin:7px 0;
+  gap:2px;
+  touch-action:none;
+  overflow:hidden;
 }
-#hidV50Pair textarea{
-  width:100%;
-  min-height:98px;
-  background:#020309;
-  border:1px solid var(--stroke);
-  color:var(--neon);
-  font-family:'Share Tech Mono',monospace;
-  font-size:10px;
-  line-height:1.3;
-  padding:8px;
-  resize:vertical;
-  user-select:text;
-  -webkit-user-select:text;
-  border-radius:6px;
+.hv52-key{
+  position:relative;
+  flex:1 1 0;
+  min-width:22px;
+  height:100%;
+  border:1px solid rgba(0,255,213,.2);
+  border-radius:0 0 6px 6px;
+  background:linear-gradient(180deg,#f8ffff,#a9d7d8);
+  color:#001013;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  padding-bottom:7px;
+  font-family:'VT323',monospace;
+  font-size:14px;
+  user-select:none;
+  touch-action:none;
 }
-.hv50-qr{
-  display:grid;
-  grid-template-columns:170px 1fr;
-  gap:10px;
-  align-items:center;
-  border:1px dashed rgba(255,230,0,.35);
-  background:rgba(0,0,0,.38);
-  padding:8px;
-  border-radius:7px;
-  margin:8px 0;
-  min-height:188px;
+.hv52-key.black{
+  height:62%;
+  margin-left:-12px;
+  margin-right:-12px;
+  z-index:4;
+  flex:.58 0 20px;
+  background:linear-gradient(180deg,#24253a,#02030a);
+  color:#dff;
+  border-color:rgba(255,230,0,.25);
+  border-radius:0 0 5px 5px;
 }
-.hv50-qr img,.hv50-qr canvas{
-  width:170px!important;
-  height:170px!important;
-  background:#fff;
-  border:5px solid #fff;
-  object-fit:contain;
-  border-radius:5px;
+.hv52-key.lit{
+  filter:brightness(1.35) saturate(1.3);
+  box-shadow:0 0 16px var(--neon3), inset 0 0 18px rgba(255,230,0,.35);
 }
-.hv50-meta{
-  color:var(--neon3);
-  font-size:15px;
-  line-height:1.25;
+#hidV52Chroma{
+  height:160px;
+  display:flex;
+  gap:2px;
+  touch-action:none;
+  overflow:hidden;
 }
-.hv50-mini{
-  color:var(--dim);
-  font-size:13px;
-  line-height:1.25;
-  margin-top:4px;
-}
-#hidV50Scan{
-  position:fixed;
-  inset:0;
-  display:none;
-  z-index:2147483647;
-  background:#000;
-  color:var(--text);
-  padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+.hv52-bar{
+  flex:1 1 0;
+  min-width:16px;
+  border:1px solid rgba(0,255,213,.18);
+  background:linear-gradient(180deg,hsla(var(--h,180),90%,52%,.42),rgba(0,0,0,.96));
+  border-radius:7px 7px 2px 2px;
+  display:flex;
   flex-direction:column;
-  gap:10px;
-}
-#hidV50Scan.show{display:flex!important}
-#hidV50Scan video{
-  flex:1;
-  min-height:260px;
-  width:100%;
-  object-fit:cover;
-  border:2px solid var(--neon);
-  border-radius:10px;
-  box-shadow:0 0 22px rgba(0,255,213,.45);
-  background:#000;
-}
-#hidV50Scan canvas{display:none}
-.hv50-scan-head{
-  display:flex;
-  gap:8px;
+  justify-content:flex-end;
   align-items:center;
-  justify-content:space-between;
-  flex-wrap:wrap;
+  padding:5px 2px;
+  font-family:'VT323',monospace;
+  font-size:13px;
+  color:white;
+  text-shadow:0 0 6px currentColor;
+  user-select:none;
+  touch-action:none;
 }
-.hv50-scan-title{
-  font-family:'Press Start 2P',monospace;
+.hv52-bar small{font-size:10px;color:rgba(255,255,255,.7)}
+.hv52-bar.lit{
+  filter:brightness(1.65) saturate(1.55);
+  box-shadow:0 0 18px hsla(var(--h,180),95%,62%,.94), inset 0 0 26px hsla(var(--h,180),95%,62%,.55);
+}
+#hidV52PitchPad{
+  height:72px;
+  min-width:220px;
+  flex:1;
+  border:1px solid rgba(255,230,0,.45);
+  background:linear-gradient(90deg,rgba(0,255,213,.2),rgba(255,230,0,.25),rgba(255,80,160,.2));
+  border-radius:9px;
+  position:relative;
+  touch-action:none;
+  user-select:none;
+}
+#hidV52PitchPad:before{
+  content:"CENTER";
+  position:absolute;
+  left:50%;
+  top:0;
+  bottom:0;
+  width:1px;
+  background:rgba(255,255,255,.45);
+  color:#fff;
+  font-family:'VT323',monospace;
   font-size:10px;
-  color:var(--neon3);
-  text-shadow:0 0 6px var(--neon3);
-  letter-spacing:.1em;
-  line-height:1.45;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
-.hv50-scan-msg{
-  color:var(--neon);
-  border:1px solid var(--stroke);
-  background:rgba(0,255,213,.05);
-  padding:8px;
-  border-radius:6px;
-  font-size:16px;
-  line-height:1.25;
-}
-#hidV50PairBtn{
-  display:inline-flex!important;
+#hidV52PitchThumb{
+  position:absolute;
+  top:8px;
+  bottom:8px;
+  width:14px;
+  border-radius:10px;
+  background:var(--neon3);
+  box-shadow:0 0 12px var(--neon3);
+  left:calc(50% - 7px);
+  pointer-events:none;
 }
 @media(max-width:760px){
-  .hv50-grid{grid-template-columns:1fr}
-  .hv50-qr{grid-template-columns:130px 1fr;min-height:148px}
-  .hv50-qr img,.hv50-qr canvas{width:130px!important;height:130px!important}
+  #hidV52Piano{height:118px}
+  #hidV52Chroma{height:135px}
+  .hv52-key{min-width:18px;font-size:12px}
+  .hv52-key.black{min-width:16px;margin-left:-9px;margin-right:-9px}
 }
 </style>
 
@@ -11589,510 +11568,608 @@ document.addEventListener('pointerdown',()=>setTimeout(initV49,60),true);
 })();
 </script>
 
-
-<!-- ===== HID V50 REMOTE PAIRING REPAIR: QR + COPY/PASTE WEBRTC ===== -->
+<!-- ===== HID V51 SAFE REMOTE PAIRING: NO-FREEZE QR + COPY/PASTE ===== -->
 <script>
 (function(){
 'use strict';
-if(window.__HID_V50_REMOTE_PAIR__) return;
-window.__HID_V50_REMOTE_PAIR__ = true;
+if(window.__HID_V51_SAFE_PAIR__) return;
+window.__HID_V51_SAFE_PAIR__=true;
 
-const ICE_SERVERS = [
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'}
-];
-const CHUNK_SIZE = 850;
-const pair = {
-  role:'none',
-  pc:null,
-  channel:null,
-  connected:false,
-  offerCode:'',
-  answerCode:'',
-  qr:{
-    host:{parts:[],idx:0,code:''},
-    answer:{parts:[],idx:0,code:''}
-  },
-  scanned:{},
-  scanTarget:'host',
-  scanStream:null,
-  scanRaf:0
-};
+const ICE=[{urls:'stun:stun.l.google.com:19302'}];
+const CHUNK=700;
+const P={role:'none',pc:null,ch:null,connected:false,offer:'',answer:'',qr:{host:{parts:[],idx:0},answer:{parts:[],idx:0}},scanStream:null,scanRaf:0,scanTarget:'host',scanParts:{}};
 
 function q(s,r=document){return r.querySelector(s)}
 function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
-function getS(){try{return STATE}catch(e){return window.STATE||null}}
-function toast(msg){
-  try{ if(typeof window.toast==='function') return window.toast(msg); }catch(e){}
-  console.log('[V50 Remote]',msg);
+function status(){
+  const el=q('#hidV51Status');
+  if(el) el.innerHTML='<b>'+(P.role==='host'?'IPAD HOST':P.role==='controller'?'IPHONE CONTROL':'NOT PAIRED')+'</b> · '+(P.connected?'CONNECTED':'NOT CONNECTED');
 }
-function b64(str){
-  return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function unb64(str){
-  str=String(str||'').replace(/-/g,'+').replace(/_/g,'/');
-  while(str.length%4) str+='=';
-  return decodeURIComponent(escape(atob(str)));
-}
-function encodeDesc(desc){
-  return b64(JSON.stringify(desc));
-}
-function decodeDesc(code){
-  return JSON.parse(unb64(String(code||'').trim()));
-}
-function setStatus(text){
-  const el=q('#hidV50Status');
-  if(el) el.innerHTML=text;
-}
-function updateStatus(){
-  const role=pair.role==='host'?'IPAD HOST':pair.role==='controller'?'IPHONE CONTROL':'NOT PAIRED';
-  setStatus(`<b>${role}</b> · ${pair.connected?'CONNECTED':'NOT CONNECTED'}`);
-}
-function openPair(){
-  ensureUI().classList.add('show');
-  updateStatus();
-}
-function closePair(){
-  stopScan();
-  q('#hidV50Pair')?.classList.remove('show');
-}
-function copyText(text, label='code'){
-  text=String(text||'');
-  if(!text){toast('No '+label+' yet');return;}
-  if(navigator.clipboard && window.isSecureContext){
-    navigator.clipboard.writeText(text).then(()=>toast(label+' copied')).catch(()=>fallbackCopy(text,label));
-  }else fallbackCopy(text,label);
-}
-function fallbackCopy(text,label){
-  const ta=document.createElement('textarea');
-  ta.value=text;
-  ta.style.position='fixed';
-  ta.style.opacity='0';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try{document.execCommand('copy');toast(label+' copied');}
-  catch(e){toast('Select the code manually and copy it.');}
-  ta.remove();
-}
-function chunkCode(code){
-  code=String(code||'');
-  const parts=[];
-  for(let i=0;i<code.length;i+=CHUNK_SIZE) parts.push(code.slice(i,i+CHUNK_SIZE));
-  return parts.length?parts:[''];
-}
-function qrPayload(kind,idx,total,data){
-  return `HID50|${kind}|${idx+1}|${total}|${data}`;
-}
-function setQR(kind,code){
-  const st=pair.qr[kind];
-  st.code=String(code||'').trim();
-  st.parts=chunkCode(st.code);
-  st.idx=0;
-  renderQR(kind);
+function toast(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V51 Pair]',msg)}
+function b64(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function unb64(s){s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)))}
+function encDesc(desc){return b64(JSON.stringify(desc))}
+function decDesc(code){return JSON.parse(unb64(String(code||'').trim()))}
+function chunks(code){const out=[];for(let i=0;i<code.length;i+=CHUNK)out.push(code.slice(i,i+CHUNK));return out.length?out:['']}
+function qrPayload(kind,idx,total,data){return `HID51|${kind}|${idx+1}|${total}|${data}`}
+function showQR(kind,code){
+  const st=P.qr[kind];st.parts=chunks(String(code||''));st.idx=0;renderQR(kind);
 }
 function renderQR(kind){
-  const st=pair.qr[kind];
-  const box=q('#hidV50'+(kind==='host'?'Host':'Answer')+'QR');
-  const meta=q('#hidV50'+(kind==='host'?'Host':'Answer')+'Meta');
+  const st=P.qr[kind];
+  const cap=kind==='host'?'Host':'Answer';
+  const box=q('#hidV51'+cap+'QR'), meta=q('#hidV51'+cap+'Meta');
   if(!box||!meta) return;
   box.innerHTML='';
-  if(!st.parts.length || !st.code){
-    meta.textContent='No QR generated yet.';
-    return;
-  }
+  if(!st.parts.length||!st.parts[0]){meta.textContent='No QR yet.';return}
   const idx=Math.max(0,Math.min(st.idx,st.parts.length-1));
   const payload=qrPayload(kind,idx,st.parts.length,st.parts[idx]);
   const img=document.createElement('img');
-  img.alt='Pairing QR';
-  img.src='https://api.qrserver.com/v1/create-qr-code/?size=420x420&ecc=M&margin=8&data='+encodeURIComponent(payload);
+  img.alt='Pair QR';
+  // External QR image is intentionally loaded only after a code exists, not during panel open.
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=360x360&ecc=M&margin=8&data='+encodeURIComponent(payload);
   box.appendChild(img);
-  meta.innerHTML=`${kind==='host'?'Host offer':'Controller answer'} QR chunk <b>${idx+1}/${st.parts.length}</b><div class="hv50-mini">Use COPY if scanning is unreliable. Long WebRTC codes are split into chunks automatically.</div>`;
+  meta.innerHTML=(kind==='host'?'Host code':'Answer code')+' QR <b>'+(idx+1)+'/'+st.parts.length+'</b><div class="hv51-mini">If camera scanning glitches, use copy/paste. Long codes are split into chunks.</div>';
 }
-function nextQR(kind,dir){
-  const st=pair.qr[kind];
-  if(!st.parts.length) return;
-  st.idx=(st.idx+dir+st.parts.length)%st.parts.length;
-  renderQR(kind);
+function nextQR(kind,dir){const st=P.qr[kind];if(!st.parts.length)return;st.idx=(st.idx+dir+st.parts.length)%st.parts.length;renderQR(kind)}
+function copyText(txt,label){txt=String(txt||'');if(!txt)return; if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(txt).then(()=>toast(label+' copied')).catch(()=>fallbackCopy(txt))}else fallbackCopy(txt)}
+function fallbackCopy(txt){const a=document.createElement('textarea');a.value=txt;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.focus();a.select();try{document.execCommand('copy')}catch(e){}a.remove()}
+async function maybePaste(sel){const el=q(sel);if(!el)return;try{if(navigator.clipboard&&window.isSecureContext)el.value=await navigator.clipboard.readText();else{el.focus();el.select()}}catch(e){el.focus();el.select()}}
+
+function cleanup(clear=false){
+  try{P.ch?.close()}catch(e){}
+  try{P.pc?.close()}catch(e){}
+  P.pc=null;P.ch=null;P.connected=false;
+  if(clear){P.offer='';P.answer='';['HostCode','OfferIn','AnswerCode','AnswerIn'].forEach(id=>{const el=q('#hidV51'+id);if(el)el.value=''})}
+  status();
 }
-async function waitIce(pc,timeout=5500){
-  if(pc.iceGatheringState==='complete') return;
-  await new Promise(resolve=>{
-    let done=false;
-    const finish=()=>{if(done)return;done=true;pc.removeEventListener('icegatheringstatechange',check);clearTimeout(t);resolve();};
-    const check=()=>{if(pc.iceGatheringState==='complete') finish();};
-    const t=setTimeout(finish,timeout);
-    pc.addEventListener('icegatheringstatechange',check);
-  });
-}
-function makePeer(){
-  const pc=new RTCPeerConnection({iceServers:ICE_SERVERS});
-  pc.onconnectionstatechange=()=>{pair.connected=['connected','completed'].includes(pc.connectionState);updateStatus();};
-  pc.oniceconnectionstatechange=()=>{pair.connected=['connected','completed'].includes(pc.iceConnectionState);updateStatus();};
-  pc.ondatachannel=e=>{
-    setupChannel(e.channel);
-  };
+function peer(){
+  const pc=new RTCPeerConnection({iceServers:ICE,iceCandidatePoolSize:0});
+  pc.onconnectionstatechange=()=>{P.connected=['connected'].includes(pc.connectionState);status()};
+  pc.oniceconnectionstatechange=()=>{P.connected=['connected','completed'].includes(pc.iceConnectionState);status()};
+  pc.ondatachannel=e=>setupChannel(e.channel);
   return pc;
 }
 function setupChannel(ch){
-  pair.channel=ch;
-  ch.binaryType='arraybuffer';
-  ch.onopen=()=>{pair.connected=true;updateStatus();toast('Remote channel connected');};
-  ch.onclose=()=>{pair.connected=false;updateStatus();toast('Remote channel closed');};
-  ch.onerror=e=>console.warn('V50 channel error',e);
-  ch.onmessage=e=>{
-    let msg;
-    try{msg=JSON.parse(e.data)}catch(_){return}
-    handleRemoteMessage(msg);
-  };
+  P.ch=ch;
+  ch.onopen=()=>{P.connected=true;status();toast('Remote connected')};
+  ch.onclose=()=>{P.connected=false;status()};
+  ch.onerror=e=>console.warn('V51 channel error',e);
+  ch.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return} handleMessage(m)};
 }
-function send(msg){
-  try{
-    if(pair.channel && pair.channel.readyState==='open'){
-      pair.channel.send(JSON.stringify(msg));
-      return true;
-    }
-  }catch(e){console.warn('V50 send failed',e)}
-  return false;
+function waitIceFast(pc){
+  return new Promise(resolve=>{
+    if(pc.iceGatheringState==='complete') return resolve();
+    let done=false;
+    const finish=()=>{if(done)return;done=true;clearTimeout(t);pc.removeEventListener('icecandidate',onice);pc.removeEventListener('icegatheringstatechange',onstate);resolve()};
+    const onice=e=>{ if(!e.candidate) finish(); };
+    const onstate=()=>{ if(pc.iceGatheringState==='complete') finish(); };
+    const t=setTimeout(finish,1800);
+    pc.addEventListener('icecandidate',onice);
+    pc.addEventListener('icegatheringstatechange',onstate);
+  });
 }
 async function startHost(){
+  const btn=q('#hidV51StartHost');
   try{
-    cleanupConnection(false);
-    pair.role='host';
-    pair.pc=makePeer();
-    setupChannel(pair.pc.createDataChannel('hid-control',{ordered:false,maxRetransmits:0}));
-    await pair.pc.setLocalDescription(await pair.pc.createOffer());
-    await waitIce(pair.pc);
-    pair.offerCode=encodeDesc(pair.pc.localDescription);
-    const ta=q('#hidV50HostCode'); if(ta) ta.value=pair.offerCode;
-    setQR('host',pair.offerCode);
-    updateStatus();
-    toast('Host code generated');
+    if(btn){btn.disabled=true;btn.textContent='GENERATING…'}
+    cleanup(false);
+    P.role='host';status();
+    // Yield to UI first so it cannot appear frozen.
+    await new Promise(r=>setTimeout(r,40));
+    P.pc=peer();
+    setupChannel(P.pc.createDataChannel('hid-control',{ordered:false,maxRetransmits:0}));
+    const offer=await P.pc.createOffer();
+    await P.pc.setLocalDescription(offer);
+    await waitIceFast(P.pc);
+    P.offer=encDesc(P.pc.localDescription);
+    q('#hidV51HostCode').value=P.offer;
+    setTimeout(()=>showQR('host',P.offer),50);
+    toast('Host code ready');
   }catch(err){
     console.error(err);
-    alert('Could not generate host code: '+(err.message||err));
+    alert('Could not generate host code. Try closing/reopening Pairing or refresh the page.\\n\\n'+(err.message||err));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='GENERATE HOST CODE'}
+    status();
   }
 }
 async function connectController(){
-  const code=(q('#hidV50OfferIn')?.value||pair.offerCode||'').trim();
-  if(!code){alert('Paste or scan the iPad Host code first.');return;}
+  const btn=q('#hidV51MakeAnswer');
   try{
-    cleanupConnection(false);
-    pair.role='controller';
-    pair.pc=makePeer();
-    const offer=decodeDesc(code);
-    await pair.pc.setRemoteDescription(offer);
-    await pair.pc.setLocalDescription(await pair.pc.createAnswer());
-    await waitIce(pair.pc);
-    pair.answerCode=encodeDesc(pair.pc.localDescription);
-    const ta=q('#hidV50AnswerCode'); if(ta) ta.value=pair.answerCode;
-    setQR('answer',pair.answerCode);
-    updateStatus();
-    toast('Controller answer generated');
+    const code=(q('#hidV51OfferIn')?.value||'').trim();
+    if(!code) return alert('Paste or scan the Host Code first.');
+    if(btn){btn.disabled=true;btn.textContent='CONNECTING…'}
+    cleanup(false);
+    P.role='controller';status();
+    await new Promise(r=>setTimeout(r,40));
+    P.pc=peer();
+    await P.pc.setRemoteDescription(decDesc(code));
+    const ans=await P.pc.createAnswer();
+    await P.pc.setLocalDescription(ans);
+    await waitIceFast(P.pc);
+    P.answer=encDesc(P.pc.localDescription);
+    q('#hidV51AnswerCode').value=P.answer;
+    setTimeout(()=>showQR('answer',P.answer),50);
+    toast('Answer code ready');
   }catch(err){
     console.error(err);
-    alert('Could not connect as controller. Make sure the Host code was copied/scanned completely.\\n\\n'+(err.message||err));
+    alert('Could not make answer code. Make sure the Host Code is complete.\\n\\n'+(err.message||err));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='CONNECT + MAKE ANSWER'}
+    status();
   }
 }
 async function acceptAnswer(){
-  const code=(q('#hidV50AnswerIn')?.value||pair.answerCode||'').trim();
-  if(!code){alert('Paste or scan the controller Answer code first.');return;}
   try{
-    if(!pair.pc || pair.role!=='host') throw new Error('Start Host first.');
-    const ans=decodeDesc(code);
-    await pair.pc.setRemoteDescription(ans);
-    updateStatus();
-    toast('Answer accepted. Remote should connect shortly.');
+    const code=(q('#hidV51AnswerIn')?.value||'').trim();
+    if(!code) return alert('Paste or scan the Answer Code first.');
+    if(!P.pc||P.role!=='host') return alert('Generate Host Code first.');
+    await P.pc.setRemoteDescription(decDesc(code));
+    toast('Answer accepted. Connection should complete.');
   }catch(err){
     console.error(err);
-    alert('Could not accept answer. Make sure the Answer code was copied/scanned completely.\\n\\n'+(err.message||err));
+    alert('Could not accept Answer Code.\\n\\n'+(err.message||err));
+  }finally{status()}
+}
+function send(m){try{if(P.ch&&P.ch.readyState==='open'){P.ch.send(JSON.stringify(m));return true}}catch(e){}return false}
+function handleMessage(msg){
+  if(!msg||!msg.cmd)return;
+  const S=(()=>{try{return STATE}catch(e){return window.STATE||null}})();
+  const host=window.__HID_V52_REMOTE_HOST__=window.__HID_V52_REMOTE_HOST__||{voice:null,midi:null,poly:new Map()};
+  function F(m){try{return typeof freqOf==='function'?freqOf(m):440*Math.pow(2,(m-69)/12)}catch(e){return 440*Math.pow(2,(m-69)/12)}}
+  function startRemoteVoice(midi,vel=.82){
+    try{
+      if(typeof ensureAudioReady==='function')ensureAudioReady();
+      else if(typeof initAudio==='function')initAudio();
+      const v=typeof startVoice==='function'?startVoice(midi,vel):null;
+      if(v){
+        const base=F(midi);
+        v.__hidV52Ratios=(v.oscs||[]).map(o=>{try{return o.osc.frequency.value/base}catch(e){return 1}});
+        try{S?.activeNotes?.set?.(midi,v)}catch(e){}
+      }
+      return v;
+    }catch(e){console.warn('remote start failed',e);return null}
   }
-}
-function cleanupConnection(clearCodes=true){
-  try{pair.channel?.close()}catch(e){}
-  try{pair.pc?.close()}catch(e){}
-  pair.pc=null; pair.channel=null; pair.connected=false;
-  if(clearCodes){
-    pair.offerCode=''; pair.answerCode='';
-    ['HostCode','OfferIn','AnswerCode','AnswerIn'].forEach(id=>{const el=q('#hidV50'+id); if(el) el.value='';});
-    setQR('host',''); setQR('answer','');
+  function releaseVoice(midi,v,fast=false){
+    try{if(v)fast&&v.fadeOut?v.fadeOut(24):v.release?v.release():v.fadeOut?.(36)}catch(e){}
+    try{S?.activeNotes?.delete?.(midi)}catch(e){}
   }
-  updateStatus();
-}
-function handleRemoteMessage(msg){
-  if(!msg || !msg.type) return;
-  try{
-    if(msg.type==='cmd') applyCommand(msg.cmd,msg);
-    if(msg.type==='ping') send({type:'pong',t:Date.now()});
-  }catch(e){console.warn('V50 remote msg failed',e)}
-}
-function applyCommand(cmd,msg){
-  const S=getS();
-  if(cmd==='kill'){ try{ if(typeof HID_MASTER_KILL_NOW==='function') HID_MASTER_KILL_NOW(); else if(typeof killAll==='function') killAll(); }catch(e){} return; }
-  if(cmd==='pad'){ try{ if(typeof padTrigger==='function') padTrigger(msg.idx); }catch(e){} return; }
-  if(cmd==='padStop'){ try{ if(typeof padStop==='function') padStop(msg.idx,true); }catch(e){} return; }
-  if(cmd==='noteOn'){ try{ if(typeof pressNoteByDisplay==='function') pressNoteByDisplay(msg.midi); else if(typeof startVoice==='function') S?.activeNotes?.set?.(msg.midi,startVoice(msg.midi,msg.vel||.8)); }catch(e){} return; }
-  if(cmd==='noteOff'){ try{ if(typeof releaseNoteByDisplay==='function') releaseNoteByDisplay(msg.midi); }catch(e){} return; }
-  if(cmd==='bpm' && S){ S.bpm=Number(msg.value)||S.bpm; try{ if(typeof updateTape==='function') updateTape(); }catch(e){} return; }
-  if(cmd==='master'){ const el=q('#master-vol'); if(el){el.value=msg.value; el.dispatchEvent(new Event('input',{bubbles:true}));} return; }
-  if(cmd==='pitch' && S){ S.modWheel=S.modWheel||{}; S.modWheel.target=Number(msg.value)||0; return; }
-}
-function controllerTestControls(){
-  return `<div class="hv50-card gold">
-    <h3>CONNECTED CONTROL TEST</h3>
-    <div class="hv50-help">After pairing, these send real commands to the host. Your existing remote panel can also use <b>HID_REMOTE_V50_SEND(...)</b>.</div>
-    <div class="hv50-row">
-      <button class="btn tiny warn" data-v50-send="kill">KILL</button>
-      ${Array.from({length:8},(_,i)=>`<button class="btn tiny" data-v50-pad="${i}">PAD ${i+1}</button>`).join('')}
-    </div>
-    <div class="hv50-row">
-      <button class="btn tiny" data-v50-note="60" data-on="1">C4 ON</button>
-      <button class="btn tiny" data-v50-note="60" data-on="0">C4 OFF</button>
-      <label style="color:var(--dim)">MASTER</label><input type="range" min="0" max="1" step=".01" value=".8" data-v50-master style="min-width:160px">
-    </div>
-  </div>`;
-}
-function ensureUI(){
-  let root=q('#hidV50Pair');
-  if(root) return root;
-  root=document.createElement('div');
-  root.id='hidV50Pair';
-  root.innerHTML=`
-    <div class="hv50-shell">
-      <div class="hv50-head">
-        <div class="hv50-title">REMOTE PAIRING<br><b>V50 · QR + COPY/PASTE</b></div>
-        <div class="hv50-status" id="hidV50Status"><b>NOT PAIRED</b></div>
-        <button class="btn tiny gold" data-v50="startHost">GENERATE HOST CODE</button>
-        <button class="btn tiny warn" data-v50="close">CLOSE</button>
-      </div>
-      <div class="hv50-grid">
-        <div class="hv50-card gold">
-          <h3>1 · IPAD / MAIN DEVICE HOST</h3>
-          <div class="hv50-help">On the main device, tap <b>Generate Host Code</b>. Then either show the QR chunks to the controller device or copy/paste the full code.</div>
-          <div class="hv50-row">
-            <button class="btn tiny gold" data-v50="startHost">GENERATE HOST CODE</button>
-            <button class="btn tiny" data-v50="copyHost">COPY HOST CODE</button>
-            <button class="btn tiny" data-v50="prevHost">◀ QR</button>
-            <button class="btn tiny" data-v50="nextHost">QR ▶</button>
-          </div>
-          <textarea id="hidV50HostCode" placeholder="Generated Host code appears here"></textarea>
-          <div class="hv50-qr"><div id="hidV50HostQR"></div><div class="hv50-meta" id="hidV50HostMeta">No Host QR yet.</div></div>
-          <div class="hv50-help">After the controller creates an Answer code, scan/paste it below, then tap <b>Accept Answer</b>.</div>
-          <div class="hv50-row">
-            <button class="btn tiny gold" data-v50="scanAnswer">SCAN ANSWER QR</button>
-            <button class="btn tiny" data-v50="pasteAnswer">PASTE ANSWER</button>
-            <button class="btn tiny gold" data-v50="acceptAnswer">ACCEPT ANSWER</button>
-          </div>
-          <textarea id="hidV50AnswerIn" placeholder="Paste/scanned Controller Answer code here"></textarea>
-        </div>
-        <div class="hv50-card">
-          <h3>2 · IPHONE / CONTROLLER DEVICE</h3>
-          <div class="hv50-help">On the controller device, scan the Host QR or paste the Host code. Then tap <b>Connect + Make Answer</b>.</div>
-          <div class="hv50-row">
-            <button class="btn tiny gold" data-v50="scanHost">SCAN HOST QR</button>
-            <button class="btn tiny" data-v50="pasteHost">PASTE HOST</button>
-            <button class="btn tiny gold" data-v50="makeAnswer">CONNECT + MAKE ANSWER</button>
-          </div>
-          <textarea id="hidV50OfferIn" placeholder="Paste/scanned Host code here"></textarea>
-          <div class="hv50-row">
-            <button class="btn tiny" data-v50="copyAnswer">COPY ANSWER</button>
-            <button class="btn tiny" data-v50="prevAnswer">◀ QR</button>
-            <button class="btn tiny" data-v50="nextAnswer">QR ▶</button>
-          </div>
-          <textarea id="hidV50AnswerCode" placeholder="Controller Answer code appears here"></textarea>
-          <div class="hv50-qr"><div id="hidV50AnswerQR"></div><div class="hv50-meta" id="hidV50AnswerMeta">No Answer QR yet.</div></div>
-        </div>
-      </div>
-      <div style="padding:0 10px 10px">${controllerTestControls()}</div>
-    </div>
-    <div id="hidV50Scan">
-      <div class="hv50-scan-head">
-        <div class="hv50-scan-title">QR CAMERA SCANNER</div>
-        <button class="btn tiny warn" data-v50="stopScan">STOP SCAN</button>
-      </div>
-      <div class="hv50-scan-msg" id="hidV50ScanMsg">Point camera at QR code…</div>
-      <video id="hidV50Video" playsinline muted></video>
-      <canvas id="hidV50Canvas"></canvas>
-    </div>
-  `;
-  document.body.appendChild(root);
-  root.addEventListener('click',handleClick,true);
-  root.addEventListener('input',handleInput,true);
-  updateStatus();
-  return root;
-}
-async function maybePasteInto(selector){
-  const el=q(selector);
-  if(!el) return;
-  try{
-    if(navigator.clipboard && window.isSecureContext){
-      el.value=await navigator.clipboard.readText();
-      toast('Pasted from clipboard');
+  function glideVoice(v,toMidi){
+    if(!v)return;
+    let c=null;try{c=ctx}catch(e){c=window.ctx||window.audioCtx}
+    if(!c)return;
+    const now=c.currentTime, target=F(toMidi);
+    let glide=.08;try{glide=Math.max(.025,Math.min(.55,(S?.modWheel?.glide||.06)*2.4))}catch(e){}
+    try{
+      (v.oscs||[]).forEach((o,i)=>{
+        const ratio=(v.__hidV52Ratios&&v.__hidV52Ratios[i])||1;
+        o.osc.frequency.cancelScheduledValues(now);
+        o.osc.frequency.setTargetAtTime(target*ratio,now,glide);
+      });
+      if(v.fmOsc){
+        v.fmOsc.frequency.cancelScheduledValues(now);
+        v.fmOsc.frequency.setTargetAtTime(target,now,glide);
+      }
+      v.midi=toMidi;
+    }catch(e){console.warn('remote glide failed',e)}
+  }
+  function releaseRemoteAll(){
+    host.poly.forEach(({midi,voice})=>releaseVoice(midi,voice,true));
+    host.poly.clear();
+    if(host.voice){releaseVoice(host.midi,host.voice,true);host.voice=null;host.midi=null}
+  }
+  function remoteChromaDown(midi,mode='legato',id='main',vel=.82){
+    midi=Number(midi); if(!Number.isFinite(midi))return;
+    mode=String(mode||'legato').toLowerCase();
+    if(mode==='poly'){
+      const v=startRemoteVoice(midi,vel);
+      host.poly.set(id,{midi,voice:v});
+    }else if(mode==='mono'){
+      releaseRemoteAll();
+      host.voice=startRemoteVoice(midi,vel);
+      host.midi=midi;
     }else{
-      el.focus();
-      el.select();
-      toast('Paste the code manually.');
+      if(!host.voice){host.voice=startRemoteVoice(midi,vel);}
+      else if(host.midi!==midi){glideVoice(host.voice,midi);try{S?.activeNotes?.delete?.(host.midi);S?.activeNotes?.set?.(midi,host.voice)}catch(e){}}
+      host.midi=midi;
     }
-  }catch(e){
-    el.focus(); el.select(); toast('Paste the code manually.');
   }
-}
-function handleInput(e){
-  const t=e.target;
-  if(t && t.matches('[data-v50-master]')) send({type:'cmd',cmd:'master',value:Number(t.value)});
-}
-function handleClick(e){
-  const b=e.target.closest('[data-v50],[data-v50-pad],[data-v50-note],[data-v50-send]');
-  if(!b) return;
-  e.preventDefault(); e.stopPropagation();
-  if(b.dataset.v50Pad!=null){ send({type:'cmd',cmd:'pad',idx:Number(b.dataset.v50Pad)}); return; }
-  if(b.dataset.v50Note!=null){ send({type:'cmd',cmd:b.dataset.on==='0'?'noteOff':'noteOn',midi:Number(b.dataset.v50Note)}); return; }
-  if(b.dataset.v50Send==='kill'){ send({type:'cmd',cmd:'kill'}); return; }
-  const a=b.dataset.v50;
-  if(a==='close') closePair();
-  else if(a==='startHost') startHost();
-  else if(a==='copyHost') copyText(q('#hidV50HostCode')?.value,'Host code');
-  else if(a==='copyAnswer') copyText(q('#hidV50AnswerCode')?.value,'Answer code');
-  else if(a==='prevHost') nextQR('host',-1);
-  else if(a==='nextHost') nextQR('host',1);
-  else if(a==='prevAnswer') nextQR('answer',-1);
-  else if(a==='nextAnswer') nextQR('answer',1);
-  else if(a==='pasteHost') maybePasteInto('#hidV50OfferIn');
-  else if(a==='pasteAnswer') maybePasteInto('#hidV50AnswerIn');
-  else if(a==='makeAnswer') connectController();
-  else if(a==='acceptAnswer') acceptAnswer();
-  else if(a==='scanHost') startScan('host');
-  else if(a==='scanAnswer') startScan('answer');
-  else if(a==='stopScan') stopScan();
-}
-async function loadJsQR(){
-  if(window.jsQR) return window.jsQR;
-  await new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-    s.onload=res;
-    s.onerror=rej;
-    document.head.appendChild(s);
-  });
-  return window.jsQR;
-}
-function applyScannedText(text,target){
-  text=String(text||'').trim();
-  if(!text) return false;
-  if(text.startsWith('HID50|')){
-    const parts=text.split('|');
-    const kind=parts[1], idx=Number(parts[2]), total=Number(parts[3]);
-    const data=parts.slice(4).join('|');
-    const key=kind+'-'+total;
-    pair.scanned[key]=pair.scanned[key]||{};
-    pair.scanned[key][idx]=data;
-    q('#hidV50ScanMsg').textContent=`Scanned ${kind} chunk ${idx}/${total}.`;
-    const got=Object.keys(pair.scanned[key]).length;
-    if(got<total) return false;
-    let full='';
-    for(let i=1;i<=total;i++) full+=pair.scanned[key][i]||'';
-    delete pair.scanned[key];
-    text=full;
-    target=kind;
+  function remoteChromaMove(midi,mode='legato',id='main'){
+    midi=Number(midi); if(!Number.isFinite(midi))return;
+    mode=String(mode||'legato').toLowerCase();
+    if(mode==='poly'){
+      if(!host.poly.has(id))remoteChromaDown(midi,mode,id,.78);
+    }else if(mode==='mono'){
+      if(host.voice)releaseVoice(host.midi,host.voice,true);
+      host.voice=startRemoteVoice(midi,.8);host.midi=midi;
+    }else{
+      if(!host.voice)host.voice=startRemoteVoice(midi,.8);
+      else if(host.midi!==midi){glideVoice(host.voice,midi);try{S?.activeNotes?.delete?.(host.midi);S?.activeNotes?.set?.(midi,host.voice)}catch(e){}}
+      host.midi=midi;
+    }
   }
-  if(target==='host'){
-    const el=q('#hidV50OfferIn'); if(el) el.value=text;
-    pair.offerCode=text;
-    toast('Host code scanned');
-  }else{
-    const el=q('#hidV50AnswerIn'); if(el) el.value=text;
-    pair.answerCode=text;
-    toast('Answer code scanned');
+  function remoteChromaUp(id='main',mode='legato'){
+    mode=String(mode||'legato').toLowerCase();
+    if(mode==='poly'){
+      const p=host.poly.get(id);
+      if(p){releaseVoice(p.midi,p.voice,false);host.poly.delete(id)}
+    }else{
+      if(host.voice){releaseVoice(host.midi,host.voice,false);host.voice=null;host.midi=null}
+    }
   }
+  function setPitch(v){
+    if(!S)return;
+    S.modWheel=S.modWheel||{rangeUp:2,rangeDown:2,glide:.06,active:0,target:0};
+    S.modWheel.target=Math.max(-1,Math.min(1,Number(v)||0));
+  }
+  try{
+    if(msg.cmd==='kill'){releaseRemoteAll();if(typeof HID_MASTER_KILL_NOW==='function')HID_MASTER_KILL_NOW();else if(typeof killAll==='function')killAll();return}
+    if(msg.cmd==='pad'&&typeof padTrigger==='function'){padTrigger(msg.idx);return}
+    if(msg.cmd==='noteOn'){if(typeof pressNoteByDisplay==='function')pressNoteByDisplay(msg.midi);else if(typeof startVoice==='function')S?.activeNotes?.set?.(msg.midi,startVoice(msg.midi,msg.vel||.8));return}
+    if(msg.cmd==='noteOff'&&typeof releaseNoteByDisplay==='function'){releaseNoteByDisplay(msg.midi);return}
+    if(msg.cmd==='master'){const el=q('#master-vol');if(el){el.value=msg.value;el.dispatchEvent(new Event('input',{bubbles:true}))}return}
+    if(msg.cmd==='pitch'){setPitch(msg.value);return}
+    if(msg.cmd==='pitchReset'){setPitch(0);return}
+    if(msg.cmd==='pitchRange'&&S){S.modWheel=S.modWheel||{}; if(msg.up!=null)S.modWheel.rangeUp=Number(msg.up)||S.modWheel.rangeUp||2; if(msg.down!=null)S.modWheel.rangeDown=Number(msg.down)||S.modWheel.rangeDown||2; try{if(typeof buildModWheelWindow==='function')buildModWheelWindow()}catch(e){} return}
+    if(msg.cmd==='pitchGlide'&&S){S.modWheel=S.modWheel||{};S.modWheel.glide=Math.max(.005,Math.min(.5,Number(msg.value)||.06));try{if(typeof buildModWheelWindow==='function')buildModWheelWindow()}catch(e){}return}
+    if(msg.cmd==='remoteChromaDown'){remoteChromaDown(msg.midi,msg.mode,msg.id,msg.vel);return}
+    if(msg.cmd==='remoteChromaMove'){remoteChromaMove(msg.midi,msg.mode,msg.id);return}
+    if(msg.cmd==='remoteChromaUp'){remoteChromaUp(msg.id,msg.mode);return}
+    if(msg.cmd==='remoteChromaRelease'){releaseRemoteAll();return}
+    if(msg.cmd==='chromaView'){
+      if(msg.on){
+        if(typeof HID_V41_CHROMA_ON==='function')HID_V41_CHROMA_ON();
+        else if(typeof HID_V40_CHROMA_ON==='function')HID_V40_CHROMA_ON();
+        else if(S)S.chromatic=true;
+      }else{
+        if(typeof HID_V41_CHROMA_OFF==='function')HID_V41_CHROMA_OFF();
+        else if(typeof HID_V40_CHROMA_OFF==='function')HID_V40_CHROMA_OFF();
+        else if(S)S.chromatic=false;
+      }
+      return;
+    }
+  }catch(e){console.warn('remote command failed',e)}
+}
+async function loadJsQR(){if(window.jsQR)return window.jsQR;await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)});return window.jsQR}
+function applyScan(text,target){
+  text=String(text||'').trim();if(!text)return false;
+  if(text.startsWith('HID51|')){
+    const parts=text.split('|');const kind=parts[1],idx=Number(parts[2]),total=Number(parts[3]),data=parts.slice(4).join('|');
+    const key=kind+'-'+total;P.scanParts[key]=P.scanParts[key]||{};P.scanParts[key][idx]=data;
+    q('#hidV51ScanMsg').textContent=`Scanned ${kind} chunk ${idx}/${total}`;
+    if(Object.keys(P.scanParts[key]).length<total)return false;
+    text='';for(let i=1;i<=total;i++)text+=P.scanParts[key][i]||'';delete P.scanParts[key];target=kind;
+  }
+  if(target==='host'){q('#hidV51OfferIn').value=text;toast('Host code scanned')}
+  else{q('#hidV51AnswerIn').value=text;toast('Answer code scanned')}
   return true;
 }
 async function startScan(target){
-  ensureUI();
-  pair.scanTarget=target;
-  const overlay=q('#hidV50Scan'), video=q('#hidV50Video'), canvas=q('#hidV50Canvas'), msg=q('#hidV50ScanMsg');
-  overlay.classList.add('show');
-  msg.textContent='Opening camera…';
+  ensureUI();P.scanTarget=target;
+  const o=q('#hidV51Scan'),v=q('#hidV51Video'),c=q('#hidV51Canvas'),msg=q('#hidV51ScanMsg');
+  o.classList.add('show');msg.textContent='Opening camera…';
   try{
-    pair.scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-    video.srcObject=pair.scanStream;
-    await video.play();
-    msg.textContent='Point camera at QR code. Scan every chunk if the code is split.';
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    let detector=null, jsqrPromise=null;
-    try{ if('BarcodeDetector' in window) detector=new BarcodeDetector({formats:['qr_code']}); }catch(e){detector=null}
-    if(!detector) jsqrPromise=loadJsQR().catch(()=>null);
+    P.scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    v.srcObject=P.scanStream;await v.play();msg.textContent='Point camera at QR. Scan every chunk if split.';
+    const cx=c.getContext('2d',{willReadFrequently:true});
+    let detector=null;try{if('BarcodeDetector'in window)detector=new BarcodeDetector({formats:['qr_code']})}catch(e){}
+    let jsqrPromise=detector?null:loadJsQR().catch(()=>null);
     const tick=async()=>{
-      if(!pair.scanStream) return;
+      if(!P.scanStream)return;
       let found='';
       try{
-        if(video.readyState>=2){
-          canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
-          ctx.drawImage(video,0,0,canvas.width,canvas.height);
-          if(detector){
-            const codes=await detector.detect(canvas);
-            found=codes&&codes[0]&&codes[0].rawValue||'';
-          }else{
-            const jsqr=await jsqrPromise;
-            if(jsqr){
-              const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-              const r=jsqr(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
-              found=r&&r.data||'';
-            }
-          }
+        if(v.readyState>=2){
+          c.width=v.videoWidth||640;c.height=v.videoHeight||480;cx.drawImage(v,0,0,c.width,c.height);
+          if(detector){const codes=await detector.detect(c);found=codes?.[0]?.rawValue||''}
+          else{const jsqr=await jsqrPromise;if(jsqr){const img=cx.getImageData(0,0,c.width,c.height);const r=jsqr(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});found=r?.data||''}}
         }
       }catch(e){}
-      if(found){
-        const done=applyScannedText(found,target);
-        if(done){ stopScan(); return; }
-      }
-      pair.scanRaf=requestAnimationFrame(tick);
+      if(found&&applyScan(found,target)){stopScan();return}
+      P.scanRaf=requestAnimationFrame(tick);
     };
     tick();
   }catch(err){
-    console.error(err);
-    msg.textContent='Camera scan unavailable. Use COPY / PASTE code instead. '+(err.message||err);
+    msg.textContent='Camera unavailable. Use copy/paste instead. '+(err.message||err);
   }
 }
-function stopScan(){
-  if(pair.scanRaf) cancelAnimationFrame(pair.scanRaf);
-  pair.scanRaf=0;
-  if(pair.scanStream){
-    pair.scanStream.getTracks().forEach(t=>t.stop());
-    pair.scanStream=null;
-  }
-  q('#hidV50Scan')?.classList.remove('show');
+function stopScan(){if(P.scanRaf)cancelAnimationFrame(P.scanRaf);P.scanRaf=0;if(P.scanStream){P.scanStream.getTracks().forEach(t=>t.stop());P.scanStream=null}q('#hidV51Scan')?.classList.remove('show')}
+function ensureUI(){
+  let root=q('#hidV51Pair');if(root)return root;
+  root=document.createElement('div');root.id='hidV51Pair';
+  root.innerHTML=`
+    <div class="hv51-shell">
+      <div class="hv51-head">
+        <div class="hv51-title">REMOTE PAIRING<br><b>V51 SAFE CODE / QR</b></div>
+        <div class="hv51-status" id="hidV51Status"><b>NOT PAIRED</b></div>
+        <button class="btn tiny gold" id="hidV51StartHost" data-a="host">GENERATE HOST CODE</button>
+        <button class="btn tiny warn" data-a="close">CLOSE</button>
+      </div>
+      <div class="hv51-grid">
+        <div class="hv51-card gold">
+          <h3>IPAD / MAIN DEVICE</h3>
+          <div class="hv51-help">Generate a Host Code, then show the QR to the controller or copy/paste the code.</div>
+          <div class="hv51-row"><button class="btn tiny gold" data-a="host">GENERATE HOST CODE</button><button class="btn tiny" data-a="copyHost">COPY HOST</button><button class="btn tiny" data-a="prevHost">◀ QR</button><button class="btn tiny" data-a="nextHost">QR ▶</button></div>
+          <textarea id="hidV51HostCode" placeholder="Host code appears here"></textarea>
+          <div class="hv51-qr"><div id="hidV51HostQR"></div><div class="hv51-meta" id="hidV51HostMeta">No Host QR yet.</div></div>
+          <div class="hv51-row"><button class="btn tiny gold" data-a="scanAnswer">SCAN ANSWER QR</button><button class="btn tiny" data-a="pasteAnswer">PASTE ANSWER</button><button class="btn tiny gold" data-a="accept">ACCEPT ANSWER</button></div>
+          <textarea id="hidV51AnswerIn" placeholder="Paste/scanned Answer Code here"></textarea>
+        </div>
+        <div class="hv51-card">
+          <h3>IPHONE / CONTROLLER</h3>
+          <div class="hv51-help">Scan or paste the Host Code, then make an Answer Code and send it back to the iPad.</div>
+          <div class="hv51-row"><button class="btn tiny gold" data-a="scanHost">SCAN HOST QR</button><button class="btn tiny" data-a="pasteHost">PASTE HOST</button><button class="btn tiny gold" id="hidV51MakeAnswer" data-a="answer">CONNECT + MAKE ANSWER</button></div>
+          <textarea id="hidV51OfferIn" placeholder="Paste/scanned Host Code here"></textarea>
+          <div class="hv51-row"><button class="btn tiny" data-a="copyAnswer">COPY ANSWER</button><button class="btn tiny" data-a="prevAnswer">◀ QR</button><button class="btn tiny" data-a="nextAnswer">QR ▶</button></div>
+          <textarea id="hidV51AnswerCode" placeholder="Answer Code appears here"></textarea>
+          <div class="hv51-qr"><div id="hidV51AnswerQR"></div><div class="hv51-meta" id="hidV51AnswerMeta">No Answer QR yet.</div></div>
+        </div>
+      </div>
+      <div class="hv51-card gold" style="margin:0 10px 10px">
+        <h3>PAIRING TEST</h3>
+        <div class="hv51-row">
+          <button class="btn tiny warn" data-send="kill">KILL</button>
+          ${Array.from({length:8},(_,i)=>`<button class="btn tiny" data-pad="${i}">PAD ${i+1}</button>`).join('')}
+          <button class="btn tiny" data-note="60" data-on="1">C4 ON</button>
+          <button class="btn tiny" data-note="60" data-on="0">C4 OFF</button>
+          <label style="color:var(--dim)">MASTER</label><input type="range" min="0" max="1" step=".01" value=".8" data-master style="min-width:150px">
+        </div>
+      </div>
+    </div>
+    <div id="hidV51Scan"><div class="hv51-scan-head"><div class="hv51-scan-title">QR CAMERA SCANNER</div><button class="btn tiny warn" data-a="stopScan">STOP SCAN</button></div><div class="hv51-scan-msg" id="hidV51ScanMsg">Point camera at QR…</div><video id="hidV51Video" playsinline muted></video><canvas id="hidV51Canvas"></canvas></div>`;
+  document.body.appendChild(root);
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('[data-a],[data-pad],[data-note],[data-send]');if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    if(b.dataset.pad!=null)return send({cmd:'pad',idx:Number(b.dataset.pad)});
+    if(b.dataset.note!=null)return send({cmd:b.dataset.on==='0'?'noteOff':'noteOn',midi:Number(b.dataset.note)});
+    if(b.dataset.send==='kill')return send({cmd:'kill'});
+    const a=b.dataset.a;
+    if(a==='close')q('#hidV51Pair').classList.remove('show');
+    if(a==='host')startHost();
+    if(a==='copyHost')copyText(q('#hidV51HostCode')?.value,'Host code');
+    if(a==='copyAnswer')copyText(q('#hidV51AnswerCode')?.value,'Answer code');
+    if(a==='prevHost')nextQR('host',-1); if(a==='nextHost')nextQR('host',1);
+    if(a==='prevAnswer')nextQR('answer',-1); if(a==='nextAnswer')nextQR('answer',1);
+    if(a==='pasteHost')maybePaste('#hidV51OfferIn');
+    if(a==='pasteAnswer')maybePaste('#hidV51AnswerIn');
+    if(a==='answer')connectController();
+    if(a==='accept')acceptAnswer();
+    if(a==='scanHost')startScan('host');
+    if(a==='scanAnswer')startScan('answer');
+    if(a==='stopScan')stopScan();
+  },true);
+  root.addEventListener('input',e=>{if(e.target.matches('[data-master]'))send({cmd:'master',value:Number(e.target.value)})},true);
+  status();
+  return root;
 }
-function installButtons(){
-  // Remove old QR button if visible.
-  ['hid-v12-qr-btn','hid-qr-v11-topbtn','hid-qr-v11-launcher'].forEach(id=>q('#'+id)?.remove());
+function openPair(){ensureUI().classList.add('show');status()}
+function installButton(){
+  ['hidV50PairBtn','hid-v12-qr-btn','hid-qr-v11-topbtn','hid-qr-v11-launcher'].forEach(id=>q('#'+id)?.remove());
   const top=q('.topbar')||q('.pb-row1')||q('#app');
-  if(top && !q('#hidV50PairBtn')){
-    const b=document.createElement('button');
-    b.id='hidV50PairBtn';
-    b.className='btn tiny gold';
-    b.textContent='QR / CODE PAIR';
-    b.title='Open remote QR/copy pairing';
-    b.onclick=e=>{e.preventDefault();openPair();};
-    top.appendChild(b);
-  }
-  // Make existing remote button open the normal remote panel but also offer pairing.
-  const remote=q('#btn-remote-top-static,#btn-remote-top,#launcher-remote-static,.launcher-btn[data-w="remote"]');
-  if(remote && !remote.__v50){
-    remote.__v50=true;
-    remote.addEventListener('click',()=>setTimeout(openPair,120),true);
+  if(top&&!q('#hidV51PairBtn')){
+    const b=document.createElement('button');b.id='hidV51PairBtn';b.className='btn tiny gold';b.textContent='QR / CODE PAIR';b.onclick=e=>{e.preventDefault();openPair()};top.appendChild(b);
   }
 }
-window.HID_REMOTE_V50_OPEN=openPair;
-window.HID_REMOTE_V50_SEND=send;
-window.HID_REMOTE_V50_START_HOST=startHost;
-window.HID_REMOTE_V50_CONNECT_CONTROLLER=connectController;
-window.HID_REMOTE_V50_ACCEPT_ANSWER=acceptAnswer;
-window.HID_REMOTE_V50_STOP_SCAN=stopScan;
+window.HID_REMOTE_V51_OPEN=openPair;
+window.HID_REMOTE_V51_SEND=send;
+window.HID_REMOTE_V51_START_HOST=startHost;
+window.HID_REMOTE_V51_CONNECT_CONTROLLER=connectController;
+window.HID_REMOTE_V51_ACCEPT_ANSWER=acceptAnswer;
+window.HID_REMOTE_V51_STOP_SCAN=stopScan;
+window.addEventListener('load',()=>{setTimeout(installButton,300);setTimeout(installButton,1500);setTimeout(installButton,3500)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(installButton,200));
+document.addEventListener('pointerdown',()=>setTimeout(installButton,80),true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopScan()});
+})();
+</script>
 
-window.addEventListener('load',()=>{setTimeout(installButtons,300);setTimeout(installButtons,1500);setTimeout(installButtons,3500);});
-document.addEventListener('DOMContentLoaded',()=>setTimeout(installButtons,200));
-document.addEventListener('pointerdown',()=>setTimeout(installButtons,80),true);
-document.addEventListener('visibilitychange',()=>{if(document.hidden) stopScan();});
+
+<!-- ===== HID V52 REMOTE PERFORMANCE SURFACES ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V52_REMOTE_PERFORMANCE__) return;
+window.__HID_V52_REMOTE_PERFORMANCE__=true;
+
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const SCALES={
+  chromatic:[0,1,2,3,4,5,6,7,8,9,10,11],
+  major:[0,2,4,5,7,9,11],
+  dorian:[0,2,3,5,7,9,10],
+  phrygian:[0,1,3,5,7,8,10],
+  lydian:[0,2,4,6,7,9,11],
+  mixolydian:[0,2,4,5,7,9,10],
+  minor:[0,2,3,5,7,8,10],
+  aeolian:[0,2,3,5,7,8,10],
+  locrian:[0,1,3,5,6,8,10],
+  harmonic_minor:[0,2,3,5,7,8,11],
+  melodic_minor:[0,2,3,5,7,9,11],
+  phrygian_dominant:[0,1,4,5,7,8,10],
+  lydian_dominant:[0,2,4,6,7,9,10],
+  altered:[0,1,3,4,6,8,10],
+  whole_tone:[0,2,4,6,8,10],
+  diminished_hw:[0,1,3,4,6,7,9,10],
+  diminished_wh:[0,2,3,5,6,8,9,11],
+  major_pentatonic:[0,2,4,7,9],
+  minor_pentatonic:[0,3,5,7,10],
+  blues:[0,3,5,6,7,10]
+};
+const SCALE_LABELS=[['chromatic','Chromatic'],['major','Major'],['dorian','Dorian'],['phrygian','Phrygian'],['lydian','Lydian'],['mixolydian','Mixolydian'],['minor','Minor'],['locrian','Locrian'],['harmonic_minor','Harmonic Minor'],['melodic_minor','Melodic Minor'],['phrygian_dominant','Phrygian Dom.'],['lydian_dominant','Lydian Dom.'],['altered','Altered'],['whole_tone','Whole Tone'],['diminished_hw','Dim H-W'],['diminished_wh','Dim W-H'],['major_pentatonic','Maj Pent'],['minor_pentatonic','Min Pent'],['blues','Blues']];
+const st={pianoBase:48,pianoKeys:24,chromaBase:48,chromaRoot:0,chromaScale:'mixolydian',chromaOrder:'scale',chromaBars:16,voice:'legato',pitchHold:false,pitchValue:0,chromaPointer:null,chromaLast:null,notesDown:new Set()};
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function send(msg){return window.HID_REMOTE_V51_SEND?window.HID_REMOTE_V51_SEND(msg):false}
+function midiName(m){return NOTES[((m%12)+12)%12]+(Math.floor(m/12)-1)}
+function isBlack(m){return [1,3,6,8,10].includes(((m%12)+12)%12)}
+function makeScale(){
+  const count=Number(st.chromaBars)||16, base=Number(st.chromaBase)||48;
+  if(st.chromaOrder==='chromatic'||st.chromaScale==='chromatic')return Array.from({length:count},(_,i)=>base+i);
+  const ints=SCALES[st.chromaScale]||SCALES.mixolydian, root=Number(st.chromaRoot)||0, out=[];
+  let oct=Math.floor((base-root)/12)-1, guard=0;
+  while(out.length<count&&guard++<200){for(const it of ints){const m=root+it+oct*12;if(m>=base&&out.length<count)out.push(m)}oct++}
+  return out;
+}
+function makePiano(){
+  const el=q('#hidV52Piano'); if(!el)return;
+  el.innerHTML='';
+  const keys=Number(st.pianoKeys)||24, base=Number(st.pianoBase)||48;
+  for(let i=0;i<keys;i++){
+    const m=base+i, k=document.createElement('div');
+    k.className='hv52-key'+(isBlack(m)?' black':'');
+    k.dataset.midi=m;
+    k.textContent=NOTES[m%12]+(Math.floor(m/12)-1);
+    el.appendChild(k);
+  }
+}
+function makeChroma(){
+  const el=q('#hidV52Chroma'); if(!el)return;
+  el.innerHTML='';
+  const list=makeScale();
+  list.forEach((m,i)=>{
+    const b=document.createElement('div');
+    b.className='hv52-bar';
+    b.dataset.midi=m;
+    b.style.setProperty('--h',String(Math.round((i/Math.max(1,list.length))*320+20)%360));
+    b.innerHTML='<span>'+NOTES[m%12]+'</span><small>'+Math.floor(m/12-1)+'</small>';
+    el.appendChild(b);
+  });
+}
+function barAt(x,y){return document.elementFromPoint(x,y)?.closest?.('#hidV52Chroma .hv52-bar')}
+function light(el,on){if(el)el.classList.toggle('lit',!!on)}
+function noteOn(el){
+  const m=Number(el.dataset.midi); if(!Number.isFinite(m))return;
+  st.notesDown.add(m); light(el,true); send({cmd:'noteOn',midi:m,vel:.86});
+}
+function noteOff(el){
+  const m=Number(el.dataset.midi); if(!Number.isFinite(m))return;
+  st.notesDown.delete(m); light(el,false); send({cmd:'noteOff',midi:m});
+}
+function chromaDown(bar,id='touch'){
+  const m=Number(bar.dataset.midi); if(!Number.isFinite(m))return;
+  st.chromaLast=bar; light(bar,true);
+  send({cmd:'remoteChromaDown',midi:m,mode:st.voice,id,vel:.84});
+}
+function chromaMove(bar,id='touch'){
+  if(!bar || st.chromaLast===bar)return;
+  const m=Number(bar.dataset.midi); if(!Number.isFinite(m))return;
+  light(st.chromaLast,false); st.chromaLast=bar; light(bar,true);
+  send({cmd:'remoteChromaMove',midi:m,mode:st.voice,id});
+}
+function chromaUp(id='touch'){
+  if(st.chromaLast)light(st.chromaLast,false);
+  st.chromaLast=null; st.chromaPointer=null;
+  send({cmd:'remoteChromaUp',mode:st.voice,id});
+}
+function updatePitchThumb(){
+  const pad=q('#hidV52PitchPad'), thumb=q('#hidV52PitchThumb');
+  if(!pad||!thumb)return;
+  const r=pad.getBoundingClientRect();
+  const x=((st.pitchValue+1)/2)*r.width;
+  thumb.style.left=Math.max(0,Math.min(r.width-14,x-7))+'px';
+}
+function setPitchFromEvent(e,release=false){
+  const pad=q('#hidV52PitchPad'); if(!pad)return;
+  const r=pad.getBoundingClientRect();
+  const v=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width)*2-1));
+  st.pitchValue=release?0:v; updatePitchThumb(); send({cmd:'pitch',value:st.pitchValue});
+}
+function resetPitch(){
+  st.pitchValue=0; updatePitchThumb(); send({cmd:'pitchReset'});
+}
+function installEvents(){
+  const piano=q('#hidV52Piano');
+  if(piano&&!piano.__v52){
+    piano.__v52=true;
+    piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.hv52-key'); if(!k)return; e.preventDefault();k.setPointerCapture?.(e.pointerId);noteOn(k)},true);
+    piano.addEventListener('pointerup',e=>{const k=e.target.closest('.hv52-key'); if(!k)return; e.preventDefault();noteOff(k)},true);
+    piano.addEventListener('pointercancel',()=>{qa('#hidV52Piano .lit').forEach(noteOff)},true);
+  }
+  const chroma=q('#hidV52Chroma');
+  if(chroma&&!chroma.__v52){
+    chroma.__v52=true;
+    chroma.addEventListener('pointerdown',e=>{const b=e.target.closest('.hv52-bar'); if(!b)return; e.preventDefault(); e.stopPropagation(); st.chromaPointer=e.pointerId; chroma.setPointerCapture?.(e.pointerId); chromaDown(b,'touch'+e.pointerId)},true);
+    chroma.addEventListener('pointermove',e=>{if(st.chromaPointer!==e.pointerId)return; const b=barAt(e.clientX,e.clientY); if(!b)return; e.preventDefault(); chromaMove(b,'touch'+e.pointerId)},true);
+    ['pointerup','pointercancel','lostpointercapture'].forEach(t=>chroma.addEventListener(t,e=>{if(st.chromaPointer===e.pointerId||t==='lostpointercapture')chromaUp('touch'+(e.pointerId||''))},true));
+  }
+  const pitch=q('#hidV52PitchPad');
+  if(pitch&&!pitch.__v52){
+    pitch.__v52=true;
+    pitch.addEventListener('pointerdown',e=>{e.preventDefault();pitch.setPointerCapture?.(e.pointerId);setPitchFromEvent(e)},true);
+    pitch.addEventListener('pointermove',e=>{if(e.buttons||e.pressure>0){e.preventDefault();setPitchFromEvent(e)}},true);
+    ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pitch.addEventListener(t,e=>{e.preventDefault?.(); if(!st.pitchHold)resetPitch()},true));
+  }
+}
+function updateControls(){
+  st.pianoBase=Number(q('#hidV52PianoBase')?.value||st.pianoBase);
+  st.pianoKeys=Number(q('#hidV52PianoKeys')?.value||st.pianoKeys);
+  st.chromaBase=Number(q('#hidV52ChromaBase')?.value||st.chromaBase);
+  st.chromaRoot=Number(q('#hidV52Root')?.value||st.chromaRoot);
+  st.chromaScale=q('#hidV52Scale')?.value||st.chromaScale;
+  st.chromaOrder=q('#hidV52Order')?.value||st.chromaOrder;
+  st.chromaBars=Number(q('#hidV52Bars')?.value||st.chromaBars);
+  st.voice=q('#hidV52Voice')?.value||st.voice;
+  makePiano(); makeChroma(); installEvents();
+}
+function surfaceHTML(){
+  return `<div id="hidV52RemotePerformance">
+    <h3>REMOTE PERFORMANCE SURFACES</h3>
+    <div class="hv51-help">Use these from the iPhone/controller. The sound renders on the paired iPad/host.</div>
+    <div class="hv52-row">
+      <button class="btn tiny gold" id="hidV52HostChroma">SHOW CHROMA ON HOST</button>
+      <label>Voice</label><select id="hidV52Voice"><option value="poly">POLY</option><option value="mono">MONO</option><option value="legato" selected>LEGATO</option></select>
+      <label>Pitch Up</label><input id="hidV52RangeUp" type="range" min="1" max="12" step="1" value="2"><span id="hidV52RangeUpV">2</span>
+      <label>Down</label><input id="hidV52RangeDown" type="range" min="1" max="12" step="1" value="2"><span id="hidV52RangeDownV">2</span>
+      <label>Glide</label><input id="hidV52PitchGlide" type="range" min=".005" max=".5" step=".005" value=".06"><span id="hidV52PitchGlideV">.06</span>
+      <button class="btn tiny" id="hidV52PitchHold">PITCH HOLD: OFF</button>
+    </div>
+    <div class="hv52-row"><div id="hidV52PitchPad"><div id="hidV52PitchThumb"></div></div></div>
+    <div class="hv52-surface">
+      <div class="hv52-row">
+        <b style="color:var(--neon3)">PIANO KEYS</b>
+        <label>Base</label><input id="hidV52PianoBase" type="range" min="36" max="72" value="48">
+        <label>Keys</label><input id="hidV52PianoKeys" type="range" min="12" max="36" value="24">
+      </div>
+      <div id="hidV52Piano"></div>
+    </div>
+    <div class="hv52-surface">
+      <div class="hv52-row">
+        <b style="color:var(--neon3)">CHROMATIC BARS</b>
+        <label>Root</label><select id="hidV52Root">${NOTES.map((n,i)=>`<option value="${i}">${n}</option>`).join('')}</select>
+        <label>Scale</label><select id="hidV52Scale">${SCALE_LABELS.map(([v,l])=>`<option value="${v}" ${v==='mixolydian'?'selected':''}>${l}</option>`).join('')}</select>
+        <label>Order</label><select id="hidV52Order"><option value="scale">Scale degrees</option><option value="chromatic">Every note</option></select>
+        <label>Base</label><input id="hidV52ChromaBase" type="range" min="36" max="72" value="48">
+        <label>Bars</label><input id="hidV52Bars" type="range" min="8" max="32" value="16">
+      </div>
+      <div id="hidV52Chroma"></div>
+    </div>
+  </div>`;
+}
+function installSurfaces(){
+  const root=q('#hidV51Pair .hv51-shell');
+  if(!root || q('#hidV52RemotePerformance')) return;
+  const holder=document.createElement('div');
+  holder.innerHTML=surfaceHTML();
+  root.appendChild(holder.firstElementChild);
+  q('#hidV52Voice').value=st.voice;
+  q('#hidV52HostChroma').onclick=e=>{e.preventDefault();send({cmd:'chromaView',on:true});};
+  q('#hidV52PitchHold').onclick=e=>{e.preventDefault();st.pitchHold=!st.pitchHold;e.currentTarget.textContent='PITCH HOLD: '+(st.pitchHold?'ON':'OFF');if(!st.pitchHold)resetPitch();};
+  ['hidV52PianoBase','hidV52PianoKeys','hidV52ChromaBase','hidV52Root','hidV52Scale','hidV52Order','hidV52Bars','hidV52Voice'].forEach(id=>q('#'+id)?.addEventListener('input',updateControls,true));
+  q('#hidV52RangeUp').addEventListener('input',e=>{q('#hidV52RangeUpV').textContent=e.target.value;send({cmd:'pitchRange',up:Number(e.target.value),down:Number(q('#hidV52RangeDown').value)});});
+  q('#hidV52RangeDown').addEventListener('input',e=>{q('#hidV52RangeDownV').textContent=e.target.value;send({cmd:'pitchRange',up:Number(q('#hidV52RangeUp').value),down:Number(e.target.value)});});
+  q('#hidV52PitchGlide').addEventListener('input',e=>{q('#hidV52PitchGlideV').textContent=Number(e.target.value).toFixed(3);send({cmd:'pitchGlide',value:Number(e.target.value)});});
+  makePiano(); makeChroma(); installEvents(); updatePitchThumb();
+}
+function watch(){
+  installSurfaces();
+}
+const obs=new MutationObserver(watch);
+obs.observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('load',()=>{setTimeout(watch,300);setTimeout(watch,1500);setTimeout(watch,3500)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(watch,200));
+document.addEventListener('pointerdown',()=>setTimeout(watch,80),true);
+window.HID_REMOTE_V52_INSTALL=installSurfaces;
 })();
 </script>
 
