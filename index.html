@@ -1616,6 +1616,11 @@ body.hid-entered #app{display:flex!important;visibility:visible!important;opacit
 }
 </style>
 
+
+<style id="hid-v38-hide-old-controls">
+#hidProjectSaveLoadDock,#hidV35Dock,#hidMidiPanel,#hidV35Save,#hidV35Load,#hidV35Upload,#hidV35Dup,#hidV36Toast,#hidV37Toast{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -12930,6 +12935,46 @@ window.addEventListener('load',()=>{setTimeout(installAll,300);setTimeout(instal
 document.addEventListener('DOMContentLoaded',()=>setTimeout(installAll,200));
 document.addEventListener('pointerdown',()=>setTimeout(installAll,60),true);
 
+})();
+</script>
+
+
+<!-- ===== HID V38 DIRECT SAVE/LOAD + CHROMA LEGATO RESTORE ===== -->
+<script>
+(function(){
+if(window.__HID_V38_DIRECT_FIX__) return;
+window.__HID_V38_DIRECT_FIX__=true;
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const $=(s,r=document)=>r.querySelector(s);
+function T(msg){let t=$('#hidV38Toast');if(!t){t=document.createElement('div');t.id='hidV38Toast';t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.92);color:#dff;border:1px solid rgba(0,255,213,.7);padding:10px 14px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 18px rgba(0,255,213,.35);max-width:88vw;text-align:center;';document.body.appendChild(t)}t.textContent=msg;t.style.display='block';clearTimeout(t._timer);t._timer=setTimeout(()=>t.style.display='none',2600)}
+function S(){try{return typeof STATE==='object'?STATE:null}catch(e){return null}}
+function call(n){try{if(typeof window[n]==='function')return window[n]()}catch(e){}}
+function removeOld(){['hidProjectSaveLoadDock','hidV35Dock','hidMidiPanel','hidV35Save','hidV35Load','hidV35Upload','hidV35Dup'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove()});}
+setInterval(removeOld,1200);removeOld();
+function getPads(){const st=S(); if(st&&Array.isArray(st.pads))return st.pads; if(Array.isArray(window.pads))return window.pads; window.pads=[]; if(st)st.pads=window.pads; return window.pads;}
+function restoreMaps(){const st=S(); if(!st)return; if(!(st.activeNotes instanceof Map))st.activeNotes=new Map(); if(!(st.shapeNotes instanceof Set))st.shapeNotes=new Set(Array.isArray(st.shapeNotes)?st.shapeNotes:[]); if(st.sampler&&!(st.sampler.activeSources instanceof Set))st.sampler.activeSources=new Set(); if(!(st.padPlayingVoices instanceof Map))st.padPlayingVoices=new Map(); if(!(st.padPlayingSequences instanceof Map))st.padPlayingSequences=new Map();}
+function refresh(){restoreMaps();['buildPadsWindow','renderPads','renderPadGrid','refreshPads','updatePads','buildPads','renderSampler','refreshSampler','renderWindows','refreshUI','buildPiano','buildChroma'].forEach(call);setTimeout(cleanChromaForV29,80)}
+async function audioBufferToDataURL(buffer){if(!buffer||!buffer.length)return null;const ch=Math.min(buffer.numberOfChannels||1,2),len=buffer.length,rate=buffer.sampleRate||44100,block=ch*2;const ab=new ArrayBuffer(44+len*block),v=new DataView(ab);let o=0;const str=s=>{for(let i=0;i<s.length;i++)v.setUint8(o++,s.charCodeAt(i))};str('RIFF');v.setUint32(o,36+len*block,true);o+=4;str('WAVE');str('fmt ');v.setUint32(o,16,true);o+=4;v.setUint16(o,1,true);o+=2;v.setUint16(o,ch,true);o+=2;v.setUint32(o,rate,true);o+=4;v.setUint32(o,rate*block,true);o+=4;v.setUint16(o,block,true);o+=2;v.setUint16(o,16,true);o+=2;str('data');v.setUint32(o,len*block,true);o+=4;for(let i=0;i<len;i++)for(let c=0;c<ch;c++){let s=buffer.getChannelData(c)[i]||0;s=Math.max(-1,Math.min(1,s));v.setInt16(o,s<0?s*0x8000:s*0x7fff,true);o+=2}return await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(null);r.readAsDataURL(new Blob([ab],{type:'audio/wav'}))})}
+function cssVars(){const cs=getComputedStyle(document.documentElement),o={};['--bg','--neon','--neon2','--neon3','--text','--dim','--white-key','--black-key','--panel','--stroke','--window-glow','--hid-window-glow','--hid-white-key-solid','--hid-black-key-solid'].forEach(k=>{const v=cs.getPropertyValue(k).trim();if(v)o[k]=v});return o}
+function applyCss(o){if(o)Object.entries(o).forEach(([k,v])=>document.documentElement.style.setProperty(k,v))}
+function controls(){const o={};$$('input,select,textarea').forEach(el=>{if(!el.id&&!el.name)return;if(el.type==='file')return;const k=el.id||el.name;if(el.type==='checkbox')o[k]=!!el.checked;else if(el.type==='radio'){if(el.checked)o[k]=el.value}else o[k]=el.value});return o}
+function applyControls(o){if(!o)return;Object.entries(o).forEach(([k,val])=>{let els=[];try{els=$$('#'+CSS.escape(k)+',[name="'+String(k).replace(/"/g,'\\"')+'"]')}catch(e){}els.forEach(el=>{if(el.type==='file')return;if(el.type==='checkbox')el.checked=!!val;else if(el.type==='radio')el.checked=(el.value==val);else el.value=val;try{el.dispatchEvent(new Event('input',{bubbles:true}))}catch(e){}try{el.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}})})}
+function stateLite(){const st=S();if(!st)return null;const keys=['bank','patchIdx','octave','transpose','bpm','sustain','chromatic','build','keyboardPiano','voiceMode','pianoView','chromaV24','chromaV23','arp','fx','amp','filt','mod','wheel','modWheel','slots','custom','colors'];const o={};keys.forEach(k=>{try{if(st[k]!==undefined)o[k]=JSON.parse(JSON.stringify(st[k]))}catch(e){}});try{o.shapeNotes=Array.from(st.shapeNotes||[])}catch(e){}return o}
+function applyStateLite(o){const st=S();if(!st||!o)return;Object.entries(o).forEach(([k,v])=>{try{if(k==='shapeNotes')st.shapeNotes=new Set(v||[]);else st[k]=v}catch(e){}});restoreMaps()}
+async function padSave(p){if(!p)return null;const o={};Object.keys(p).forEach(k=>{if(['buffer','audioBuffer','sampleBuffer'].includes(k))return;try{o[k]=JSON.parse(JSON.stringify(p[k]))}catch(e){}});if(!o.dataURL){const b=p.buffer||p.audioBuffer||p.sampleBuffer;if(b)o.dataURL=await audioBufferToDataURL(b)}return o}
+async function saveProject(){try{const pads=[];for(const p of getPads())pads.push(await padSave(p));const project={fileType:'HoldItDownProject',type:'hidproject',app:'Hold It Down',version:38,savedAt:new Date().toISOString(),cssVars:cssVars(),controls:controls(),state:stateLite(),pads:pads};const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hold-it-down-project.hidproject.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);T('Project saved as .hidproject.json')}catch(e){console.error(e);alert('Save failed: '+(e.message||e))}}
+function ctx(){try{return window.ctx||window.audioCtx||null}catch(e){return null}}
+async function dataURLToBuffer(d){if(!d)return null;let c=ctx();if(!c){try{const C=AudioContext||webkitAudioContext;c=new C();window.audioCtx=c}catch(e){return null}}if(c.state==='suspended')try{await c.resume()}catch(e){}const r=await fetch(d);const ab=await r.arrayBuffer();return await c.decodeAudioData(ab.slice(0))}
+async function loadProjectFile(file){if(!file)return;try{const txt=await file.text();let p=JSON.parse(txt.replace(/^\uFEFF/,'').trim());if(!p||!(p.type==='hidproject'||p.fileType==='HoldItDownProject'||p.app==='Hold It Down'))throw new Error('Not a Hold It Down project JSON file');applyCss(p.cssVars||p.colors);applyControls(p.controls||p.inputs);applyStateLite(p.state||p.STATE);const pads=getPads();pads.length=0;for(const raw of (p.pads||p.sampler?.pads||[])){const pad=raw||null;if(pad&&pad.dataURL){try{const b=await dataURLToBuffer(pad.dataURL);pad.buffer=b;pad.audioBuffer=b;pad.sampleBuffer=b;pad.loaded=true}catch(e){console.warn('audio pad restore failed',e)}}pads.push(pad)}while(pads.length<16)pads.push(null);const st=S();if(st)st.pads=pads;refresh();T('Project loaded')}catch(e){console.error(e);alert('Load failed. Select the .hidproject.json file saved by this app.\n\n'+(e.message||e))}}
+function openProject(){let inp=$('#hidV38ProjectInput');if(!inp){inp=document.createElement('input');inp.id='hidV38ProjectInput';inp.type='file';inp.style.display='none';inp.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];loadProjectFile(f);e.target.value=''});document.body.appendChild(inp)}inp.removeAttribute('accept');inp.click()}
+function addTopButton(id,label,fn){let b=$('#'+id);if(!b){b=document.createElement('button');b.id=id;b.className='btn tiny gold';b.textContent=label;b.style.marginLeft='4px'}b.onclick=e=>{e.preventDefault();e.stopPropagation();fn()};return b}
+function installTop(){removeOld();const top=$('.topbar')||$('.pb-row1')||$('#app');if(!top)return;let badge=$('#hidV38Badge');if(!badge){badge=document.createElement('span');badge.id='hidV38Badge';badge.textContent='V38 ACTIVE';badge.style.cssText='font-family:VT323,monospace;font-size:12px;color:#00ffd5;border:1px solid rgba(0,255,213,.55);padding:3px 6px;margin-left:4px;letter-spacing:.1em;';top.appendChild(badge)}top.appendChild(addTopButton('hidV38Save','SAVE PROJECT',saveProject));top.appendChild(addTopButton('hidV38Load','LOAD PROJECT',openProject));$$('button,.btn,.launcher-btn').forEach(btn=>{const t=(btn.textContent||'').trim().toUpperCase();if(btn.id&&btn.id.startsWith('hidV38'))return;if(t.includes('SAVE')&&t.includes('PROJECT'))btn.onclick=e=>{e.preventDefault();e.stopPropagation();saveProject()};if((t.includes('LOAD')||t.includes('OPEN'))&&t.includes('PROJECT'))btn.onclick=e=>{e.preventDefault();e.stopPropagation();openProject()}})}
+function cleanChromaForV29(){const c=$('#chroma');if(!c||c.dataset.hidV38Clean==='1')return;const clone=c.cloneNode(true);clone.dataset.hidV38Clean='1';c.replaceWith(clone);try{document.body.classList.add('hid-v29-chroma-engine')}catch(e){};const st=S();if(st&&!st.voiceMode)st.voiceMode='legato';const v=$('#hid-v28-voice');if(v){v.onchange=()=>{const st=S();if(st)st.voiceMode=v.value;T('Chroma voice: '+v.value.toUpperCase())}}}
+function forceLegatoSync(){const st=S();if(!st)return;const v=$('#hid-v28-voice')||$('#hid-v18-voice-mode');if(v)st.voiceMode=v.value||st.voiceMode||'legato';}
+window.HID_V38_SAVE_PROJECT=saveProject;window.HID_V38_LOAD_PROJECT=openProject;window.HID_V38_CLEAN_CHROMA=cleanChromaForV29;
+function boot(){installTop();forceLegatoSync();cleanChromaForV29()}
+window.addEventListener('load',()=>{setTimeout(boot,400);setTimeout(boot,1600);setTimeout(boot,3600);setInterval(boot,2500)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,250));document.addEventListener('click',()=>setTimeout(boot,50),true);
 })();
 </script>
 
