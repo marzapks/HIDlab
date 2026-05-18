@@ -2315,6 +2315,191 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 }
 </style>
 
+
+<style id="hid-v60-protected-sample-pads-css">
+#hidV57RecoveryBadge,
+#hidV58RecoveryBadge,
+#hidV57PadModeBar,
+#hidV58HardModeBar,
+#hidV56PadModeBar,
+#hidV59PadModeBar{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#hidV60PadModeBar{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:5px 7px;
+  padding:7px 8px;
+  border:1px solid rgba(0,255,213,.42);
+  background:linear-gradient(180deg,rgba(0,255,213,.09),rgba(0,0,0,.54));
+  border-radius:8px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 14px rgba(0,255,213,.12);
+}
+#hidV60PadModeBar .v60-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+}
+#hidV60PadModeBar .v60-help{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  line-height:1.2;
+}
+#hidV60PadModeBar button.on{
+  box-shadow:0 0 14px rgba(0,255,213,.55);
+}
+.spad.hid-v60-active-pad{
+  box-shadow:0 0 18px rgba(0,255,213,.78), inset 0 0 18px rgba(0,255,213,.16)!important;
+}
+</style>
+
+
+<style id="hid-v61-toggle-cleanup-css">
+/* V61: remove confusing older keyboard-trigger bar from the pad window.
+   The actual pad playback mode is now only controlled by the V61 STACK / SOLO / TOGGLE bar. */
+#hidV46PadKeyControls,
+#hidV47PadKeyStatus,
+#hidV57RecoveryBadge,
+#hidV58RecoveryBadge,
+#hidV56PadModeBar,
+#hidV57PadModeBar,
+#hidV58HardModeBar,
+#hidV59PadModeBar,
+#hidV60PadModeBar{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#hidV61PadModeBar{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:5px 7px;
+  padding:8px 9px;
+  border:1px solid rgba(255,230,0,.42);
+  background:linear-gradient(180deg,rgba(255,230,0,.10),rgba(0,0,0,.55));
+  border-radius:8px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 14px rgba(255,230,0,.12);
+}
+#hidV61PadModeBar .v61-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+}
+#hidV61PadModeBar .v61-help{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  line-height:1.2;
+}
+#hidV61PadModeBar button.on{
+  box-shadow:0 0 14px rgba(255,230,0,.55);
+}
+.spad.hid-v61-active-pad{
+  box-shadow:0 0 18px rgba(255,230,0,.72), inset 0 0 18px rgba(255,230,0,.14)!important;
+}
+</style>
+
+
+<style id="hid-v62-pad-editor-backquote-css">
+#hidV62PadEditor{
+  margin:6px 7px;
+  padding:9px;
+  border:1px solid rgba(255,230,0,.42);
+  background:linear-gradient(180deg,rgba(255,230,0,.08),rgba(0,0,0,.55));
+  border-radius:9px;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.45),0 0 12px rgba(255,230,0,.10);
+}
+#hidV62PadEditor .v62-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+  margin-bottom:7px;
+}
+#hidV62PadEditor .v62-sub{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  line-height:1.2;
+  margin-bottom:7px;
+}
+#hidV62PadEditor .v62-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(180px,1fr));
+  gap:7px 10px;
+}
+#hidV62PadEditor .v62-row{
+  display:grid;
+  grid-template-columns:58px 1fr 50px;
+  gap:6px;
+  align-items:center;
+}
+#hidV62PadEditor label{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+#hidV62PadEditor .v{
+  font-family:'VT323',monospace;
+  color:var(--neon3);
+  font-size:12px;
+  text-align:right;
+}
+#hidV62PadEditor .v62-actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+#hidV62PadEditor .v62-empty{
+  color:var(--dim);
+  font-family:'VT323',monospace;
+  font-size:14px;
+  letter-spacing:.08em;
+}
+.spad.hid-v62-selected-pad{
+  outline:2px solid var(--neon3)!important;
+  outline-offset:-2px;
+  box-shadow:0 0 18px rgba(255,230,0,.75), inset 0 0 18px rgba(255,230,0,.15)!important;
+}
+body.piano-kbd-disabled #hidV62KbdBadge{
+  color:#ff5577!important;
+  border-color:rgba(255,80,120,.55)!important;
+}
+#hidV62KbdBadge{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(0,255,213,.45);
+  color:var(--neon);
+  background:rgba(0,0,0,.35);
+  border-radius:5px;
+}
+@media(max-width:780px){
+  #hidV62PadEditor .v62-grid{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -14406,6 +14591,1115 @@ window.HID_V59_STOP_PAD=stopPad;
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V60 PROTECTED SAMPLE PADS: FULL-LENGTH AUDIO UNDER LIVE PIANO ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V60_PROTECTED_SAMPLE_PADS__) return;
+window.__HID_V60_PROTECTED_SAMPLE_PADS__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function C(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function log(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V60]',msg)}
+function ensureAudio(){
+  try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function'&&!C())initAudio()}catch(e){}
+  const c=C();
+  try{if(c&&c.state==='suspended')c.resume()}catch(e){}
+  return c;
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padIsSample(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL));
+}
+function padIsEmpty(p){
+  return !p || !(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function ensureMode(){
+  const S=getS(); if(!S)return 'stack';
+  if(!S.padPlayMode)S.padPlayMode=S.padSoloMode?'solo':'stack';
+  if(!['stack','solo','toggle'].includes(S.padPlayMode))S.padPlayMode='stack';
+  S.padSoloMode=S.padPlayMode==='solo';
+  return S.padPlayMode;
+}
+function setMode(mode){
+  const S=getS(); if(!S)return;
+  S.padPlayMode=mode;
+  S.padSoloMode=mode==='solo';
+  updateModeUI();
+}
+function padEl(idx){return qa('#pads-grid .spad')[idx]||qa('.spad')[idx]||null}
+function mark(idx,on){
+  const el=padEl(idx);
+  if(el)el.classList.toggle('hid-v60-active-pad',!!on);
+}
+function activePadSampleNodes(idx){
+  const S=getS(), p=getPads()[idx], out=[];
+  try{
+    for(const node of (S?.sampler?.activeSources||[])){
+      if(node.__hidV60PadOwned && (node.padIdx===idx||node.padCfg===p))out.push(node);
+    }
+  }catch(e){}
+  return out;
+}
+function anyPadActive(idx){
+  const S=getS();
+  if(activePadSampleNodes(idx).length)return true;
+  try{if(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx))return true}catch(e){}
+  return false;
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  if(typeof HID_V45_HYDRATE_PAD==='function')return HID_V45_HYDRATE_PAD(p);
+  if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}
+  return null;
+}
+function sampleRate(p){
+  try{if(typeof samplePlaybackRateForWheel==='function')return samplePlaybackRateForWheel(p)}catch(e){}
+  const S=getS();
+  const semis=(Number(p?.transpose)||0)+(Number(p?.octaveShift)||0)*12+((p?.wheelEnabled===false||p?.pitchBendEnabled===false)?0:(Number(S?.modWheel?.active)||0));
+  return Math.pow(2,semis/12);
+}
+function disconnectNode(node){
+  try{node.src.disconnect()}catch(e){}
+  try{node.g?.disconnect()}catch(e){}
+  for(const n of (node.routeNodes||[])){try{n.disconnect()}catch(e){}}
+}
+function stopPadSamples(idx){
+  const S=getS();
+  for(const node of activePadSampleNodes(idx)){
+    node.__hidV60ManualStop=true;
+    try{node.src.stop(0)}catch(e){}
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+    disconnectNode(node);
+  }
+  mark(idx,false);
+}
+function playProtectedSample(idx,p,buffer){
+  const S=getS(), c=ensureAudio();
+  if(!S||!c||!buffer)return null;
+  const src=c.createBufferSource();
+  src.buffer=buffer;
+  const rate=sampleRate(p);
+  try{src.playbackRate.setValueAtTime(rate,c.currentTime)}catch(e){src.playbackRate.value=rate}
+  const g=c.createGain();
+  const now=c.currentTime;
+  g.gain.setValueAtTime(0,now);
+  g.gain.linearRampToValueAtTime(1,now+0.006);
+  const routeNodes=[];
+  let padGain=null,fxSend=null,drySend=null;
+  try{if(typeof ensurePadDefaults==='function')ensurePadDefaults(p,idx)}catch(e){}
+  try{
+    padGain=c.createGain(); padGain.gain.value=clamp(p.volume??1,0,2);
+    fxSend=c.createGain(); fxSend.gain.value=clamp(p.fxSend??1,0,1);
+    drySend=c.createGain(); drySend.gain.value=clamp(1-(p.fxSend??1),0,1);
+    src.connect(g).connect(padGain);
+    try{padGain.connect(fxSend).connect(fxIn)}catch(e){try{padGain.connect(fxSend).connect(c.destination)}catch(_){}} 
+    try{if(typeof recordTap!=='undefined'&&recordTap)padGain.connect(drySend).connect(recordTap);else padGain.connect(drySend).connect(fxIn)}catch(e){try{padGain.connect(drySend).connect(c.destination)}catch(_){}}
+    routeNodes.push(padGain,fxSend,drySend);
+  }catch(e){
+    try{src.connect(g).connect(c.destination)}catch(_){}
+  }
+  const node={src,g,padGain,fxSend,drySend,routeNodes,padCfg:p,padIdx:idx,baseRate:1,wheelEnabled:p.wheelEnabled!==false&&p.pitchBendEnabled!==false,__hidV60PadOwned:true,__hidV60Ended:false};
+  S.sampler=S.sampler||{};
+  S.sampler.activeSources=S.sampler.activeSources||new Set();
+  S.sampler.activeSources.add(node);
+  src.onended=function(){
+    node.__hidV60Ended=true;
+    try{S.sampler.activeSources.delete(node)}catch(e){}
+    disconnectNode(node);
+    if(!activePadSampleNodes(idx).length)mark(idx,false);
+  };
+  src.start(now);
+  mark(idx,true);
+  return src;
+}
+function stopPad(idx,smooth=true){
+  const S=getS(); if(!S)return;
+  stopPadSamples(idx);
+  const el=padEl(idx);
+  if(el)el.classList.remove('playing','sustained','hid-v56-active-pad','hid-v57-active-pad','hid-v58-active-pad','hid-v59-active-pad','hid-v60-active-pad');
+  try{
+    const vs=S.padPlayingVoices?.get?.(idx);
+    if(vs){
+      (vs.timers||[]).forEach(clearTimeout);
+      for(const v of (vs.voices||[])){try{smooth&&v.fadeOut?v.fadeOut(120):v.release?.()}catch(e){}}
+      S.padPlayingVoices.delete(idx);
+    }
+  }catch(e){}
+  try{
+    const seq=S.padPlayingSequences?.get?.(idx);
+    if(seq){
+      seq.stopped=true;
+      (seq.timers||[]).forEach(clearTimeout);
+      Array.from(seq.allVoices||[]).forEach(v=>{try{smooth&&v.fadeOut?v.fadeOut(120):v.release?.()}catch(e){}});
+      S.padPlayingSequences.delete(idx);
+    }
+  }catch(e){}
+}
+function stopOtherPads(idx){
+  for(let i=0;i<getPads().length;i++)if(i!==idx)stopPad(i,true);
+}
+async function triggerPad(idx){
+  idx=Number(idx);
+  const S=getS(), pads=getPads();
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return;
+  ensureMode();
+  const p=pads[idx];
+  S.padCycleIdx=idx;S.padEditingIdx=idx;S.padControlScope='pad';
+  if(!p){try{padArmCapture(idx)}catch(e){};return}
+  if(p.disabled){log('Pad is off');return}
+  const mode=S.padPlayMode;
+  if(mode==='toggle'&&anyPadActive(idx)){stopPad(idx,true);return}
+  if(mode==='solo')stopOtherPads(idx);
+  // Critical: tapped pad restarts cleanly, but live piano notes never stop pads.
+  stopPad(idx,true);
+  const el=padEl(idx);
+  if(el){el.classList.add('playing','hid-v60-active-pad');setTimeout(()=>el.classList.remove('playing'),180)}
+  try{if(typeof recordEvent==='function')recordEvent({type:'pad',padIdx:idx})}catch(e){}
+  if(padIsSample(p)){
+    const b=await hydratePad(p);
+    if(!b){log('Pad audio missing');return}
+    p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;
+    playProtectedSample(idx,p,b);
+    return;
+  }
+  // Shapes / sequences still use the app engine, but only pad actions stop pads.
+  const sustain=mode==='toggle'?true:!!p.sustain;
+  try{
+    if(p.kind==='shape'){
+      const voices=[];
+      const snap=(typeof padSnapshotForPlayback==='function')?padSnapshotForPlayback(p):(p.patchSnapshot||null);
+      for(const m of (p.notes||[])){
+        const real=m+(p.transpose||0)+(p.octaveShift||0)*12;
+        voices.push(startVoice(real,0.78,snap));
+      }
+      S.padPlayingVoices.set(idx,{voices,timers:[]});
+      if(sustain)el?.classList.add('sustained');
+      else S.padPlayingVoices.get(idx).timers.push(setTimeout(()=>stopPad(idx,true),900));
+      mark(idx,true);
+    }else if(p.kind==='sequence'&&typeof padStartSequence==='function'){
+      padStartSequence(idx,p,sustain);
+      mark(idx,true);
+    }else if(typeof padPlay==='function'){
+      padPlay(idx,sustain);
+      mark(idx,true);
+    }
+    if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx);
+  }catch(e){console.warn('V60 non-sample pad play failed',e)}
+}
+function patchGlobals(){
+  if(window.__HID_V60_GLOBALS_PATCHED__)return;
+  window.__HID_V60_GLOBALS_PATCHED__=true;
+  try{window.padTrigger=idx=>triggerPad(idx);padTrigger=window.padTrigger}catch(e){window.padTrigger=idx=>triggerPad(idx)}
+  try{window.padStop=(idx,smooth=true)=>stopPad(Number(idx),smooth);padStop=window.padStop}catch(e){window.padStop=(idx,smooth=true)=>stopPad(Number(idx),smooth)}
+  try{
+    const oldApply=window.applyPitchToActiveSamples||((typeof applyPitchToActiveSamples==='function')?applyPitchToActiveSamples:null);
+    const apply=function(){
+      const S=getS(), c=C(); if(!S||!c)return;
+      for(const node of (S.sampler?.activeSources||[])){
+        const p=node.padCfg;
+        if(node.wheelEnabled===false||p?.wheelEnabled===false||p?.pitchBendEnabled===false)continue;
+        try{node.src.playbackRate.setTargetAtTime((node.baseRate||1)*(p?sampleRate(p):1),c.currentTime,0.035)}catch(e){}
+      }
+    };
+    window.applyPitchToActiveSamples=apply; applyPitchToActiveSamples=apply;
+  }catch(e){}
+  // Keep protected sample-pad audio alive when chord-bank / live chord paths try to clear generic sampler sources.
+  try{
+    const oldPlayChord=window.playChord||((typeof playChord==='function')?playChord:null);
+    if(typeof oldPlayChord==='function'&&!oldPlayChord.__hidV60Wrapped){
+      const wrapped=function(chord){
+        const S=getS();
+        const keep=[];
+        try{
+          for(const node of Array.from(S?.sampler?.activeSources||[])){
+            if(node.__hidV60PadOwned){keep.push(node);S.sampler.activeSources.delete(node)}
+          }
+        }catch(e){}
+        try{return oldPlayChord.apply(this,arguments)}
+        finally{
+          try{for(const node of keep){if(!node.__hidV60Ended)S.sampler.activeSources.add(node)}}catch(e){}
+        }
+      };
+      wrapped.__hidV60Wrapped=true;
+      window.playChord=wrapped; playChord=wrapped;
+    }
+  }catch(e){}
+}
+function padIndexFromTarget(t){
+  const pad=t?.closest?.('#pads-grid .spad,.spad');
+  if(!pad)return -1;
+  let idx=qa('#pads-grid .spad').indexOf(pad);
+  if(idx<0)idx=qa('.spad').indexOf(pad);
+  return idx;
+}
+function isInternal(t){return !!t?.closest?.('button,input,select,textarea,.spad-wheel,.spad-off,.spad-mini,.spad-x,.spad-menu,[data-no-pad-trigger]')}
+let down=null;
+function installPointerRouter(){
+  if(window.__HID_V60_POINTER_ROUTER__)return;
+  window.__HID_V60_POINTER_ROUTER__=true;
+  // Window capture runs before the older document-level routers, so old pad handlers cannot stack underneath.
+  window.addEventListener('pointerdown',e=>{
+    const idx=padIndexFromTarget(e.target);
+    if(idx<0||isInternal(e.target))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    down={idx,id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),long:false,moved:false};
+    down.timer=setTimeout(()=>{
+      if(!down||down.idx!==idx)return;
+      down.long=true;
+      const S=getS();
+      if(S&&!padIsEmpty(getPads()[idx])){
+        S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';
+        try{S.transposeTarget='pad'}catch(e){}
+        mark(idx,true);
+        try{if(typeof buildPadsWindow==='function')buildPadsWindow()}catch(e){}
+      }
+    },560);
+  },true);
+  window.addEventListener('pointermove',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    if(Math.abs(e.clientX-down.x)>14||Math.abs(e.clientY-down.y)>14)down.moved=true;
+  },true);
+  window.addEventListener('pointerup',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    clearTimeout(down.timer);
+    const d=down;down=null;
+    if(!d.moved&&!d.long)triggerPad(d.idx);
+  },true);
+  window.addEventListener('pointercancel',e=>{if(down&&down.id===e.pointerId){clearTimeout(down.timer);down=null}},true);
+  window.addEventListener('click',e=>{
+    const idx=padIndexFromTarget(e.target);
+    if(idx<0||isInternal(e.target))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  },true);
+}
+function modeBarHTML(){
+  const m=ensureMode();
+  return `<div id="hidV60PadModeBar">
+    <span class="v60-title">PAD PLAY MODE</span>
+    <button class="btn tiny ${m==='stack'?'gold on':''}" data-v60-mode="stack">STACK</button>
+    <button class="btn tiny ${m==='solo'?'gold on':''}" data-v60-mode="solo">SOLO</button>
+    <button class="btn tiny ${m==='toggle'?'gold on':''}" data-v60-mode="toggle">TOGGLE</button>
+    <span class="v60-help">Pads keep playing under live piano. STACK layers different pads, SOLO stops other pads, TOGGLE taps pads on/off.</span>
+  </div>`;
+}
+function installModeBar(){
+  ['hidV56PadModeBar','hidV57PadModeBar','hidV58HardModeBar','hidV59PadModeBar'].forEach(id=>q('#'+id)?.remove());
+  ['hidV57RecoveryBadge','hidV58RecoveryBadge'].forEach(id=>q('#'+id)?.remove());
+  const body=q('#win-sampler .win-body')||qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body)return;
+  let bar=q('#hidV60PadModeBar');
+  if(!bar){
+    const h=document.createElement('div');h.innerHTML=modeBarHTML();bar=h.firstElementChild;
+    body.insertBefore(bar,q('#pads-grid',body)||body.firstChild);
+  }
+  bar.querySelectorAll('[data-v60-mode]').forEach(b=>b.onclick=e=>{e.preventDefault();setMode(b.dataset.v60Mode)});
+  const old=q('#pads-solo-mode');
+  if(old&&!old.__v60){
+    old.__v60=true;
+    old.onclick=e=>{e.preventDefault();const m=ensureMode();setMode(m==='stack'?'solo':m==='solo'?'toggle':'stack')};
+  }
+  updateModeUI();
+}
+function updateModeUI(){
+  const m=ensureMode();
+  q('#hidV60PadModeBar')?.querySelectorAll('[data-v60-mode]').forEach(b=>{
+    const on=b.dataset.v60Mode===m;
+    b.classList.toggle('on',on);b.classList.toggle('gold',on);
+  });
+  const old=q('#pads-solo-mode');
+  if(old){old.textContent=m.toUpperCase();old.classList.toggle('on',m!=='stack')}
+}
+function wrapPadsWindow(){
+  if(window.__HID_V60_PAD_WINDOW_WRAPPED__)return;
+  const old=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V60_PAD_WINDOW_WRAPPED__=true;
+  const wrapped=function(){const r=old.apply(this,arguments);setTimeout(installModeBar,0);return r};
+  try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+}
+function init(){
+  ensureMode();
+  patchGlobals();
+  installPointerRouter();
+  wrapPadsWindow();
+  installModeBar();
+}
+window.HID_V60_TRIGGER_PAD=triggerPad;
+window.HID_V60_STOP_PAD=stopPad;
+window.HID_V60_SET_PAD_MODE=setMode;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V61 TOGGLE FIX: SINGLE MODE BAR + OWN ACTIVE REGISTRY ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V61_TOGGLE_FIX__) return;
+window.__HID_V61_TOGGLE_FIX__=true;
+
+const activePads = new Set();
+const padSources = new Map();
+let down = null;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function note(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V61]',msg)}
+function ensureAudio(){
+  try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function'&&!getC())initAudio()}catch(e){}
+  const c=getC();
+  try{if(c&&c.state==='suspended')c.resume()}catch(e){}
+  return c;
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padIsSample(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL));
+}
+function isPadLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label));
+}
+function ensureMode(){
+  const S=getS(); if(!S)return 'stack';
+  if(!S.padPlayMode)S.padPlayMode=S.padSoloMode?'solo':'stack';
+  if(!['stack','solo','toggle'].includes(S.padPlayMode))S.padPlayMode='stack';
+  // Keep old booleans in sync so old code cannot reinterpret the mode.
+  S.padSoloMode = S.padPlayMode==='solo';
+  S.padSustainMode = S.padPlayMode==='toggle';
+  return S.padPlayMode;
+}
+function setMode(mode){
+  const S=getS(); if(!S)return;
+  if(!['stack','solo','toggle'].includes(mode))mode='stack';
+  S.padPlayMode=mode;
+  S.padSoloMode=mode==='solo';
+  S.padSustainMode=mode==='toggle';
+  updateModeUI();
+  note('Pad mode: '+mode.toUpperCase());
+}
+function padEl(idx){return qa('#pads-grid .spad')[idx]||qa('.spad')[idx]||null}
+function mark(idx,on){
+  const el=padEl(idx);
+  if(el){
+    el.classList.toggle('hid-v61-active-pad',!!on);
+    el.classList.toggle('hid-v60-active-pad',!!on);
+    el.classList.toggle('playing',!!on && activePads.has(idx));
+  }
+}
+function registerActive(idx){
+  activePads.add(idx);
+  mark(idx,true);
+}
+function unregisterActive(idx){
+  activePads.delete(idx);
+  mark(idx,false);
+}
+function padActuallyActive(idx){
+  if(activePads.has(idx))return true;
+  const S=getS(), p=getPads()[idx];
+  try{
+    if((padSources.get(idx)||new Set()).size)return true;
+    for(const node of (S?.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p)return true;
+    }
+    if(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx))return true;
+  }catch(e){}
+  return false;
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  if(typeof HID_V45_HYDRATE_PAD==='function')return HID_V45_HYDRATE_PAD(p);
+  if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}
+  return null;
+}
+function sampleRate(p){
+  try{if(typeof samplePlaybackRateForWheel==='function')return samplePlaybackRateForWheel(p)}catch(e){}
+  const S=getS();
+  const semis=(Number(p?.transpose)||0)+(Number(p?.octaveShift)||0)*12+((p?.wheelEnabled===false||p?.pitchBendEnabled===false)?0:(Number(S?.modWheel?.active)||0));
+  return Math.pow(2,semis/12);
+}
+function disconnectNode(node){
+  try{node.src.disconnect()}catch(e){}
+  try{node.g?.disconnect()}catch(e){}
+  for(const n of (node.routeNodes||[])){try{n.disconnect()}catch(e){}}
+}
+function stopPadSamples(idx){
+  const S=getS(), p=getPads()[idx];
+  const own=padSources.get(idx);
+  if(own){
+    for(const node of Array.from(own)){
+      node.__hidV61ManualStop=true;
+      try{node.src.stop(0)}catch(e){}
+      try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+      disconnectNode(node);
+    }
+    own.clear();
+  }
+  try{
+    for(const node of Array.from(S?.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p){
+        node.__hidV61ManualStop=true;
+        try{node.src.stop(0)}catch(e){}
+        try{S.sampler.activeSources.delete(node)}catch(e){}
+        disconnectNode(node);
+      }
+    }
+  }catch(e){}
+}
+function stopPad(idx,smooth=true){
+  idx=Number(idx);
+  const S=getS(); if(!S||idx<0)return;
+  stopPadSamples(idx);
+  try{
+    const vs=S.padPlayingVoices?.get?.(idx);
+    if(vs){
+      (vs.timers||[]).forEach(clearTimeout);
+      for(const v of (vs.voices||[])){try{smooth&&v.fadeOut?v.fadeOut(90):v.release?.()}catch(e){}}
+      S.padPlayingVoices.delete(idx);
+    }
+  }catch(e){}
+  try{
+    const seq=S.padPlayingSequences?.get?.(idx);
+    if(seq){
+      seq.stopped=true;
+      (seq.timers||[]).forEach(clearTimeout);
+      Array.from(seq.allVoices||[]).forEach(v=>{try{smooth&&v.fadeOut?v.fadeOut(90):v.release?.()}catch(e){}});
+      S.padPlayingSequences.delete(idx);
+    }
+  }catch(e){}
+  unregisterActive(idx);
+  const el=padEl(idx);
+  if(el)el.classList.remove('playing','sustained','hid-v56-active-pad','hid-v57-active-pad','hid-v58-active-pad','hid-v59-active-pad','hid-v60-active-pad','hid-v61-active-pad');
+}
+function stopOtherPads(idx){
+  for(let i=0;i<getPads().length;i++)if(i!==idx)stopPad(i,true);
+}
+function playProtectedSample(idx,p,buffer){
+  const S=getS(), c=ensureAudio();
+  if(!S||!c||!buffer)return null;
+  const src=c.createBufferSource();
+  src.buffer=buffer;
+  const rate=sampleRate(p);
+  try{src.playbackRate.setValueAtTime(rate,c.currentTime)}catch(e){src.playbackRate.value=rate}
+  const g=c.createGain();
+  const now=c.currentTime;
+  g.gain.setValueAtTime(0,now);
+  g.gain.linearRampToValueAtTime(1,now+0.006);
+  const routeNodes=[];
+  let padGain=null,fxSend=null,drySend=null;
+  try{if(typeof ensurePadDefaults==='function')ensurePadDefaults(p,idx)}catch(e){}
+  try{
+    padGain=c.createGain(); padGain.gain.value=clamp(p.volume??1,0,2);
+    fxSend=c.createGain(); fxSend.gain.value=clamp(p.fxSend??1,0,1);
+    drySend=c.createGain(); drySend.gain.value=clamp(1-(p.fxSend??1),0,1);
+    src.connect(g).connect(padGain);
+    try{padGain.connect(fxSend).connect(fxIn)}catch(e){try{padGain.connect(fxSend).connect(c.destination)}catch(_){}}
+    try{if(typeof recordTap!=='undefined'&&recordTap)padGain.connect(drySend).connect(recordTap);else padGain.connect(drySend).connect(fxIn)}catch(e){try{padGain.connect(drySend).connect(c.destination)}catch(_){}}
+    routeNodes.push(padGain,fxSend,drySend);
+  }catch(e){
+    try{src.connect(g).connect(c.destination)}catch(_){}
+  }
+  const node={src,g,padGain,fxSend,drySend,routeNodes,padCfg:p,padIdx:idx,baseRate:1,wheelEnabled:p.wheelEnabled!==false&&p.pitchBendEnabled!==false,__hidV61PadOwned:true};
+  S.sampler=S.sampler||{};
+  S.sampler.activeSources=S.sampler.activeSources||new Set();
+  S.sampler.activeSources.add(node);
+  if(!padSources.has(idx))padSources.set(idx,new Set());
+  padSources.get(idx).add(node);
+  src.onended=function(){
+    try{S.sampler.activeSources.delete(node)}catch(e){}
+    try{padSources.get(idx)?.delete(node)}catch(e){}
+    disconnectNode(node);
+    if(!padActuallyActive(idx))unregisterActive(idx);
+  };
+  src.start(now);
+  registerActive(idx);
+  return src;
+}
+async function playPad(idx){
+  idx=Number(idx);
+  const S=getS(), pads=getPads();
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return;
+  const mode=ensureMode();
+  const p=pads[idx];
+  S.padCycleIdx=idx; S.padEditingIdx=idx; S.padControlScope='pad';
+  if(!p){try{padArmCapture(idx)}catch(e){};return}
+  if(p.disabled){note('Pad is off');return}
+
+  // True TOGGLE behavior: first tap starts, next tap stops. Do not restart underneath it.
+  if(mode==='toggle' && padActuallyActive(idx)){
+    stopPad(idx,true);
+    return;
+  }
+
+  if(mode==='solo')stopOtherPads(idx);
+
+  // STACK and SOLO always restart the tapped pad itself. TOGGLE starts from the beginning only when currently off.
+  stopPad(idx,true);
+  const el=padEl(idx);
+  if(el){el.classList.add('playing','hid-v61-active-pad');setTimeout(()=>el.classList.remove('playing'),160)}
+  try{if(typeof recordEvent==='function')recordEvent({type:'pad',padIdx:idx})}catch(e){}
+
+  if(padIsSample(p)){
+    const b=await hydratePad(p);
+    if(!b){note('Pad audio missing');return}
+    p.buffer=b; p.audioBuffer=b; p.sampleBuffer=b; p.loaded=true;
+    playProtectedSample(idx,p,b);
+    return;
+  }
+
+  try{
+    if(p.kind==='shape'){
+      const voices=[];
+      const snap=(typeof padSnapshotForPlayback==='function')?padSnapshotForPlayback(p):(p.patchSnapshot||null);
+      for(const m of (p.notes||[])){
+        const real=m+(p.transpose||0)+(p.octaveShift||0)*12;
+        voices.push(startVoice(real,0.78,snap));
+      }
+      S.padPlayingVoices.set(idx,{voices,timers:[]});
+      registerActive(idx);
+      if(mode!=='toggle'&&!p.sustain){
+        S.padPlayingVoices.get(idx).timers.push(setTimeout(()=>stopPad(idx,true),900));
+      }
+    }else if(p.kind==='sequence'&&typeof padStartSequence==='function'){
+      padStartSequence(idx,p,mode==='toggle'?true:!!p.sustain);
+      registerActive(idx);
+    }else if(typeof window.__hidV54OldPadPlay==='function'){
+      window.__hidV54OldPadPlay(idx,mode==='toggle'?true:!!p.sustain);
+      registerActive(idx);
+    }
+    if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx);
+  }catch(e){console.warn('V61 non-sample pad failed',e)}
+}
+function patchGlobals(){
+  if(window.__HID_V61_GLOBALS_PATCHED__)return;
+  window.__HID_V61_GLOBALS_PATCHED__=true;
+  try{window.padTrigger=idx=>playPad(idx);padTrigger=window.padTrigger}catch(e){window.padTrigger=idx=>playPad(idx)}
+  try{window.padStop=(idx,smooth=true)=>stopPad(idx,smooth);padStop=window.padStop}catch(e){window.padStop=(idx,smooth=true)=>stopPad(idx,smooth)}
+  try{
+    window.HID_V46_PAD_KEYS_ENABLED?.(false);
+    if(window.HID_V46_PAD_KEY_MODE)window.HID_V46_PAD_KEY_MODE.enabled=false;
+  }catch(e){}
+  try{
+    const apply=function(){
+      const S=getS(), c=getC(); if(!S||!c)return;
+      for(const node of (S.sampler?.activeSources||[])){
+        const p=node.padCfg;
+        if(node.wheelEnabled===false||p?.wheelEnabled===false||p?.pitchBendEnabled===false)continue;
+        try{node.src.playbackRate.setTargetAtTime((node.baseRate||1)*(p?sampleRate(p):1),c.currentTime,0.035)}catch(e){}
+      }
+    };
+    window.applyPitchToActiveSamples=apply; applyPitchToActiveSamples=apply;
+  }catch(e){}
+}
+function idxFromTarget(t){
+  const pad=t?.closest?.('#pads-grid .spad,.spad');
+  if(!pad)return -1;
+  let idx=qa('#pads-grid .spad').indexOf(pad);
+  if(idx<0)idx=qa('.spad').indexOf(pad);
+  return idx;
+}
+function isControl(t){return !!t?.closest?.('button,input,select,textarea,.spad-wheel,.spad-off,.spad-mini,.spad-x,.spad-menu,[data-no-pad-trigger]')}
+function installPointer(){
+  if(window.__HID_V61_POINTER_INSTALLED__)return;
+  window.__HID_V61_POINTER_INSTALLED__=true;
+  // Window capture beats the older document-level listeners from V46/V47/V59/V60.
+  window.addEventListener('pointerdown',e=>{
+    const idx=idxFromTarget(e.target);
+    if(idx<0||isControl(e.target))return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    down={idx,id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),long:false,moved:false};
+    down.timer=setTimeout(()=>{
+      if(!down||down.idx!==idx)return;
+      down.long=true;
+      const S=getS();
+      if(S&&isPadLoaded(getPads()[idx])){
+        S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';
+        try{S.transposeTarget='pad'}catch(e){}
+        mark(idx,true);
+        try{if(typeof buildPadsWindow==='function')buildPadsWindow()}catch(e){}
+      }
+    },560);
+  },true);
+  window.addEventListener('pointermove',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    if(Math.abs(e.clientX-down.x)>14||Math.abs(e.clientY-down.y)>14)down.moved=true;
+  },true);
+  window.addEventListener('pointerup',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    clearTimeout(down.timer);
+    const d=down; down=null;
+    if(!d.moved&&!d.long)playPad(d.idx);
+  },true);
+  window.addEventListener('pointercancel',e=>{if(down&&down.id===e.pointerId){clearTimeout(down.timer);down=null}},true);
+  window.addEventListener('click',e=>{
+    const idx=idxFromTarget(e.target);
+    if(idx<0||isControl(e.target))return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+  },true);
+}
+function modeBar(){
+  const m=ensureMode();
+  return `<div id="hidV61PadModeBar">
+    <span class="v61-title">PAD PLAY MODE</span>
+    <button class="btn tiny ${m==='stack'?'gold on':''}" data-v61-mode="stack">STACK</button>
+    <button class="btn tiny ${m==='solo'?'gold on':''}" data-v61-mode="solo">SOLO</button>
+    <button class="btn tiny ${m==='toggle'?'gold on':''}" data-v61-mode="toggle">TOGGLE</button>
+    <span class="v61-help">TOGGLE now has priority: tap once on, tap again off. Older PAD KEYS bar is disabled.</span>
+  </div>`;
+}
+function installModeBar(){
+  ['hidV46PadKeyControls','hidV47PadKeyStatus','hidV56PadModeBar','hidV57PadModeBar','hidV58HardModeBar','hidV59PadModeBar','hidV60PadModeBar','hidV57RecoveryBadge','hidV58RecoveryBadge'].forEach(id=>q('#'+id)?.remove());
+  const body=q('#win-sampler .win-body')||qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body)return;
+  let bar=q('#hidV61PadModeBar');
+  if(!bar){
+    const h=document.createElement('div'); h.innerHTML=modeBar(); bar=h.firstElementChild;
+    body.insertBefore(bar,q('#pads-grid',body)||body.firstChild);
+  }
+  bar.querySelectorAll('[data-v61-mode]').forEach(b=>{
+    b.onclick=e=>{e.preventDefault(); e.stopPropagation(); setMode(b.dataset.v61Mode)};
+  });
+  const old=q('#pads-solo-mode');
+  if(old&&!old.__v61){
+    old.__v61=true;
+    old.onclick=e=>{
+      e.preventDefault(); e.stopPropagation();
+      const m=ensureMode();
+      setMode(m==='stack'?'solo':m==='solo'?'toggle':'stack');
+    };
+  }
+  updateModeUI();
+}
+function updateModeUI(){
+  const m=ensureMode();
+  q('#hidV61PadModeBar')?.querySelectorAll('[data-v61-mode]').forEach(b=>{
+    const on=b.dataset.v61Mode===m;
+    b.classList.toggle('on',on); b.classList.toggle('gold',on);
+  });
+  const old=q('#pads-solo-mode');
+  if(old){old.textContent=m.toUpperCase(); old.classList.toggle('on',m!=='stack')}
+}
+function wrapPads(){
+  if(window.__HID_V61_PAD_WINDOW_WRAPPED__)return;
+  const old=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V61_PAD_WINDOW_WRAPPED__=true;
+  const wrapped=function(){const r=old.apply(this,arguments);setTimeout(installModeBar,0);return r};
+  try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+}
+function init(){
+  ensureMode();
+  patchGlobals();
+  installPointer();
+  wrapPads();
+  installModeBar();
+}
+window.HID_V61_SET_PAD_MODE=setMode;
+window.HID_V61_TRIGGER_PAD=playPad;
+window.HID_V61_STOP_PAD=stopPad;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V62 PAD INDIVIDUAL EDITOR + BACKQUOTE LIVE PIANO TOGGLE ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V62_PAD_EDITOR_BACKQUOTE__) return;
+window.__HID_V62_PAD_EDITOR_BACKQUOTE__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function toast62(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V62]',msg)}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function isPadLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label));
+}
+function ensurePad(p){
+  if(!p)return null;
+  if(p.volume==null)p.volume=1;
+  if(p.fxSend==null)p.fxSend=1;
+  if(p.pan==null)p.pan=0;
+  if(p.eqLow==null)p.eqLow=0;
+  if(p.eqMid==null)p.eqMid=0;
+  if(p.eqHigh==null)p.eqHigh=0;
+  if(p.transpose==null)p.transpose=0;
+  if(p.octaveShift==null)p.octaveShift=0;
+  if(p.wheelEnabled==null)p.wheelEnabled=true;
+  if(p.pitchBendEnabled==null)p.pitchBendEnabled=p.wheelEnabled!==false;
+  return p;
+}
+function selectedIdx(){
+  const S=getS(), pads=getPads();
+  if(S&&Number.isInteger(S.padEditingIdx)&&S.padEditingIdx>=0&&isPadLoaded(pads[S.padEditingIdx]))return S.padEditingIdx;
+  if(S&&Number.isInteger(S.padCycleIdx)&&S.padCycleIdx>=0&&isPadLoaded(pads[S.padCycleIdx]))return S.padCycleIdx;
+  return pads.findIndex(isPadLoaded);
+}
+function selectPad(idx,quiet=false){
+  const S=getS(), pads=getPads();
+  idx=Number(idx);
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length||!isPadLoaded(pads[idx]))return;
+  ensurePad(pads[idx]);
+  S.padEditingIdx=idx;
+  S.padCycleIdx=idx;
+  S.padControlScope='pad';
+  try{S.transposeTarget='pad'}catch(e){}
+  markSelected();
+  if(!quiet)toast62('Selected Pad '+(idx+1)+' for individual editing.');
+  renderEditor();
+}
+function markSelected(){
+  qa('.spad.hid-v62-selected-pad').forEach(e=>e.classList.remove('hid-v62-selected-pad'));
+  const idx=selectedIdx();
+  const el=qa('#pads-grid .spad')[idx]||qa('.spad')[idx];
+  if(el)el.classList.add('hid-v62-selected-pad');
+}
+function db(v){return (Number(v)||0).toFixed(1)+'dB'}
+function pct(v){return Math.round((Number(v)||0)*100)+'%'}
+function semi(v){v=Math.round(Number(v)||0);return (v>0?'+':'')+v}
+function panFmt(v){v=Number(v)||0;return Math.abs(v)<.01?'C':v<0?'L'+Math.round(Math.abs(v)*100):'R'+Math.round(v*100)}
+function row(id,label,min,max,step,value,fmt){
+  const f=fmt==='pct'?pct:fmt==='semi'?semi:fmt==='pan'?panFmt:db;
+  return `<div class="v62-row"><label>${label}</label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"><span class="v" id="${id}v">${f(value)}</span></div>`;
+}
+function makeEQNodes(cfg){
+  const c=getC(); if(!c)return null;
+  const low=c.createBiquadFilter(), mid=c.createBiquadFilter(), high=c.createBiquadFilter();
+  low.type='lowshelf'; low.frequency.value=160;
+  mid.type='peaking'; mid.frequency.value=950; mid.Q.value=.9;
+  high.type='highshelf'; high.frequency.value=5200;
+  low.connect(mid).connect(high);
+  try{
+    low.gain.value=clamp(cfg.eqLow||0,-18,18);
+    mid.gain.value=clamp(cfg.eqMid||0,-18,18);
+    high.gain.value=clamp(cfg.eqHigh||0,-18,18);
+  }catch(e){}
+  return {low,mid,high,input:low,output:high};
+}
+function setEQGains(eq,cfg){
+  const c=getC(); if(!c||!eq)return;
+  try{
+    eq.low.gain.setTargetAtTime(clamp(cfg.eqLow||0,-18,18),c.currentTime,0.025);
+    eq.mid.gain.setTargetAtTime(clamp(cfg.eqMid||0,-18,18),c.currentTime,0.025);
+    eq.high.gain.setTargetAtTime(clamp(cfg.eqHigh||0,-18,18),c.currentTime,0.025);
+  }catch(e){}
+}
+function insertSampleControls(node,p){
+  const c=getC(); if(!c||!node||!p)return;
+  if(!node.g||!node.padGain)return;
+  if(!node.__hidV62Chain){
+    const eq=makeEQNodes(p);
+    const pan=(c.createStereoPanner?c.createStereoPanner():null);
+    try{
+      node.g.disconnect(node.padGain);
+      node.g.connect(eq.input);
+      if(pan){
+        eq.output.connect(pan);
+        pan.connect(node.padGain);
+      }else{
+        eq.output.connect(node.padGain);
+      }
+      node.__hidV62Chain={eq,pan};
+    }catch(e){
+      try{node.g.connect(node.padGain)}catch(_){}
+    }
+  }
+  if(node.__hidV62Chain){
+    setEQGains(node.__hidV62Chain.eq,p);
+    try{if(node.__hidV62Chain.pan)node.__hidV62Chain.pan.pan.setTargetAtTime(clamp(p.pan||0,-1,1),c.currentTime,0.025)}catch(e){}
+  }
+}
+function applyPadParams(idx=selectedIdx()){
+  const S=getS(), p=ensurePad(getPads()[idx]); if(!S||!p)return;
+  const c=getC();
+  try{
+    for(const node of (S.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p){
+        insertSampleControls(node,p);
+        if(c&&node.padGain)node.padGain.gain.setTargetAtTime(clamp(p.volume,0,2),c.currentTime,0.02);
+        if(c&&node.fxSend)node.fxSend.gain.setTargetAtTime(clamp(p.fxSend,0,1),c.currentTime,0.02);
+        if(c&&node.drySend)node.drySend.gain.setTargetAtTime(clamp(1-p.fxSend,0,1),c.currentTime,0.02);
+        node.wheelEnabled=p.wheelEnabled!==false&&p.pitchBendEnabled!==false;
+        node.padCfg=p; node.padIdx=idx;
+      }
+    }
+  }catch(e){}
+  try{if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx)}catch(e){}
+  try{if(typeof HID_V53_APPLY_PAD_SAMPLE_RATES==='function')HID_V53_APPLY_PAD_SAMPLE_RATES(idx)}catch(e){}
+  try{if(typeof applyPadLiveParams==='function')applyPadLiveParams(idx)}catch(e){}
+  updateEditorValues();
+  markSelected();
+}
+function setPadValue(key,value){
+  const idx=selectedIdx(), p=ensurePad(getPads()[idx]);
+  if(!p)return;
+  if(key==='volume')p.volume=clamp(value,0,2);
+  if(key==='fxSend')p.fxSend=clamp(value,0,1);
+  if(key==='pan')p.pan=clamp(value,-1,1);
+  if(key==='eqLow')p.eqLow=clamp(value,-18,18);
+  if(key==='eqMid')p.eqMid=clamp(value,-18,18);
+  if(key==='eqHigh')p.eqHigh=clamp(value,-18,18);
+  if(key==='transpose')p.transpose=clamp(Math.round(value),-48,48);
+  if(key==='octaveShift')p.octaveShift=clamp(Math.round(value),-4,4);
+  applyPadParams(idx);
+}
+function editorHTML(){
+  const idx=selectedIdx(), p=idx>=0?ensurePad(getPads()[idx]):null;
+  if(!p)return `<div id="hidV62PadEditor"><div class="v62-title">INDIVIDUAL PAD EDITOR</div><div class="v62-empty">Long-hold/select a sampler pad to edit its individual settings.</div></div>`;
+  const nm=p.name||p.label||p.fileName||p.kind||'PAD';
+  return `<div id="hidV62PadEditor">
+    <div class="v62-title"><span>INDIVIDUAL PAD EDITOR · PAD ${idx+1}</span><button class="btn tiny gold" id="hidV62Refresh">REFRESH TARGET</button></div>
+    <div class="v62-sub">Editing: <b style="color:var(--neon3)">${nm}</b>. These controls affect only this selected pad, not the live piano/global patch.</div>
+    <div class="v62-grid">
+      ${row('hidV62Vol','VOL',0,2,.01,p.volume,'pct')}
+      ${row('hidV62FX','FX SEND',0,1,.01,p.fxSend,'pct')}
+      ${row('hidV62Pan','PAN',-1,1,.01,p.pan,'pan')}
+      ${row('hidV62Low','LOW',-18,18,.1,p.eqLow)}
+      ${row('hidV62Mid','MID',-18,18,.1,p.eqMid)}
+      ${row('hidV62High','HIGH',-18,18,.1,p.eqHigh)}
+      ${row('hidV62Trans','TRANS',-48,48,1,p.transpose,'semi')}
+      ${row('hidV62Oct','OCT',-4,4,1,p.octaveShift,'semi')}
+    </div>
+    <div class="v62-actions">
+      <button class="btn tiny ${p.wheelEnabled!==false&&p.pitchBendEnabled!==false?'gold on':''}" id="hidV62PB">PITCH BEND: ${p.wheelEnabled!==false&&p.pitchBendEnabled!==false?'ON':'OFF'}</button>
+      <button class="btn tiny" data-v62-nudge="-12">−12</button>
+      <button class="btn tiny" data-v62-nudge="-1">−1</button>
+      <button class="btn tiny" data-v62-nudge="1">+1</button>
+      <button class="btn tiny" data-v62-nudge="12">+12</button>
+      <button class="btn tiny warn" id="hidV62Reset">RESET PAD MIX</button>
+      ${p.patchSnapshot?'<button class="btn tiny gold" id="hidV62CopyLive">COPY LIVE PATCH TO PAD</button>':''}
+    </div>
+  </div>`;
+}
+function installEditor(){
+  const body=q('#win-sampler .win-body')||qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body)return;
+  let old=q('#hidV62PadEditor');
+  if(old)old.outerHTML=editorHTML();
+  else{
+    const h=document.createElement('div'); h.innerHTML=editorHTML();
+    const insertBefore=q('#pads-grid',body)||q('#hidV61PadModeBar',body)?.nextSibling||body.firstChild;
+    body.insertBefore(h.firstElementChild,insertBefore);
+  }
+  bindEditor();
+}
+function bindSlider(id,key,fmt){
+  const el=q('#'+id), out=q('#'+id+'v');
+  if(!el)return;
+  el.oninput=e=>{
+    const v=Number(e.target.value);
+    setPadValue(key,v);
+    if(out)out.textContent=fmt==='pct'?pct(v):fmt==='semi'?semi(v):fmt==='pan'?panFmt(v):db(v);
+  };
+}
+function bindEditor(){
+  bindSlider('hidV62Vol','volume','pct');
+  bindSlider('hidV62FX','fxSend','pct');
+  bindSlider('hidV62Pan','pan','pan');
+  bindSlider('hidV62Low','eqLow','db');
+  bindSlider('hidV62Mid','eqMid','db');
+  bindSlider('hidV62High','eqHigh','db');
+  bindSlider('hidV62Trans','transpose','semi');
+  bindSlider('hidV62Oct','octaveShift','semi');
+  q('#hidV62Refresh')?.addEventListener('click',e=>{e.preventDefault();renderEditor();});
+  q('#hidV62PB')?.addEventListener('click',e=>{
+    e.preventDefault();
+    const p=ensurePad(getPads()[selectedIdx()]); if(!p)return;
+    const on=!(p.wheelEnabled!==false&&p.pitchBendEnabled!==false);
+    p.wheelEnabled=on; p.pitchBendEnabled=on;
+    applyPadParams(selectedIdx()); renderEditor();
+  });
+  q('#hidV62Reset')?.addEventListener('click',e=>{
+    e.preventDefault();
+    const p=ensurePad(getPads()[selectedIdx()]); if(!p)return;
+    p.volume=1;p.fxSend=1;p.pan=0;p.eqLow=0;p.eqMid=0;p.eqHigh=0;p.transpose=0;p.octaveShift=0;
+    applyPadParams(selectedIdx()); renderEditor();
+  });
+  qa('#hidV62PadEditor [data-v62-nudge]').forEach(b=>b.onclick=e=>{
+    e.preventDefault();
+    const p=ensurePad(getPads()[selectedIdx()]); if(!p)return;
+    p.transpose=clamp((Number(p.transpose)||0)+Number(b.dataset.v62Nudge),-48,48);
+    applyPadParams(selectedIdx()); renderEditor();
+  });
+  q('#hidV62CopyLive')?.addEventListener('click',e=>{
+    e.preventDefault();
+    const p=ensurePad(getPads()[selectedIdx()]); if(!p)return;
+    try{
+      if(typeof snapshotCurrentPatch==='function')p.patchSnapshot=snapshotCurrentPatch();
+      else p.patchSnapshot=JSON.parse(JSON.stringify({amp:getS().amp,filt:getS().filt,mod:getS().mod,bank:getS().bank,patchIdx:getS().patchIdx}));
+      toast62('Copied live patch to selected pad.');
+    }catch(err){}
+  });
+}
+function updateEditorValues(){
+  const idx=selectedIdx(), p=idx>=0?ensurePad(getPads()[idx]):null;
+  if(!p)return;
+  const pairs=[
+    ['hidV62Vol',p.volume,pct],['hidV62FX',p.fxSend,pct],['hidV62Pan',p.pan,panFmt],
+    ['hidV62Low',p.eqLow,db],['hidV62Mid',p.eqMid,db],['hidV62High',p.eqHigh,db],
+    ['hidV62Trans',p.transpose,semi],['hidV62Oct',p.octaveShift,semi]
+  ];
+  for(const [id,val,fmt] of pairs){
+    const el=q('#'+id), out=q('#'+id+'v');
+    if(el&&document.activeElement!==el)el.value=val;
+    if(out)out.textContent=fmt(val);
+  }
+}
+function renderEditor(){
+  installEditor();
+  markSelected();
+  try{if(typeof buildFXWindow==='function'&&WIN?.fx?.open)buildFXWindow()}catch(e){}
+}
+function installFxMirror(){
+  const fx=q('#win-fx .win-body')||q('.window[data-w="fx"] .win-body');
+  if(!fx||q('#hidV62FxMirror'))return;
+  const div=document.createElement('div');
+  div.id='hidV62FxMirror';
+  div.style.cssText='margin:6px;padding:7px;border:1px solid rgba(255,230,0,.35);background:rgba(255,230,0,.045);border-radius:7px;font-family:VT323,monospace;color:var(--dim);font-size:13px;letter-spacing:.06em;';
+  div.innerHTML='SELECTED PAD CONTROLS are in the Pads/Sampler window. Long-hold a pad, then use Individual Pad Editor for that pad only.';
+  fx.insertBefore(div,fx.firstChild);
+}
+function patchBuilders(){
+  if(!window.__HID_V62_BUILDERS_PATCHED__){
+    window.__HID_V62_BUILDERS_PATCHED__=true;
+    const oldPads=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+    if(typeof oldPads==='function'){
+      const wrap=function(){const r=oldPads.apply(this,arguments);setTimeout(()=>{installEditor();markSelected();},0);return r};
+      try{window.buildPadsWindow=wrap;buildPadsWindow=wrap}catch(e){window.buildPadsWindow=wrap}
+    }
+    const oldFx=window.buildFXWindow||((typeof buildFXWindow==='function')?buildFXWindow:null);
+    if(typeof oldFx==='function'){
+      const wrapFx=function(){const r=oldFx.apply(this,arguments);setTimeout(installFxMirror,0);return r};
+      try{window.buildFXWindow=wrapFx;buildFXWindow=wrapFx}catch(e){window.buildFXWindow=wrapFx}
+    }
+  }
+}
+function installSelectionCapture(){
+  if(window.__HID_V62_SELECTION_CAPTURE__)return;
+  window.__HID_V62_SELECTION_CAPTURE__=true;
+  let hold=null;
+  window.addEventListener('pointerdown',e=>{
+    const pad=e.target.closest?.('#pads-grid .spad,.spad');
+    if(!pad||e.target.closest('button,input,select,textarea'))return;
+    const idx=qa('#pads-grid .spad').indexOf(pad);
+    if(idx<0)return;
+    clearTimeout(hold);
+    hold=setTimeout(()=>selectPad(idx),520);
+  },true);
+  window.addEventListener('pointerup',()=>clearTimeout(hold),true);
+  window.addEventListener('pointercancel',()=>clearTimeout(hold),true);
+}
+function setKeyboardPiano(on){
+  const S=getS(); if(!S)return;
+  S.keyboardPiano=!!on;
+  if(!S.keyboardPiano){
+    try{if(typeof releaseKeyboardPressedNotes==='function')releaseKeyboardPressedNotes()}catch(e){}
+    try{if(window.HID_V47_RELEASE_KEYBOARD)window.HID_V47_RELEASE_KEYBOARD()}catch(e){}
+  }
+  try{if(typeof updateKeyboardPianoUI==='function')updateKeyboardPianoUI();else document.body.classList.toggle('piano-kbd-disabled',!S.keyboardPiano)}catch(e){document.body.classList.toggle('piano-kbd-disabled',!S.keyboardPiano)}
+  try{if(typeof refreshShortcuts==='function')refreshShortcuts()}catch(e){}
+  updateKbdBadge();
+  toast62('Live piano '+(S.keyboardPiano?'ON':'OFF'));
+}
+function toggleKeyboardPianoV62(){
+  const S=getS(); if(!S)return;
+  if(typeof window.toggleKeyboardPiano==='function'){
+    try{window.toggleKeyboardPiano(!S.keyboardPiano)}catch(e){setKeyboardPiano(!S.keyboardPiano)}
+  }else setKeyboardPiano(!S.keyboardPiano);
+  updateKbdBadge();
+}
+function installBackquote(){
+  if(window.__HID_V62_BACKQUOTE_INSTALLED__)return;
+  window.__HID_V62_BACKQUOTE_INSTALLED__=true;
+  window.addEventListener('keydown',e=>{
+    if(e.code==='Backquote'||e.key==='`'||e.key==='~'){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(!e.repeat)toggleKeyboardPianoV62();
+    }
+  },true);
+}
+function updateKbdBadge(){
+  const S=getS(); 
+  const badge=q('#hidV62KbdBadge');
+  if(badge)badge.textContent='LIVE PIANO: '+(S?.keyboardPiano!==false?'ON':'OFF')+'  (~)';
+  document.body.classList.toggle('piano-kbd-disabled',S?.keyboardPiano===false);
+}
+function installKbdBadge(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV62KbdBadge')){
+    const b=document.createElement('span');
+    b.id='hidV62KbdBadge';
+    top.appendChild(b);
+  }
+  updateKbdBadge();
+}
+function init(){
+  patchBuilders();
+  installSelectionCapture();
+  installEditor();
+  installFxMirror();
+  installBackquote();
+  installKbdBadge();
+  const idx=selectedIdx();
+  if(idx>=0)selectPad(idx,true);
+}
+window.HID_V62_SELECT_PAD=selectPad;
+window.HID_V62_APPLY_PAD_PARAMS=applyPadParams;
+window.HID_V62_TOGGLE_LIVE_PIANO=toggleKeyboardPianoV62;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(()=>{installEditor();installKbdBadge();},90),true);
 })();
 </script>
 
