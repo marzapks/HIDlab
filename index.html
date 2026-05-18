@@ -2271,6 +2271,50 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 }
 </style>
 
+
+<style id="hid-v59-exclusive-pad-router-css">
+#hidV57RecoveryBadge,
+#hidV58RecoveryBadge,
+#hidV57PadModeBar,
+#hidV58HardModeBar,
+#hidV56PadModeBar{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#hidV59PadModeBar{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:5px 7px;
+  padding:7px 8px;
+  border:1px solid rgba(255,230,0,.42);
+  background:linear-gradient(180deg,rgba(255,230,0,.10),rgba(0,0,0,.52));
+  border-radius:8px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 14px rgba(255,230,0,.12);
+}
+#hidV59PadModeBar .v59-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+}
+#hidV59PadModeBar .v59-help{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  line-height:1.2;
+}
+#hidV59PadModeBar button.on{
+  box-shadow:0 0 14px rgba(255,230,0,.52);
+}
+.spad.hid-v59-active-pad{
+  box-shadow:0 0 18px rgba(0,255,213,.78), inset 0 0 18px rgba(0,255,213,.16)!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -14029,6 +14073,335 @@ window.HID_V58_SET_PAD_MODE=setMode;
 window.HID_V58_TRIGGER_PAD=triggerPadMode;
 window.HID_V58_STOP_PAD=stopPadStrict;
 window.HID_V58_INSTALL_REMOTE_LIVE_SHIFT=installRemoteLiveShift;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V59 EXCLUSIVE PAD ROUTER: ONE PAD MODE SYSTEM, NO BADGES ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V59_EXCLUSIVE_PAD_ROUTER__) return;
+window.__HID_V59_EXCLUSIVE_PAD_ROUTER__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function toast59(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V59]',msg)}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padIsSample(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL));
+}
+function padIsEmpty(p){
+  return !p || !(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function ensureMode(){
+  const S=getS(); if(!S)return 'stack';
+  if(!S.padPlayMode)S.padPlayMode=S.padSoloMode?'solo':'stack';
+  if(!['stack','solo','toggle'].includes(S.padPlayMode))S.padPlayMode='stack';
+  S.padSoloMode=S.padPlayMode==='solo';
+  return S.padPlayMode;
+}
+function setMode(mode){
+  const S=getS(); if(!S)return;
+  S.padPlayMode=mode;
+  S.padSoloMode=mode==='solo';
+  updateModeUI();
+  toast59('Pad mode: '+mode.toUpperCase());
+}
+function padEl(idx){return qa('#pads-grid .spad')[idx]||qa('.spad')[idx]||null}
+function markPad(idx,on){
+  const el=padEl(idx);
+  if(el)el.classList.toggle('hid-v59-active-pad',!!on);
+}
+function activeSamplesForPad(idx){
+  const S=getS(), p=getPads()[idx], out=[];
+  try{
+    for(const node of (S?.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p)out.push(node);
+    }
+  }catch(e){}
+  return out;
+}
+function padIsActive(idx){
+  const S=getS();
+  if(activeSamplesForPad(idx).length)return true;
+  try{if(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx))return true}catch(e){}
+  return false;
+}
+function stopSamples(idx){
+  const S=getS();
+  for(const node of activeSamplesForPad(idx)){
+    try{node.src.stop(0)}catch(e){}
+    try{node.src.disconnect()}catch(e){}
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+  }
+}
+function stopPad(idx,smooth=true){
+  const S=getS(); if(!S)return;
+  stopSamples(idx);
+  const el=padEl(idx);
+  if(el)el.classList.remove('playing','sustained','hid-v56-active-pad','hid-v57-active-pad','hid-v58-active-pad','hid-v59-active-pad');
+  try{
+    const vs=S.padPlayingVoices?.get?.(idx);
+    if(vs){
+      (vs.timers||[]).forEach(clearTimeout);
+      for(const v of (vs.voices||[])){try{smooth&&v.fadeOut?v.fadeOut(120):v.release?.()}catch(e){}}
+      S.padPlayingVoices.delete(idx);
+    }
+  }catch(e){}
+  try{
+    const seq=S.padPlayingSequences?.get?.(idx);
+    if(seq){
+      seq.stopped=true;
+      (seq.timers||[]).forEach(clearTimeout);
+      Array.from(seq.allVoices||[]).forEach(v=>{try{smooth&&v.fadeOut?v.fadeOut(120):v.release?.()}catch(e){}});
+      S.padPlayingSequences.delete(idx);
+    }
+  }catch(e){}
+}
+function stopOtherPads(idx){
+  const pads=getPads();
+  for(let i=0;i<pads.length;i++)if(i!==idx)stopPad(i,true);
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  if(typeof HID_V45_HYDRATE_PAD==='function')return HID_V45_HYDRATE_PAD(p);
+  if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}
+  return null;
+}
+function tagLatestSample(idx,p,src){
+  const S=getS();
+  try{
+    for(const node of Array.from(S?.sampler?.activeSources||[])){
+      if((src&&node.src===src)||node.padCfg===p){
+        node.padIdx=idx;
+        node.padCfg=p;
+        node.wheelEnabled=p.wheelEnabled!==false&&p.pitchBendEnabled!==false;
+        const oldEnd=node.src.onended;
+        node.src.onended=function(ev){
+          try{oldEnd&&oldEnd.call(this,ev)}catch(e){}
+          try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+          if(!activeSamplesForPad(idx).length)markPad(idx,false);
+        };
+      }
+    }
+  }catch(e){}
+}
+async function playSample(idx,p){
+  const b=await hydratePad(p);
+  if(!b){toast59('Pad audio missing');return}
+  p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;
+  let src=null;
+  try{src=playSampleBuffer(b,1,p)}catch(e){console.warn('V59 sample play failed',e)}
+  tagLatestSample(idx,p,src);
+  markPad(idx,true);
+}
+function playShape(idx,p,sustain){
+  const S=getS(); if(!S)return;
+  const voices=[];
+  const snap=(typeof padSnapshotForPlayback==='function')?padSnapshotForPlayback(p):(p.patchSnapshot||null);
+  for(const m of (p.notes||[])){
+    const real=m+(p.transpose||0)+(p.octaveShift||0)*12;
+    try{voices.push(startVoice(real,0.78,snap))}catch(e){}
+  }
+  const el=padEl(idx); if(el&&sustain)el.classList.add('sustained');
+  S.padPlayingVoices.set(idx,{voices,timers:[]});
+  markPad(idx,true);
+  if(!sustain){
+    const timer=setTimeout(()=>stopPad(idx,true),900);
+    S.padPlayingVoices.get(idx).timers.push(timer);
+  }
+}
+function playSequence(idx,p,sustain){
+  try{
+    if(typeof padStartSequence==='function'){
+      padStartSequence(idx,p,sustain);
+      markPad(idx,true);
+      return;
+    }
+  }catch(e){console.warn('V59 sequence play failed',e)}
+}
+async function triggerPad(idx){
+  idx=Number(idx);
+  const S=getS(), pads=getPads();
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return;
+  ensureMode();
+  const p=pads[idx];
+  S.padCycleIdx=idx;S.padEditingIdx=idx;S.padControlScope='pad';
+  if(!p){try{padArmCapture(idx)}catch(e){};return}
+  if(p.disabled){toast59('Pad is off');return}
+  const mode=S.padPlayMode;
+  if(mode==='toggle' && padIsActive(idx)){stopPad(idx,true);return}
+  if(mode==='solo')stopOtherPads(idx);
+  // For STACK and SOLO, always restart the tapped pad itself so it never self-stacks.
+  stopPad(idx,true);
+  const el=padEl(idx);
+  if(el){el.classList.add('playing','hid-v59-active-pad');setTimeout(()=>el.classList.remove('playing'),180)}
+  try{if(typeof recordEvent==='function')recordEvent({type:'pad',padIdx:idx})}catch(e){}
+  if(padIsSample(p)){await playSample(idx,p);return}
+  const sustain = mode==='toggle' ? true : !!p.sustain;
+  if(p.kind==='shape')playShape(idx,p,sustain);
+  else if(p.kind==='sequence')playSequence(idx,p,sustain);
+  else{
+    try{
+      const old=window.__hidV54OldPadPlay||window.__hidV58NativePadPlay;
+      if(typeof old==='function')old(idx,sustain);
+    }catch(e){}
+  }
+  try{if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx)}catch(e){}
+}
+function patchGlobals(){
+  if(window.__HID_V59_GLOBALS_PATCHED__)return;
+  window.__HID_V59_GLOBALS_PATCHED__=true;
+  try{window.padTrigger=idx=>triggerPad(idx);padTrigger=window.padTrigger}catch(e){window.padTrigger=idx=>triggerPad(idx)}
+  try{window.padStop=(idx,smooth=true)=>stopPad(Number(idx),smooth);padStop=window.padStop}catch(e){window.padStop=(idx,smooth=true)=>stopPad(Number(idx),smooth)}
+}
+function padIndexFromEventTarget(t){
+  const pad=t?.closest?.('#pads-grid .spad,.spad');
+  if(!pad)return -1;
+  const gridPads=qa('#pads-grid .spad');
+  let idx=gridPads.indexOf(pad);
+  if(idx<0)idx=qa('.spad').indexOf(pad);
+  return idx;
+}
+function isPadInternalControl(t){
+  return !!t?.closest?.('button,input,select,textarea,.spad-wheel,.spad-off,.spad-mini,.spad-x,.spad-menu,[data-no-pad-trigger]');
+}
+let down=null;
+function installExclusivePointerRouter(){
+  if(document.__hidV59ExclusivePointerRouter)return;
+  document.__hidV59ExclusivePointerRouter=true;
+  document.addEventListener('pointerdown',e=>{
+    const idx=padIndexFromEventTarget(e.target);
+    if(idx<0 || isPadInternalControl(e.target))return;
+    // Capture before old target handlers. Prevent the browser click from being synthesized.
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    down={idx,id:e.pointerId,x:e.clientX,y:e.clientY,t:performance.now(),moved:false,long:false};
+    try{e.target.closest('.spad')?.setPointerCapture?.(e.pointerId)}catch(err){}
+    down.timer=setTimeout(()=>{
+      if(!down||down.idx!==idx)return;
+      down.long=true;
+      const S=getS();
+      if(S&&!padIsEmpty(getPads()[idx])){
+        S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';
+        try{S.transposeTarget='pad'}catch(err){}
+        markPad(idx,true);
+        toast59('Pad '+(idx+1)+' selected.');
+        try{if(typeof buildPadsWindow==='function')buildPadsWindow()}catch(err){}
+      }
+    },560);
+  },true);
+  document.addEventListener('pointermove',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    if(Math.abs(e.clientX-down.x)>14||Math.abs(e.clientY-down.y)>14)down.moved=true;
+  },true);
+  document.addEventListener('pointerup',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    clearTimeout(down.timer);
+    const d=down;down=null;
+    if(!d.moved && !d.long)triggerPad(d.idx);
+  },true);
+  document.addEventListener('pointercancel',e=>{
+    if(down&&down.id===e.pointerId){clearTimeout(down.timer);down=null;}
+  },true);
+  // If a click still appears on a pad after pointer prevention, swallow it.
+  document.addEventListener('click',e=>{
+    const idx=padIndexFromEventTarget(e.target);
+    if(idx<0||isPadInternalControl(e.target))return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  },true);
+}
+function modeBarHTML(){
+  const m=ensureMode();
+  return `<div id="hidV59PadModeBar">
+    <span class="v59-title">PAD PLAY MODE</span>
+    <button class="btn tiny ${m==='stack'?'gold on':''}" data-v59-mode="stack">STACK</button>
+    <button class="btn tiny ${m==='solo'?'gold on':''}" data-v59-mode="solo">SOLO</button>
+    <button class="btn tiny ${m==='toggle'?'gold on':''}" data-v59-mode="toggle">TOGGLE</button>
+    <span class="v59-help">STACK layers different pads, but restarts the tapped pad. SOLO stops other pads. TOGGLE taps pads on/off.</span>
+  </div>`;
+}
+function installModeBar(){
+  // remove visual duplicates created by older patches
+  q('#hidV56PadModeBar')?.remove();
+  q('#hidV57PadModeBar')?.remove();
+  q('#hidV58HardModeBar')?.remove();
+  const body=q('#win-sampler .win-body')||qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body)return;
+  let bar=q('#hidV59PadModeBar');
+  if(!bar){
+    const h=document.createElement('div');h.innerHTML=modeBarHTML();bar=h.firstElementChild;
+    body.insertBefore(bar,q('#pads-grid',body)||body.firstChild);
+  }
+  bar.querySelectorAll('[data-v59-mode]').forEach(b=>b.onclick=e=>{e.preventDefault();setMode(b.dataset.v59Mode)});
+  const old=q('#pads-solo-mode');
+  if(old&&!old.__v59){
+    old.__v59=true;
+    old.onclick=e=>{
+      e.preventDefault();
+      const m=ensureMode();
+      setMode(m==='stack'?'solo':m==='solo'?'toggle':'stack');
+    };
+  }
+  updateModeUI();
+}
+function updateModeUI(){
+  const m=ensureMode();
+  q('#hidV59PadModeBar')?.querySelectorAll('[data-v59-mode]').forEach(b=>{
+    const on=b.dataset.v59Mode===m;
+    b.classList.toggle('on',on);b.classList.toggle('gold',on);
+  });
+  const old=q('#pads-solo-mode');
+  if(old){old.textContent=m.toUpperCase();old.classList.toggle('on',m!=='stack')}
+}
+function removeBadges(){
+  ['hidV57RecoveryBadge','hidV58RecoveryBadge'].forEach(id=>q('#'+id)?.remove());
+}
+function wrapPads(){
+  if(window.__HID_V59_BUILD_WRAPPED__)return;
+  const old=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V59_BUILD_WRAPPED__=true;
+  const wrapped=function(){
+    const res=old.apply(this,arguments);
+    setTimeout(()=>{removeBadges();installModeBar();},0);
+    return res;
+  };
+  try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+}
+function init(){
+  removeBadges();
+  ensureMode();
+  patchGlobals();
+  installExclusivePointerRouter();
+  wrapPads();
+  installModeBar();
+}
+window.HID_V59_SET_PAD_MODE=setMode;
+window.HID_V59_TRIGGER_PAD=triggerPad;
+window.HID_V59_STOP_PAD=stopPad;
 
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
