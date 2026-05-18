@@ -2524,6 +2524,157 @@ body.piano-kbd-disabled #hidV62KbdBadge{
 }
 </style>
 
+
+<style id="hid-v64-pad-pitch-target-css">
+#hidV64PitchTargetBadge{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(0,255,213,.45);
+  color:var(--neon);
+  background:rgba(0,0,0,.38);
+  border-radius:5px;
+}
+.spad.hid-v64-pitch-target{
+  outline:2px solid var(--neon)!important;
+  outline-offset:-3px;
+  box-shadow:0 0 20px rgba(0,255,213,.72), inset 0 0 20px rgba(0,255,213,.16)!important;
+}
+</style>
+
+
+<style id="hid-v65-pad-shortcut-guide-css">
+#hidV63KeyRouterStatus{display:none!important}
+#hidV65KeyRouterStatus{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(255,230,0,.45);
+  color:var(--neon3);
+  background:rgba(0,0,0,.38);
+  border-radius:5px;
+}
+.spad .hid-v65-keytag{
+  position:absolute;
+  right:4px;
+  bottom:4px;
+  z-index:7;
+  font-family:'VT323',monospace;
+  font-size:11px;
+  line-height:1;
+  padding:2px 4px;
+  border:1px solid rgba(255,230,0,.48);
+  background:rgba(0,0,0,.64);
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  pointer-events:none;
+  border-radius:4px;
+}
+#hidV65ShortcutGuide{
+  position:fixed;
+  inset:auto 12px calc(12px + env(safe-area-inset-bottom)) 12px;
+  z-index:2147483000;
+  display:none;
+  max-width:980px;
+  max-height:76vh;
+  margin:auto;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid rgba(0,255,213,.45);
+  background:linear-gradient(180deg,rgba(7,8,18,.98),rgba(0,0,0,.98));
+  color:var(--text);
+  box-shadow:0 0 28px rgba(0,255,213,.24),inset 0 0 22px rgba(0,0,0,.65);
+  border-radius:12px;
+  font-family:'VT323',monospace;
+}
+#hidV65ShortcutGuide.show{display:block!important}
+#hidV65ShortcutGuide .v65-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  padding:10px;
+  border-bottom:1px solid rgba(0,255,213,.35);
+  background:linear-gradient(90deg,rgba(0,255,213,.18),rgba(255,230,0,.07),rgba(0,0,0,.98));
+}
+#hidV65ShortcutGuide .v65-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:10px;
+  line-height:1.45;
+  color:var(--neon);
+  text-shadow:0 0 6px var(--neon);
+  letter-spacing:.1em;
+}
+#hidV65ShortcutGuide .v65-body{
+  padding:10px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(260px,1fr));
+  gap:10px;
+}
+#hidV65ShortcutGuide .v65-card{
+  border:1px solid rgba(0,255,213,.24);
+  background:rgba(0,255,213,.035);
+  border-radius:8px;
+  padding:8px;
+  min-width:0;
+}
+#hidV65ShortcutGuide .v65-card.gold{
+  border-color:rgba(255,230,0,.38);
+  background:rgba(255,230,0,.045);
+}
+#hidV65ShortcutGuide h3{
+  margin:0 0 6px;
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+}
+#hidV65ShortcutGuide .v65-row{
+  display:grid;
+  grid-template-columns:120px 1fr;
+  gap:8px;
+  align-items:start;
+  padding:3px 0;
+  border-top:1px solid rgba(255,255,255,.055);
+  font-size:14px;
+  line-height:1.2;
+}
+#hidV65ShortcutGuide .v65-row:first-of-type{border-top:0}
+#hidV65ShortcutGuide kbd{
+  display:inline-block;
+  min-width:20px;
+  padding:2px 5px;
+  margin:1px;
+  border:1px solid rgba(255,230,0,.55);
+  border-bottom-width:2px;
+  border-radius:5px;
+  background:rgba(0,0,0,.72);
+  color:var(--neon3);
+  text-align:center;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  box-shadow:0 0 6px rgba(255,230,0,.15);
+}
+#hidV65ShortcutGuide .v65-note{
+  grid-column:1/-1;
+  color:var(--dim);
+  font-size:13px;
+  line-height:1.25;
+  margin-top:5px;
+}
+@media(max-width:720px){
+  #hidV65ShortcutGuide .v65-body{grid-template-columns:1fr}
+  #hidV65ShortcutGuide .v65-row{grid-template-columns:98px 1fr}
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -15740,10 +15891,7 @@ document.addEventListener('pointerdown',()=>setTimeout(()=>{installEditor();inst
 if(window.__HID_V63_KEYBOARD_PAD_ROUTER__) return;
 window.__HID_V63_KEYBOARD_PAD_ROUTER__=true;
 
-const NUM_TO_PAD={
-  Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,
-  Numpad1:0,Numpad2:1,Numpad3:2,Numpad4:3,Numpad5:4,Numpad6:5,Numpad7:6,Numpad8:7,Numpad9:8,Numpad0:9
-};
+const NUM_TO_PAD={};
 let lastPad=-1;
 
 function q(s,r=document){return r.querySelector(s)}
@@ -15868,6 +16016,485 @@ window.addEventListener('keydown',handleKeyDown,true);
 window.addEventListener('load',()=>setTimeout(init,250));
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V64 SELECTED-PAD PITCH BEND TARGET FIX ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V64_PAD_PITCH_TARGET__) return;
+window.__HID_V64_PAD_PITCH_TARGET__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label));
+}
+function inferPadIndexFromCfg(p){
+  if(!p)return -1;
+  return getPads().indexOf(p);
+}
+function normalizeNodePad(node){
+  if(!node)return -1;
+  if(Number.isInteger(node.padIdx)&&node.padIdx>=0)return node.padIdx;
+  const idx=inferPadIndexFromCfg(node.padCfg);
+  if(idx>=0){
+    node.padIdx=idx;
+    return idx;
+  }
+  return -1;
+}
+function setPitchTarget(idx){
+  const S=getS(), pads=getPads();
+  idx=Number(idx);
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return;
+  if(!padLoaded(pads[idx]))return;
+  S.padPitchTargetIdx=idx;
+  S.padEditingIdx=idx;
+  S.padCycleIdx=idx;
+  S.padControlScope='pad';
+  markTarget();
+  updateBadge();
+}
+function targetIdx(){
+  const S=getS(), pads=getPads();
+  if(!S)return -1;
+  const choices=[
+    S.padPitchTargetIdx,
+    S.padEditingIdx,
+    S.padCycleIdx
+  ];
+  for(const raw of choices){
+    const idx=Number(raw);
+    if(Number.isInteger(idx)&&idx>=0&&idx<pads.length&&padLoaded(pads[idx]))return idx;
+  }
+  // Last fallback: first active source with a valid padIdx.
+  try{
+    for(const node of (S.sampler?.activeSources||[])){
+      const idx=normalizeNodePad(node);
+      if(idx>=0&&padLoaded(pads[idx]))return idx;
+    }
+  }catch(e){}
+  return -1;
+}
+function padWheelOn(p){
+  return !!p && p.wheelEnabled!==false && p.pitchBendEnabled!==false;
+}
+function padSemis(p,includeBend){
+  const S=getS();
+  const base=(Number(p?.transpose)||0)+(Number(p?.octaveShift)||0)*12;
+  const bend=(includeBend&&padWheelOn(p))?(Number(S?.modWheel?.active)||0):0;
+  return base+bend;
+}
+function rateForPad(p,includeBend){
+  return Math.pow(2,padSemis(p,includeBend)/12);
+}
+function setVoiceBend(v,cents){
+  const c=getC(); if(!c||!v||!v.oscs)return;
+  try{
+    if(v.wheelEnabled===false)return;
+    for(const o of v.oscs){
+      const base=o.osc._origDetune||0;
+      o.osc.detune.setTargetAtTime(base+cents,c.currentTime,0.035);
+    }
+  }catch(e){}
+}
+function correctPadVoices(){
+  const S=getS(); if(!S)return;
+  const t=targetIdx();
+  const active=Number(S.modWheel?.active)||0;
+  const centsTarget=active*100;
+  try{
+    for(const [idx,vs] of (S.padPlayingVoices||new Map())){
+      const use=Number(idx)===t;
+      for(const v of (vs.voices||[]))setVoiceBend(v,use?centsTarget:0);
+    }
+  }catch(e){}
+  try{
+    for(const [idx,seq] of (S.padPlayingSequences||new Map())){
+      const use=Number(idx)===t;
+      for(const v of (seq.allVoices||[]))setVoiceBend(v,use?centsTarget:0);
+    }
+  }catch(e){}
+}
+function applyTargetedSamplePitch(){
+  const S=getS(), c=getC(); if(!S||!c)return;
+  const t=targetIdx();
+  const pads=getPads();
+  try{
+    for(const node of (S.sampler?.activeSources||[])){
+      const idx=normalizeNodePad(node);
+      const p=node.padCfg||pads[idx];
+      if(!p||idx<0||!node.src)continue;
+      const useBend=idx===t && node.wheelEnabled!==false && padWheelOn(p);
+      const r=(node.baseRate||1)*rateForPad(p,useBend);
+      try{node.src.playbackRate.setTargetAtTime(r,c.currentTime,0.025)}catch(e){}
+    }
+  }catch(e){}
+}
+function markTarget(){
+  qa('.spad.hid-v64-pitch-target').forEach(e=>e.classList.remove('hid-v64-pitch-target'));
+  const idx=targetIdx();
+  const el=qa('#pads-grid .spad')[idx]||qa('.spad')[idx];
+  if(el)el.classList.add('hid-v64-pitch-target');
+}
+function updateBadge(){
+  const b=q('#hidV64PitchTargetBadge');
+  if(!b)return;
+  const idx=targetIdx();
+  b.textContent=idx>=0?'PITCH TARGET: PAD '+(idx+1):'PITCH TARGET: LIVE';
+}
+function installBadge(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV64PitchTargetBadge')){
+    const b=document.createElement('span');
+    b.id='hidV64PitchTargetBadge';
+    top.appendChild(b);
+  }
+  updateBadge();
+}
+function patchSamplePitchApply(){
+  if(window.__HID_V64_SAMPLE_PITCH_PATCHED__)return;
+  window.__HID_V64_SAMPLE_PITCH_PATCHED__=true;
+  const apply=function(){applyTargetedSamplePitch()};
+  try{window.applyPitchToActiveSamples=apply;applyPitchToActiveSamples=apply}catch(e){window.applyPitchToActiveSamples=apply}
+  // Ensure future source wrappers get tagged with the right padIdx.
+  const oldPlay=window.playSampleBuffer||((typeof playSampleBuffer==='function')?playSampleBuffer:null);
+  if(typeof oldPlay==='function'&&!oldPlay.__hidV64Wrapped){
+    const wrapped=function(buffer,vel=1,padCfg=null){
+      const idx=inferPadIndexFromCfg(padCfg);
+      if(idx>=0)setPitchTarget(idx);
+      const src=oldPlay.apply(this,arguments);
+      setTimeout(()=>{
+        const S=getS();
+        try{
+          for(const node of (S?.sampler?.activeSources||[])){
+            if(node.src===src||node.padCfg===padCfg){
+              if(idx>=0)node.padIdx=idx;
+              node.padCfg=padCfg||node.padCfg;
+              node.baseRate=node.baseRate||1;
+              node.wheelEnabled=!(padCfg&&padCfg.wheelEnabled===false)&&!(padCfg&&padCfg.pitchBendEnabled===false);
+            }
+          }
+        }catch(e){}
+        applyTargetedSamplePitch();
+      },0);
+      return src;
+    };
+    wrapped.__hidV64Wrapped=true;
+    try{window.playSampleBuffer=wrapped;playSampleBuffer=wrapped}catch(e){window.playSampleBuffer=wrapped}
+  }
+}
+function patchPadTriggers(){
+  if(window.__HID_V64_TRIGGER_PATCHED__)return;
+  window.__HID_V64_TRIGGER_PATCHED__=true;
+  const names=[
+    'HID_V63_TRIGGER_PAD','HID_V61_TRIGGER_PAD','HID_V60_TRIGGER_PAD','HID_V59_TRIGGER_PAD','HID_V58_TRIGGER_PAD'
+  ];
+  names.forEach(name=>{
+    try{
+      if(typeof window[name]==='function'&&!window[name].__hidV64Wrapped){
+        const old=window[name];
+        const wrapped=function(idx,...rest){
+          setPitchTarget(idx);
+          const out=old.call(this,idx,...rest);
+          setTimeout(()=>{markTarget();applyTargetedSamplePitch();correctPadVoices();},25);
+          return out;
+        };
+        wrapped.__hidV64Wrapped=true;
+        window[name]=wrapped;
+      }
+    }catch(e){}
+  });
+  try{
+    if(typeof window.padTrigger==='function'&&!window.padTrigger.__hidV64Wrapped){
+      const old=window.padTrigger;
+      const wrapped=function(idx,...rest){
+        setPitchTarget(idx);
+        const out=old.call(this,idx,...rest);
+        setTimeout(()=>{markTarget();applyTargetedSamplePitch();correctPadVoices();},25);
+        return out;
+      };
+      wrapped.__hidV64Wrapped=true;
+      window.padTrigger=wrapped; padTrigger=wrapped;
+    }
+  }catch(e){}
+}
+function patchSelection(){
+  if(window.__HID_V64_SELECTION_PATCHED__)return;
+  window.__HID_V64_SELECTION_PATCHED__=true;
+  window.addEventListener('pointerdown',e=>{
+    const pad=e.target.closest?.('#pads-grid .spad,.spad');
+    if(!pad)return;
+    const idx=qa('#pads-grid .spad').indexOf(pad);
+    if(idx>=0)setPitchTarget(idx);
+  },true);
+}
+function patchKeyboardPadRouter(){
+  // V63 exported function gets wrapped above, but this reinforces arrow/number pad targeting.
+  window.addEventListener('keydown',e=>{
+    if(e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    const map={Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,Numpad1:0,Numpad2:1,Numpad3:2,Numpad4:3,Numpad5:4,Numpad6:5,Numpad7:6,Numpad8:7,Numpad9:8,Numpad0:9};
+    if(e.code in map)setPitchTarget(map[e.code]);
+    if(e.code==='ArrowRight'||e.code==='ArrowLeft')setTimeout(()=>{markTarget();applyTargetedSamplePitch();},30);
+  },true);
+}
+function targetLoop(){
+  correctPadVoices();
+  applyTargetedSamplePitch();
+  updateBadge();
+  requestAnimationFrame(targetLoop);
+}
+function init(){
+  installBadge();
+  patchSamplePitchApply();
+  patchPadTriggers();
+  patchSelection();
+  patchKeyboardPadRouter();
+  markTarget();
+  setTimeout(()=>requestAnimationFrame(targetLoop),80);
+}
+window.HID_V64_SET_PITCH_TARGET=setPitchTarget;
+window.HID_V64_APPLY_TARGETED_PITCH=applyTargetedSamplePitch;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V65 3x4 PAD SHORTCUT LAYOUT + UPDATED SHORTCUT GUIDE ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V65_PAD_SHORTCUT_GUIDE__) return;
+window.__HID_V65_PAD_SHORTCUT_GUIDE__=true;
+
+const PAD_CODES = [
+  ['Digit8','8'], ['Digit9','9'], ['Digit0','0'],
+  ['KeyI','I'], ['KeyO','O'], ['KeyP','P'],
+  ['KeyK','K'], ['KeyL','L'], ['Semicolon',':'],
+  ['Comma',','], ['Period','.'], ['Slash','/']
+];
+const PAD_CODE_TO_IDX = Object.fromEntries(PAD_CODES.map((x,i)=>[x[0],i]));
+const OLD_NUMBER_CODES = ['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Numpad1','Numpad2','Numpad3','Numpad4','Numpad5','Numpad6','Numpad7','Numpad8','Numpad9','Numpad0'];
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function isTyping(t){return !!t?.closest?.('input,textarea,select,[contenteditable="true"]')}
+function livePianoOn(){const S=getS(); return !S || S.keyboardPiano!==false}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function isLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label));
+}
+function triggerPad(idx){
+  const S=getS();
+  if(S){S.padCycleIdx=idx;S.padEditingIdx=idx;S.padControlScope='pad';try{S.arrowBankFocus='pads'}catch(e){}}
+  try{if(typeof window.HID_V64_SET_PITCH_TARGET==='function')window.HID_V64_SET_PITCH_TARGET(idx)}catch(e){}
+  try{if(typeof window.HID_V63_TRIGGER_PAD==='function'){window.HID_V63_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.HID_V61_TRIGGER_PAD==='function'){window.HID_V61_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.HID_V60_TRIGGER_PAD==='function'){window.HID_V60_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.padTrigger==='function'){window.padTrigger(idx);return true}}catch(e){}
+  return false;
+}
+function loadedIndices(){
+  return getPads().map((p,i)=>isLoaded(p)&&!p.disabled?i:null).filter(i=>i!=null);
+}
+function nextLoaded(dir){
+  const loaded=loadedIndices();
+  if(!loaded.length)return -1;
+  const S=getS();
+  const cur=Number.isInteger(S?.padCycleIdx)?S.padCycleIdx:loaded[0];
+  let pos=loaded.indexOf(cur);
+  if(pos<0)pos=dir>0?-1:0;
+  return loaded[(pos+dir+loaded.length)%loaded.length];
+}
+function handleKeydown(e){
+  if(isTyping(e.target))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+
+  // Only use the 3x4 sampler shortcut layout when live piano keyboard mode is OFF.
+  if(!livePianoOn()){
+    if(e.code in PAD_CODE_TO_IDX){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(!e.repeat)triggerPad(PAD_CODE_TO_IDX[e.code]);
+      return;
+    }
+    // Block old number layout 1-7 so it cannot leak through from older routers.
+    if(OLD_NUMBER_CODES.includes(e.code)){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if(e.code==='ArrowRight'||e.code==='ArrowLeft'){
+      const idx=nextLoaded(e.code==='ArrowRight'?1:-1);
+      if(idx>=0){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if(!e.repeat)triggerPad(idx);
+      }
+      return;
+    }
+  }
+}
+function addPadTags(){
+  const pads=qa('#pads-grid .spad,.spad');
+  pads.forEach((el,i)=>{
+    const old=el.querySelector('.hid-v46-keytag,.hid-v47-keytag');
+    if(old)old.remove();
+    if(i>=PAD_CODES.length)return;
+    if(getComputedStyle(el).position==='static')el.style.position='relative';
+    let tag=el.querySelector('.hid-v65-keytag');
+    if(!tag){
+      tag=document.createElement('span');
+      tag.className='hid-v65-keytag';
+      el.appendChild(tag);
+    }
+    tag.textContent=PAD_CODES[i][1];
+  });
+}
+function installStatus(){
+  q('#hidV63KeyRouterStatus')?.remove();
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV65KeyRouterStatus')){
+    const b=document.createElement('button');
+    b.id='hidV65KeyRouterStatus';
+    b.className='btn tiny';
+    b.type='button';
+    b.textContent='SHORTCUTS / PAD KEYS';
+    b.onclick=e=>{e.preventDefault();toggleGuide()};
+    top.appendChild(b);
+  }
+}
+function k(keys){return keys.split(' ').map(x=>`<kbd>${x}</kbd>`).join(' ')}
+function guideHTML(){
+  return `<div id="hidV65ShortcutGuide">
+    <div class="v65-head">
+      <div class="v65-title">KEYBOARD SHORTCUT GUIDE<br><span style="color:var(--neon3)">UPDATED PAD + PERFORMANCE MAP</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn tiny gold" id="hidV65CloseGuide">CLOSE</button>
+      </div>
+    </div>
+    <div class="v65-body">
+      <div class="v65-card gold">
+        <h3>LIVE PIANO MODE</h3>
+        <div class="v65-row"><div>${k('~')}</div><div>Turn live Bluetooth-keyboard piano ON / OFF.</div></div>
+        <div class="v65-row"><div>${k('Z S X D C V G B H N J M')}</div><div>Lower row piano keys.</div></div>
+        <div class="v65-row"><div>${k('Q 2 W 3 E R 5 T 6 Y 7 U I 9 O 0 P')}</div><div>Upper row piano keys when live piano mode is ON.</div></div>
+        <div class="v65-row"><div>${k('Shift+] Shift+[')}</div><div>Octave up / octave down fallback.</div></div>
+        <div class="v65-row"><div>${k('Shift+= Shift+-')}</div><div>Transpose up / transpose down fallback.</div></div>
+        <div class="v65-note">When live piano is ON, the app keeps the normal piano-key performance layout. When live piano is OFF, the 3×4 sampler pad layout below takes over.</div>
+      </div>
+      <div class="v65-card gold">
+        <h3>SAMPLER PAD MODE · LIVE PIANO OFF</h3>
+        <div class="v65-row"><div>${k('8 9 0')}</div><div>Pads 1–3, top row.</div></div>
+        <div class="v65-row"><div>${k('I O P')}</div><div>Pads 4–6, second row.</div></div>
+        <div class="v65-row"><div>${k('K L :')}</div><div>Pads 7–9, third row. The <kbd>:</kbd> key is the semicolon/colon key.</div></div>
+        <div class="v65-row"><div>${k(', . /')}</div><div>Pads 10–12, bottom row.</div></div>
+        <div class="v65-row"><div>${k('← →')}</div><div>Cycle previous / next loaded sampler pad through the active pad play mode.</div></div>
+        <div class="v65-row"><div>${k('STACK SOLO TOGGLE')}</div><div>Use the pad mode buttons inside the Pads/Sampler window.</div></div>
+        <div class="v65-note">This replaces the old 1–0 pad shortcut layout. The new layout is a 3×4 block near the pitch-bend shortcuts.</div>
+      </div>
+      <div class="v65-card">
+        <h3>PITCH BEND / MOD WHEEL</h3>
+        <div class="v65-row"><div>${k('[ ]')}</div><div>Bend down / bend up.</div></div>
+        <div class="v65-row"><div>${k('\\')}</div><div>Hold/spring pitch-bend mode.</div></div>
+        <div class="v65-row"><div>${k("'")}</div><div>Recenter pitch bend.</div></div>
+        <div class="v65-row"><div><kbd>PITCH TARGET</kbd></div><div>Pitch bend follows the currently selected or last-triggered pad when editing/playing pads.</div></div>
+      </div>
+      <div class="v65-card">
+        <h3>CHROMATIC BAR VIEW</h3>
+        <div class="v65-row"><div>${k('A S D F G H J K L ; \'')}</div><div>Controls the first 11 visible chromatic bars while Chromatic Bars mode is active.</div></div>
+        <div class="v65-row"><div><kbd>POLY</kbd> <kbd>MONO</kbd> <kbd>LEGATO</kbd></div><div>Use the voice mode selector in the chromatic controls.</div></div>
+      </div>
+      <div class="v65-card">
+        <h3>REMOTE CONTROL</h3>
+        <div class="v65-row"><div><kbd>QR / CODE PAIR</kbd></div><div>Open pairing panel for iPhone/iPad remote control.</div></div>
+        <div class="v65-row"><div><kbd>Remote Piano</kbd></div><div>Play host/iPad sounds from the controller device.</div></div>
+        <div class="v65-row"><div><kbd>Remote Chroma</kbd></div><div>Slide across chromatic bars remotely with poly/mono/legato behavior.</div></div>
+        <div class="v65-row"><div><kbd>Remote Mixer</kbd></div><div>Adjust global mix, live piano/chroma mix, selected pad mix, pad volume, FX send, EQ, and transpose.</div></div>
+      </div>
+      <div class="v65-card">
+        <h3>IMPORTANT BEHAVIOR</h3>
+        <div class="v65-row"><div><kbd>Long-hold pad</kbd></div><div>Select pad for editing without triggering it.</div></div>
+        <div class="v65-row"><div><kbd>Short tap pad</kbd></div><div>Trigger pad through STACK / SOLO / TOGGLE mode.</div></div>
+        <div class="v65-row"><div><kbd>Kill</kbd></div><div>Stops audio when you need an emergency reset.</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+function ensureGuide(){
+  let g=q('#hidV65ShortcutGuide');
+  if(!g){
+    const h=document.createElement('div');
+    h.innerHTML=guideHTML();
+    document.body.appendChild(h.firstElementChild);
+    g=q('#hidV65ShortcutGuide');
+    q('#hidV65CloseGuide').onclick=e=>{e.preventDefault();g.classList.remove('show')};
+  }
+  return g;
+}
+function toggleGuide(){
+  const g=ensureGuide();
+  g.classList.toggle('show');
+}
+function patchOldGuideButtons(){
+  const buttons=qa('button,.btn,.launcher-btn');
+  buttons.forEach(b=>{
+    const txt=(b.textContent||'').trim().toUpperCase();
+    if((txt.includes('KEYS')||txt.includes('SHORTCUT')||txt.includes('GUIDE'))&&!b.__hidV65Guide&&b.id!=='hidV65KeyRouterStatus'){
+      b.__hidV65Guide=true;
+      b.addEventListener('click',e=>{
+        if(txt.includes('BANK'))return;
+        e.preventDefault();
+        e.stopPropagation();
+        toggleGuide();
+      },true);
+    }
+  });
+}
+function init(){
+  try{window.HID_V46_PAD_KEYS_ENABLED?.(false)}catch(e){}
+  try{if(window.HID_V46_PAD_KEY_MODE)window.HID_V46_PAD_KEY_MODE.enabled=false}catch(e){}
+  installStatus();
+  addPadTags();
+  ensureGuide();
+  patchOldGuideButtons();
+  setTimeout(addPadTags,500);
+  setTimeout(addPadTags,1800);
+}
+window.HID_V65_TOGGLE_SHORTCUT_GUIDE=toggleGuide;
+window.HID_V65_TRIGGER_PAD=triggerPad;
+
+window.addEventListener('keydown',handleKeydown,true);
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(()=>{addPadTags();patchOldGuideButtons();},80),true);
 })();
 </script>
 
