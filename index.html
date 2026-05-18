@@ -2500,6 +2500,30 @@ body.piano-kbd-disabled #hidV62KbdBadge{
 }
 </style>
 
+
+<style id="hid-v63-keyboard-pad-router-css">
+#hidV46PadKeyControls,
+#hidV47PadKeyStatus{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#hidV63KeyRouterStatus{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(255,230,0,.45);
+  color:var(--neon3);
+  background:rgba(0,0,0,.38);
+  border-radius:5px;
+}
+.spad.hid-v63-kbd-flash{
+  filter:brightness(1.35) saturate(1.25);
+  box-shadow:0 0 18px rgba(255,230,0,.75), inset 0 0 18px rgba(255,230,0,.18)!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -11074,7 +11098,7 @@ const KEY_TO_MIDI = {
   KeyI:72,Digit9:73,KeyO:74,Digit0:75,KeyP:76,Equal:78
 };
 const v47 = {
-  padKeysEnabled:true,
+  padKeysEnabled:false,
   padMode:'restart',
   downNotes:new Map(),
   activeSampleNodes:new Map()
@@ -11361,6 +11385,11 @@ function handleKeyDown(e){
   if(v47.padKeysEnabled && e.code in PAD_KEY_CODE_TO_IDX && !e.ctrlKey && !e.metaKey && !e.altKey){
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
     if(!e.repeat) padKeyTrigger(PAD_KEY_CODE_TO_IDX[e.code]);
+    return;
+  }
+
+  // V63: number keys are owned by the sampler pad-mode router, not the old V47 piano fallback.
+  if(e.code in PAD_KEY_CODE_TO_IDX && !e.ctrlKey && !e.metaKey && !e.altKey){
     return;
   }
 
@@ -15700,6 +15729,145 @@ window.HID_V62_TOGGLE_LIVE_PIANO=toggleKeyboardPianoV62;
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(()=>{installEditor();installKbdBadge();},90),true);
+})();
+</script>
+
+
+<!-- ===== HID V63 BLUETOOTH KEYBOARD PAD MODE ROUTER + ARROW PAD CYCLING ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V63_KEYBOARD_PAD_ROUTER__) return;
+window.__HID_V63_KEYBOARD_PAD_ROUTER__=true;
+
+const NUM_TO_PAD={
+  Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,
+  Numpad1:0,Numpad2:1,Numpad3:2,Numpad4:3,Numpad5:4,Numpad6:5,Numpad7:6,Numpad8:7,Numpad9:8,Numpad0:9
+};
+let lastPad=-1;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function isTyping(t){return !!t?.closest?.('input,textarea,select,[contenteditable="true"]')}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function isLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label));
+}
+function loadedIndices(){
+  return getPads().map((p,i)=>isLoaded(p)&&!p.disabled?i:null).filter(i=>i!=null);
+}
+function getMode(){
+  const S=getS(); 
+  const m=S?.padPlayMode;
+  return ['stack','solo','toggle'].includes(m)?m:(S?.padSoloMode?'solo':'stack');
+}
+function syncOldModeBooleans(){
+  const S=getS(); if(!S)return;
+  const m=getMode();
+  S.padPlayMode=m;
+  S.padSoloMode=m==='solo';
+  S.padSustainMode=m==='toggle';
+}
+function padEl(idx){return qa('#pads-grid .spad')[idx]||qa('.spad')[idx]||null}
+function flash(idx){
+  const el=padEl(idx);
+  if(!el)return;
+  el.classList.add('hid-v63-kbd-flash');
+  setTimeout(()=>el.classList.remove('hid-v63-kbd-flash'),140);
+}
+function triggerPad(idx){
+  idx=Number(idx);
+  if(!Number.isInteger(idx)||idx<0)return;
+  syncOldModeBooleans();
+  lastPad=idx;
+  const S=getS();
+  if(S){S.padCycleIdx=idx;S.padEditingIdx=idx;S.padControlScope='pad';try{S.arrowBankFocus='pads'}catch(e){}}
+  flash(idx);
+
+  // Prefer the newest clean toggle-aware engine, then fall back.
+  try{if(typeof window.HID_V61_TRIGGER_PAD==='function'){window.HID_V61_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.HID_V60_TRIGGER_PAD==='function'){window.HID_V60_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.HID_V59_TRIGGER_PAD==='function'){window.HID_V59_TRIGGER_PAD(idx);return true}}catch(e){}
+  try{if(typeof window.padTrigger==='function'){window.padTrigger(idx);return true}}catch(e){}
+  return false;
+}
+function nextLoaded(dir){
+  const loaded=loadedIndices();
+  if(!loaded.length)return -1;
+  const S=getS();
+  const cur=Number.isInteger(S?.padCycleIdx)?S.padCycleIdx:lastPad;
+  let pos=loaded.indexOf(cur);
+  if(pos<0)pos=dir>0?-1:0;
+  return loaded[(pos+dir+loaded.length)%loaded.length];
+}
+function triggerNext(dir){
+  const idx=nextLoaded(dir);
+  if(idx>=0)triggerPad(idx);
+}
+function disableOldPadKeyControls(){
+  try{window.HID_V46_PAD_KEYS_ENABLED?.(false)}catch(e){}
+  try{if(window.HID_V46_PAD_KEY_MODE)window.HID_V46_PAD_KEY_MODE.enabled=false}catch(e){}
+  q('#hidV46PadKeyControls')?.remove();
+  q('#hidV47PadKeyStatus')?.remove();
+}
+function handleKeyDown(e){
+  if(isTyping(e.target))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+
+  if(e.code in NUM_TO_PAD){
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if(!e.repeat)triggerPad(NUM_TO_PAD[e.code]);
+    return;
+  }
+
+  // Arrow pad cycling: left/right move through loaded sampler pads through the same mode engine.
+  // Shift+arrows are left alone for browser/app text/range behavior.
+  if((e.code==='ArrowRight'||e.code==='ArrowLeft')&&!e.shiftKey){
+    const loaded=loadedIndices();
+    if(loaded.length){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(!e.repeat)triggerNext(e.code==='ArrowRight'?1:-1);
+      return;
+    }
+  }
+}
+function installStatus(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV63KeyRouterStatus')){
+    const b=document.createElement('span');
+    b.id='hidV63KeyRouterStatus';
+    b.textContent='PAD KEYS: 1–0 / ←→';
+    top.appendChild(b);
+  }
+}
+function init(){
+  disableOldPadKeyControls();
+  installStatus();
+  // keep old controls from coming back after delayed V46/V47 init
+  setTimeout(disableOldPadKeyControls,400);
+  setTimeout(disableOldPadKeyControls,1600);
+  setTimeout(disableOldPadKeyControls,3400);
+}
+window.HID_V63_TRIGGER_PAD=triggerPad;
+window.HID_V63_TRIGGER_NEXT_PAD=triggerNext;
+window.HID_V63_DISABLE_OLD_PAD_KEYS=disableOldPadKeyControls;
+
+window.addEventListener('keydown',handleKeyDown,true);
+window.addEventListener('load',()=>setTimeout(init,250));
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
 })();
 </script>
 
