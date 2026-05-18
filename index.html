@@ -2193,6 +2193,84 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 }
 </style>
 
+
+<style id="hid-v58-hard-pad-modes-transpose-css">
+#hidV58HardModeBar{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:5px 7px;
+  padding:7px 8px;
+  border:1px solid rgba(255,230,0,.42);
+  background:linear-gradient(180deg,rgba(255,230,0,.10),rgba(0,0,0,.52));
+  border-radius:8px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 14px rgba(255,230,0,.12);
+}
+#hidV58HardModeBar .v58-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+}
+#hidV58HardModeBar .v58-help{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  line-height:1.2;
+}
+#hidV58HardModeBar button.on{
+  box-shadow:0 0 14px rgba(255,230,0,.52);
+}
+.spad.hid-v58-active-pad{
+  box-shadow:0 0 18px rgba(0,255,213,.78), inset 0 0 18px rgba(0,255,213,.16)!important;
+}
+#hidV58RemoteLiveShift{
+  margin:8px 0;
+  padding:8px;
+  border:1px solid rgba(255,230,0,.32);
+  background:rgba(255,230,0,.045);
+  border-radius:8px;
+}
+#hidV58RemoteLiveShift h4{
+  margin:0 0 6px;
+  font-family:'VT323',monospace;
+  color:var(--neon3);
+  font-size:16px;
+  letter-spacing:.12em;
+  font-weight:400;
+}
+#hidV58RemoteLiveShift .hv58-row{
+  display:grid;
+  grid-template-columns:70px 1fr 46px;
+  gap:6px;
+  align-items:center;
+  margin:5px 0;
+}
+#hidV58RemoteLiveShift label{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:13px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+#hidV58RemoteLiveShift .v{
+  color:var(--neon3);
+  font-family:'VT323',monospace;
+  text-align:right;
+}
+#hidV58RecoveryBadge{
+  font-family:'VT323',monospace;
+  color:#ffe600;
+  border:1px solid rgba(255,230,0,.5);
+  padding:3px 6px;
+  margin-left:4px;
+  font-size:12px;
+  letter-spacing:.08em;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -12077,7 +12155,7 @@ function handleMessage(msg){
     if(host.voice){releaseVoice(host.midi,host.voice,true);host.voice=null;host.midi=null}
   }
   function remoteChromaDown(midi,mode='legato',id='main',vel=.82){
-    midi=Number(midi); if(!Number.isFinite(midi))return;
+    midi=liveMidiV58(midi,false); if(!Number.isFinite(midi))return;
     mode=String(mode||'legato').toLowerCase();
     if(mode==='poly'){
       const v=startRemoteVoice(midi,vel);
@@ -12093,7 +12171,7 @@ function handleMessage(msg){
     }
   }
   function remoteChromaMove(midi,mode='legato',id='main'){
-    midi=Number(midi); if(!Number.isFinite(midi))return;
+    midi=liveMidiV58(midi,false); if(!Number.isFinite(midi))return;
     mode=String(mode||'legato').toLowerCase();
     if(mode==='poly'){
       if(!host.poly.has(id))remoteChromaDown(midi,mode,id,.78);
@@ -12119,6 +12197,20 @@ function handleMessage(msg){
     if(!S)return;
     S.modWheel=S.modWheel||{rangeUp:2,rangeDown:2,glide:.06,active:0,target:0};
     S.modWheel.target=Math.max(-1,Math.min(1,Number(v)||0));
+  }
+  function liveMidiV58(m,absolute=false){
+    m=Number(m);
+    if(!Number.isFinite(m))return 60;
+    if(absolute||!S)return m;
+    return m + ((Number(S.octave)||0)*12) + (Number(S.transpose)||0);
+  }
+  function setLiveShiftV58(kind,value){
+    if(!S)return;
+    if(kind==='octave')S.octave=clamp(Math.round(value),-3,3);
+    if(kind==='transpose')S.transpose=clamp(Math.round(value),-12,12);
+    try{if(typeof refreshShortcuts==='function')refreshShortcuts()}catch(e){}
+    try{if(typeof updateTransposeUI==='function')updateTransposeUI()}catch(e){}
+    try{if(typeof updateTape==='function')updateTape()}catch(e){}
   }
   function setGlobalMix(key,value){
     if(!S||!S.fx)return;
@@ -12160,8 +12252,8 @@ function handleMessage(msg){
   try{
     if(msg.cmd==='kill'){releaseRemoteAll();if(typeof HID_MASTER_KILL_NOW==='function')HID_MASTER_KILL_NOW();else if(typeof killAll==='function')killAll();return}
     if(msg.cmd==='pad'&&typeof padTrigger==='function'){padTrigger(msg.idx);return}
-    if(msg.cmd==='noteOn'){if(typeof pressNoteByDisplay==='function')pressNoteByDisplay(msg.midi);else if(typeof startVoice==='function')S?.activeNotes?.set?.(msg.midi,startVoice(msg.midi,msg.vel||.8));return}
-    if(msg.cmd==='noteOff'&&typeof releaseNoteByDisplay==='function'){releaseNoteByDisplay(msg.midi);return}
+    if(msg.cmd==='noteOn'){const mm=liveMidiV58(msg.midi,!!msg.absolute);if(typeof pressNoteByDisplay==='function')pressNoteByDisplay(mm);else if(typeof startVoice==='function')S?.activeNotes?.set?.(mm,startVoice(mm,msg.vel||.8));return}
+    if(msg.cmd==='noteOff'){const mm=liveMidiV58(msg.midi,!!msg.absolute);if(typeof releaseNoteByDisplay==='function')releaseNoteByDisplay(mm);return}
     if(msg.cmd==='master'){setGlobalMix('master',msg.value);return}
     if(msg.cmd==='mixParam'){ if(msg.scope==='global')setGlobalMix(msg.key,msg.value); else if(msg.scope==='live'||msg.scope==='instrument'||msg.scope==='chroma')setLiveMix(msg.key,msg.value); else if(msg.scope==='pad')setPadMix(msg.padIdx,msg.key,msg.value); return}
     if(msg.cmd==='globalMix'){setGlobalMix(msg.key,msg.value);return}
@@ -12172,7 +12264,9 @@ function handleMessage(msg){
     if(msg.cmd==='padFX'){setPadMix(msg.padIdx,'fxSend',msg.value);return}
     if(msg.cmd==='selectPad'){const idx=Number(msg.padIdx);if(S&&Number.isInteger(idx)){S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';try{buildPadsWindow()}catch(e){};try{buildFXWindow()}catch(e){}}return}
 
-    if(msg.cmd==='instrumentSelect'){
+    if(msg.cmd==='liveOctave'){setLiveShiftV58('octave',msg.value);return}
+    if(msg.cmd==='liveTranspose'){setLiveShiftV58('transpose',msg.value);return}
+        if(msg.cmd==='instrumentSelect'){
       if(S){
         try{
           if(msg.bank && BANKS && BANKS[msg.bank]){
@@ -13603,6 +13697,338 @@ function init(){
 window.HID_V57_SET_PAD_MODE=setMode;
 window.HID_V57_TRIGGER_PAD=triggerPadSafe;
 window.HID_V57_INSTALL_REMOTE_INSTRUMENT=installRemoteInstrument;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V58 HARD PAD MODE ROUTER + LIVE OCT/TRANSPOSE CONSISTENCY ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V58_HARD_PAD_MODES__) return;
+window.__HID_V58_HARD_PAD_MODES__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function toast58(msg){
+  try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){}
+  console.log('[V58]',msg);
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padIsSample(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL));
+}
+function padIsEmpty(p){
+  return !p || !(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function ensureMode(){
+  const S=getS(); if(!S)return 'stack';
+  if(!S.padPlayMode)S.padPlayMode=S.padSoloMode?'solo':'stack';
+  if(!['stack','solo','toggle'].includes(S.padPlayMode))S.padPlayMode='stack';
+  S.padSoloMode=S.padPlayMode==='solo';
+  return S.padPlayMode;
+}
+function setMode(mode){
+  const S=getS(); if(!S)return;
+  S.padPlayMode=mode;
+  S.padSoloMode=mode==='solo';
+  updateModeUI();
+  toast58('Pad mode: '+mode.toUpperCase());
+}
+function padEl(idx){return qa('#pads-grid .spad')[idx]||qa('.spad')[idx]||null}
+function markPad(idx,on){
+  const el=padEl(idx);
+  if(el)el.classList.toggle('hid-v58-active-pad',!!on);
+}
+function activeSamplesForPad(idx){
+  const S=getS(), p=getPads()[idx], out=[];
+  try{
+    for(const node of (S?.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p)out.push(node);
+    }
+  }catch(e){}
+  return out;
+}
+function padIsActive(idx){
+  const S=getS();
+  if(activeSamplesForPad(idx).length)return true;
+  try{if(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx))return true}catch(e){}
+  return false;
+}
+function stopSamplePad(idx){
+  const S=getS();
+  for(const node of activeSamplesForPad(idx)){
+    try{node.src.stop(0)}catch(e){}
+    try{node.src.disconnect()}catch(e){}
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+  }
+  markPad(idx,false);
+}
+const nativePadStop=(function(){try{return window.__hidV54OldPadStop||window.__hidV56NativePadStop||window.__hidV58NativePadStop||window.padStop||padStop}catch(e){return null}})();
+const nativePadPlay=(function(){try{return window.__hidV54OldPadPlay||window.__hidV58NativePadPlay||window.padPlay||padPlay}catch(e){return null}})();
+window.__hidV58NativePadStop=nativePadStop;
+window.__hidV58NativePadPlay=nativePadPlay;
+
+function stopPadStrict(idx,smooth=true){
+  stopSamplePad(idx);
+  try{if(typeof nativePadStop==='function'&&nativePadStop!==stopPadStrict)nativePadStop(idx,smooth)}catch(e){}
+  try{getS()?.padPlayingVoices?.delete?.(idx)}catch(e){}
+  try{getS()?.padPlayingSequences?.delete?.(idx)}catch(e){}
+  markPad(idx,false);
+  const el=padEl(idx); if(el)el.classList.remove('playing','sustained','hid-v57-active-pad');
+}
+function stopOtherPads(idx){
+  for(let i=0;i<getPads().length;i++)if(i!==idx)stopPadStrict(i,true);
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  if(typeof HID_V45_HYDRATE_PAD==='function')return HID_V45_HYDRATE_PAD(p);
+  if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}
+  return null;
+}
+function sampleRateFor(p){
+  try{if(typeof samplePlaybackRateForWheel==='function')return samplePlaybackRateForWheel(p)}catch(e){}
+  const S=getS();
+  const semis=(Number(p?.transpose)||0)+(Number(p?.octaveShift)||0)*12+((p?.wheelEnabled===false||p?.pitchBendEnabled===false)?0:(Number(S?.modWheel?.active)||0));
+  return Math.pow(2,semis/12);
+}
+function tagLatestSample(idx,p,src){
+  const S=getS();
+  try{
+    for(const node of Array.from(S?.sampler?.activeSources||[])){
+      if((src&&node.src===src)||node.padCfg===p){
+        node.padIdx=idx;
+        node.padCfg=p;
+        node.wheelEnabled=p.wheelEnabled!==false&&p.pitchBendEnabled!==false;
+        const oldEnd=node.src.onended;
+        node.src.onended=function(ev){
+          try{oldEnd&&oldEnd.call(this,ev)}catch(e){}
+          try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+          if(!activeSamplesForPad(idx).length)markPad(idx,false);
+        };
+      }
+    }
+  }catch(e){}
+}
+async function playSampleFull(idx,p){
+  const b=await hydratePad(p);
+  if(!b){toast58('Pad audio missing');return}
+  p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;
+  let src=null;
+  try{src=playSampleBuffer(b,1,p)}catch(e){console.warn('V58 sample play failed',e)}
+  tagLatestSample(idx,p,src);
+  markPad(idx,true);
+}
+async function triggerPadMode(idx){
+  idx=Number(idx);
+  const S=getS(), pads=getPads();
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return;
+  ensureMode();
+  const p=pads[idx];
+  S.padCycleIdx=idx;S.padEditingIdx=idx;S.padControlScope='pad';
+  if(!p){try{padArmCapture(idx)}catch(e){};return}
+  if(p.disabled){toast58('Pad is off');return}
+  const mode=S.padPlayMode;
+  if(mode==='toggle'&&padIsActive(idx)){stopPadStrict(idx,true);return}
+  if(mode==='solo')stopOtherPads(idx);
+  // Critical: tapped pad always restarts cleanly in stack/solo.
+  stopPadStrict(idx,true);
+  const el=padEl(idx);
+  if(el){el.classList.add('playing','hid-v58-active-pad');setTimeout(()=>el.classList.remove('playing'),180)}
+  try{if(typeof recordEvent==='function')recordEvent({type:'pad',padIdx:idx})}catch(e){}
+  if(padIsSample(p)){await playSampleFull(idx,p);return}
+  try{
+    if(typeof nativePadPlay==='function')nativePadPlay(idx,!!p.sustain);
+    else if(typeof padPlay==='function')padPlay(idx,!!p.sustain);
+    if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx);
+  }catch(e){console.warn('V58 pad play failed',e)}
+}
+function patchGlobals(){
+  if(window.__HID_V58_GLOBALS_PATCHED__)return;
+  window.__HID_V58_GLOBALS_PATCHED__=true;
+  const trig=function(idx){return triggerPadMode(idx)};
+  const stop=function(idx,smooth=true){return stopPadStrict(Number(idx),smooth)};
+  try{window.padTrigger=trig;padTrigger=trig}catch(e){window.padTrigger=trig}
+  try{window.padStop=stop;padStop=stop}catch(e){window.padStop=stop}
+}
+let downInfo=null;
+function padIndexFromTarget(t){
+  const pad=t?.closest?.('#pads-grid .spad,.spad');
+  if(!pad)return -1;
+  const all=qa('#pads-grid .spad');
+  let idx=all.indexOf(pad);
+  if(idx<0)idx=qa('.spad').indexOf(pad);
+  return idx;
+}
+function installCaptureRouter(){
+  if(document.__hidV58CaptureRouter)return;
+  document.__hidV58CaptureRouter=true;
+  document.addEventListener('pointerdown',e=>{
+    const idx=padIndexFromTarget(e.target);
+    if(idx<0)return;
+    downInfo={idx,t:performance.now(),x:e.clientX,y:e.clientY};
+  },true);
+  document.addEventListener('click',e=>{
+    const pad=e.target.closest?.('#pads-grid .spad,.spad');
+    if(!pad)return;
+    if(e.target.closest('.spad-wheel,.spad-off,button,input,select,textarea'))return;
+    const idx=padIndexFromTarget(e.target);
+    if(idx<0)return;
+    const age=downInfo&&downInfo.idx===idx?performance.now()-downInfo.t:0;
+    if(age>520)return; // allow long-hold edit behavior
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if(e.shiftKey){
+      stopPadStrict(idx,false);
+      const S=getS(); if(S){S.pads[idx]=null;if(S.padEditingIdx===idx)S.padEditingIdx=-1;if(S.padCycleIdx===idx)S.padCycleIdx=-1}
+      try{if(typeof buildPadsWindow==='function')buildPadsWindow()}catch(err){}
+      return;
+    }
+    triggerPadMode(idx);
+  },true);
+}
+function installModeBar(){
+  const body=q('#win-sampler .win-body')||qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body)return;
+  let bar=q('#hidV58HardModeBar');
+  if(!bar){
+    const holder=document.createElement('div');
+    holder.innerHTML=`<div id="hidV58HardModeBar">
+      <span class="v58-title">PAD PLAY MODE</span>
+      <button class="btn tiny" data-v58-mode="stack">STACK</button>
+      <button class="btn tiny" data-v58-mode="solo">SOLO</button>
+      <button class="btn tiny" data-v58-mode="toggle">TOGGLE</button>
+      <span class="v58-help">STACK layers different pads but restarts the tapped pad. SOLO stops other pads first. TOGGLE taps pads on/off.</span>
+    </div>`;
+    bar=holder.firstElementChild;
+    body.insertBefore(bar,q('#pads-grid',body)||body.firstChild);
+  }
+  bar.querySelectorAll('[data-v58-mode]').forEach(b=>{
+    b.onclick=e=>{e.preventDefault();setMode(b.dataset.v58Mode)};
+  });
+  const old=q('#pads-solo-mode');
+  if(old&&!old.__v58){
+    old.__v58=true;
+    old.onclick=e=>{
+      e.preventDefault();
+      const m=ensureMode();
+      setMode(m==='stack'?'solo':m==='solo'?'toggle':'stack');
+    };
+  }
+  updateModeUI();
+}
+function updateModeUI(){
+  const m=ensureMode();
+  q('#hidV58HardModeBar')?.querySelectorAll('[data-v58-mode]').forEach(b=>{
+    const on=b.dataset.v58Mode===m;
+    b.classList.toggle('on',on);b.classList.toggle('gold',on);
+  });
+  const old=q('#pads-solo-mode');
+  if(old){old.textContent=m.toUpperCase();old.classList.toggle('on',m!=='stack');}
+}
+function wrapPadsBuild(){
+  if(window.__HID_V58_PADBUILD_WRAPPED__)return;
+  const old=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V58_PADBUILD_WRAPPED__=true;
+  const wrapped=function(){
+    const res=old.apply(this,arguments);
+    setTimeout(()=>{installModeBar();updateModeUI();},0);
+    return res;
+  };
+  try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+}
+function liveShift(deltaOct=0,deltaTrans=0){
+  const S=getS(); if(!S)return;
+  S.octave=clamp((Number(S.octave)||0)+deltaOct,-3,3);
+  S.transpose=clamp((Number(S.transpose)||0)+deltaTrans,-12,12);
+  try{if(typeof refreshShortcuts==='function')refreshShortcuts()}catch(e){}
+  try{if(typeof updateTransposeUI==='function')updateTransposeUI()}catch(e){}
+  try{if(typeof updateTape==='function')updateTape()}catch(e){}
+}
+function installRemoteLiveShift(){
+  const surf=q('#hidV52RemotePerformance');
+  if(!surf||q('#hidV58RemoteLiveShift'))return;
+  const box=document.createElement('div');
+  box.id='hidV58RemoteLiveShift';
+  box.innerHTML=`<h4>REMOTE LIVE OCTAVE / TRANSPOSE</h4>
+    <div class="hv51-help">These shift the host/iPad live piano and chromatic bars. The same remote keys/slides keep working but move to the higher/lower octave or transposition.</div>
+    <div class="hv58-row"><label>Octave</label><input id="hidV58RemoteOct" type="range" min="-3" max="3" step="1" value="0"><span class="v" id="hidV58RemoteOctV">0</span></div>
+    <div class="hv58-row"><label>Trans</label><input id="hidV58RemoteTrans" type="range" min="-12" max="12" step="1" value="0"><span class="v" id="hidV58RemoteTransV">0</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn tiny" id="hidV58OctDown">OCT −</button>
+      <button class="btn tiny" id="hidV58OctUp">OCT +</button>
+      <button class="btn tiny" id="hidV58TransDown">−1</button>
+      <button class="btn tiny" id="hidV58TransUp">+1</button>
+      <button class="btn tiny warn" id="hidV58LiveReset">RESET LIVE SHIFT</button>
+    </div>`;
+  const insert=q('#hidV56RemoteInstrument')||q('#hidV57RemoteInstrument')||surf.children[1]||surf.firstChild;
+  surf.insertBefore(box,insert);
+  function sendOct(v){
+    q('#hidV58RemoteOctV').textContent=String(v);
+    if(window.HID_REMOTE_V51_SEND)window.HID_REMOTE_V51_SEND({cmd:'liveOctave',value:Number(v)});
+  }
+  function sendTrans(v){
+    q('#hidV58RemoteTransV').textContent=(Number(v)>0?'+':'')+String(v);
+    if(window.HID_REMOTE_V51_SEND)window.HID_REMOTE_V51_SEND({cmd:'liveTranspose',value:Number(v)});
+  }
+  q('#hidV58RemoteOct').oninput=e=>sendOct(e.target.value);
+  q('#hidV58RemoteTrans').oninput=e=>sendTrans(e.target.value);
+  q('#hidV58OctDown').onclick=e=>{e.preventDefault();const r=q('#hidV58RemoteOct');r.value=Math.max(-3,Number(r.value)-1);sendOct(r.value)};
+  q('#hidV58OctUp').onclick=e=>{e.preventDefault();const r=q('#hidV58RemoteOct');r.value=Math.min(3,Number(r.value)+1);sendOct(r.value)};
+  q('#hidV58TransDown').onclick=e=>{e.preventDefault();const r=q('#hidV58RemoteTrans');r.value=Math.max(-12,Number(r.value)-1);sendTrans(r.value)};
+  q('#hidV58TransUp').onclick=e=>{e.preventDefault();const r=q('#hidV58RemoteTrans');r.value=Math.min(12,Number(r.value)+1);sendTrans(r.value)};
+  q('#hidV58LiveReset').onclick=e=>{e.preventDefault();q('#hidV58RemoteOct').value=0;q('#hidV58RemoteTrans').value=0;sendOct(0);sendTrans(0)};
+}
+function patchKeyboardTransposeFallback(){
+  if(document.__hidV58KeyboardTransposeFallback)return;
+  document.__hidV58KeyboardTransposeFallback=true;
+  document.addEventListener('keydown',e=>{
+    if(e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    // Safe additional octave/transpose shortcuts. Does not remove existing shortcuts.
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.code==='BracketRight'&&e.shiftKey){e.preventDefault();liveShift(1,0)}
+    if(e.code==='BracketLeft'&&e.shiftKey){e.preventDefault();liveShift(-1,0)}
+    if(e.code==='Equal'&&e.shiftKey){e.preventDefault();liveShift(0,1)}
+    if(e.code==='Minus'&&e.shiftKey){e.preventDefault();liveShift(0,-1)}
+  },true);
+}
+function badge(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV58RecoveryBadge')){
+    const b=document.createElement('span');b.id='hidV58RecoveryBadge';b.textContent='V58 PAD FIX';top.appendChild(b);
+  }
+}
+function init(){
+  badge();
+  patchGlobals();
+  installCaptureRouter();
+  wrapPadsBuild();
+  installModeBar();
+  installRemoteLiveShift();
+  patchKeyboardTransposeFallback();
+}
+window.HID_V58_SET_PAD_MODE=setMode;
+window.HID_V58_TRIGGER_PAD=triggerPadMode;
+window.HID_V58_STOP_PAD=stopPadStrict;
+window.HID_V58_INSTALL_REMOTE_LIVE_SHIFT=installRemoteLiveShift;
 
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
