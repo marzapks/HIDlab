@@ -1887,6 +1887,69 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 }
 </style>
 
+
+<style id="hid-v53-pad-transpose-css">
+#hidV53PadTransposePanel{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:5px 7px;
+  padding:7px 8px;
+  border:1px solid rgba(255,230,0,.36);
+  background:linear-gradient(180deg,rgba(255,230,0,.08),rgba(0,0,0,.48));
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 12px rgba(255,230,0,.1);
+  border-radius:7px;
+}
+#hidV53PadTransposePanel label{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  color:var(--dim);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+#hidV53PadTransposePanel .hid-v53-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+  margin-right:4px;
+}
+#hidV53PadTransposePanel input[type=range]{
+  min-width:180px;
+  flex:1 1 200px;
+}
+#hidV53PadTransposePanel .hid-v53-value{
+  min-width:54px;
+  color:var(--neon);
+  font-family:'VT323',monospace;
+  font-size:15px;
+  text-align:center;
+}
+.spad .hid-v53-trans-badge{
+  position:absolute;
+  left:4px;
+  top:4px;
+  z-index:5;
+  font-family:'VT323',monospace;
+  font-size:11px;
+  line-height:1;
+  padding:2px 4px;
+  border:1px solid rgba(0,255,213,.42);
+  background:rgba(0,0,0,.62);
+  color:var(--neon);
+  text-shadow:0 0 5px var(--neon);
+  pointer-events:none;
+  border-radius:4px;
+}
+.spad.hid-v53-trans-selected{
+  outline:2px solid var(--neon3)!important;
+  outline-offset:-2px;
+  box-shadow:0 0 18px rgba(255,230,0,.72), inset 0 0 18px rgba(255,230,0,.15)!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -12170,6 +12233,309 @@ window.addEventListener('load',()=>{setTimeout(watch,300);setTimeout(watch,1500)
 document.addEventListener('DOMContentLoaded',()=>setTimeout(watch,200));
 document.addEventListener('pointerdown',()=>setTimeout(watch,80),true);
 window.HID_REMOTE_V52_INSTALL=installSurfaces;
+})();
+</script>
+
+
+<!-- ===== HID V53 PER-PAD TRANSPOSE CONTROL FOR SAMPLER PADS ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V53_PAD_TRANSPOSE__) return;
+window.__HID_V53_PAD_TRANSPOSE__ = true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function toast53(msg){
+  try{ if(typeof window.toast==='function') return window.toast(msg); }catch(e){}
+  let t=q('#hidV53Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV53Toast';
+    t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.92);color:#ffd;border:1px solid rgba(255,230,0,.65);padding:9px 13px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 0 16px rgba(255,230,0,.22);';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',1900);
+}
+function getCtx(){
+  try{ if(typeof ctx!=='undefined' && ctx) return ctx; }catch(e){}
+  return window.ctx||window.audioCtx||null;
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads && Array.isArray(window.pads)) pads=window.pads;
+  if(!pads){pads=[]; if(S)S.pads=pads; window.pads=pads;}
+  while(pads.length<16) pads.push(null);
+  return pads;
+}
+function ensurePad(p){
+  if(!p) return null;
+  if(p.transpose==null) p.transpose=0;
+  if(p.octaveShift==null) p.octaveShift=0;
+  if(p.wheelEnabled==null) p.wheelEnabled=true;
+  if(p.pitchBendEnabled==null) p.pitchBendEnabled=p.wheelEnabled!==false;
+  return p;
+}
+function padEmpty(p){
+  return !p || !(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function selectedIdx(){
+  const S=getS();
+  const pads=getPads();
+  if(S && Number.isInteger(S.padEditingIdx) && S.padEditingIdx>=0 && !padEmpty(pads[S.padEditingIdx])) return S.padEditingIdx;
+  if(S && Number.isInteger(S.padCycleIdx) && S.padCycleIdx>=0 && !padEmpty(pads[S.padCycleIdx])) return S.padCycleIdx;
+  return pads.findIndex(p=>!padEmpty(p));
+}
+function setSelectedIdx(idx){
+  const S=getS(); if(!S) return;
+  S.padEditingIdx=idx;
+  S.padCycleIdx=idx;
+  S.padControlScope='pad';
+  try{ S.transposeTarget='pad'; }catch(e){}
+  markSelected();
+}
+function semisForPad(p, includeWheel=true){
+  const S=getS();
+  p=ensurePad(p)||{};
+  const base=(Number(p.transpose)||0)+(Number(p.octaveShift)||0)*12;
+  const wheelOn=includeWheel && p.wheelEnabled!==false && p.pitchBendEnabled!==false;
+  const bend=wheelOn ? (Number(S?.modWheel?.active)||0) : 0;
+  return base+bend;
+}
+function rateForPad(p, includeWheel=true){
+  return Math.pow(2, semisForPad(p,includeWheel)/12);
+}
+function applyPadSampleRates(idx=selectedIdx()){
+  const S=getS(), c=getCtx();
+  if(!S||!c||idx<0) return;
+  const p=getPads()[idx];
+  if(!p) return;
+  try{
+    for(const node of (S.sampler?.activeSources||[])){
+      if(node.padCfg===p || node.padIdx===idx){
+        const r=(node.baseRate||1)*rateForPad(p,true);
+        node.wheelEnabled = p.wheelEnabled!==false && p.pitchBendEnabled!==false;
+        node.padCfg=p;
+        node.padIdx=idx;
+        try{ node.src.playbackRate.setTargetAtTime(r,c.currentTime,0.025); }catch(e){}
+      }
+    }
+  }catch(e){}
+}
+function updatePadTranspose(idx,val){
+  const pads=getPads();
+  if(idx<0 || idx>=pads.length || !pads[idx]) return;
+  const p=ensurePad(pads[idx]);
+  p.transpose=Math.max(-48,Math.min(48,Math.round(Number(val)||0)));
+  setSelectedIdx(idx);
+  applyPadSampleRates(idx);
+  try{ if(typeof applyPadLiveParams==='function') applyPadLiveParams(idx); }catch(e){}
+  renderPanelValues();
+  addBadges();
+}
+function nudgePadTranspose(delta){
+  const idx=selectedIdx();
+  if(idx<0){toast53('Long-hold/select a pad first.');return}
+  const p=ensurePad(getPads()[idx]);
+  updatePadTranspose(idx,(p.transpose||0)+delta);
+}
+function resetPadTranspose(){
+  const idx=selectedIdx();
+  if(idx<0){toast53('Long-hold/select a pad first.');return}
+  updatePadTranspose(idx,0);
+}
+function markSelected(){
+  const idx=selectedIdx();
+  qa('.spad.hid-v53-trans-selected').forEach(e=>e.classList.remove('hid-v53-trans-selected'));
+  const el=q(`#pads-grid .spad[data-idx="${idx}"]`) || q(`#pads-grid .spad[data-drag-index="${idx}"]`) || qa('#pads-grid .spad')[idx] || qa('.spad')[idx];
+  if(el) el.classList.add('hid-v53-trans-selected');
+}
+function addBadges(){
+  const pads=getPads();
+  qa('#pads-grid .spad,.spad').forEach((el,i)=>{
+    const p=pads[i];
+    if(!p || padEmpty(p)) return;
+    if(getComputedStyle(el).position==='static') el.style.position='relative';
+    let b=el.querySelector('.hid-v53-trans-badge');
+    if(!b){
+      b=document.createElement('span');
+      b.className='hid-v53-trans-badge';
+      el.appendChild(b);
+    }
+    const tr=Number(p.transpose)||0;
+    const oct=Number(p.octaveShift)||0;
+    const total=tr+oct*12;
+    b.textContent=total===0?'0':(total>0?'+'+total:String(total));
+  });
+  markSelected();
+}
+function renderPanelValues(){
+  const idx=selectedIdx();
+  const p=idx>=0?ensurePad(getPads()[idx]):null;
+  const title=q('#hidV53PadTransTitle');
+  const range=q('#hidV53PadTransRange');
+  const value=q('#hidV53PadTransValue');
+  const octave=q('#hidV53PadOctRange');
+  const octv=q('#hidV53PadOctValue');
+  if(title) title.textContent=p?`PAD ${idx+1} · ${(p.name||p.label||p.kind||'PAD')}`:'NO PAD SELECTED';
+  if(range && p) range.value=Number(p.transpose)||0;
+  if(value) value.textContent=p?`${(p.transpose||0)>0?'+':''}${p.transpose||0} st`:'—';
+  if(octave && p) octave.value=Number(p.octaveShift)||0;
+  if(octv) octv.textContent=p?`${(p.octaveShift||0)>0?'+':''}${p.octaveShift||0} oct`:'—';
+}
+function installPanel(){
+  const body=q('#win-sampler .win-body') || qa('.window').find(w=>(w.textContent||'').toUpperCase().includes('PADS'))?.querySelector('.win-body');
+  if(!body) return;
+  if(q('#hidV53PadTransposePanel')){ renderPanelValues(); addBadges(); return; }
+  const panel=document.createElement('div');
+  panel.id='hidV53PadTransposePanel';
+  panel.innerHTML=`
+    <span class="hid-v53-title" id="hidV53PadTransTitle">PAD TRANSPOSE</span>
+    <button class="btn tiny" id="hidV53Minus12">−12</button>
+    <button class="btn tiny" id="hidV53Minus1">−1</button>
+    <label>Semitone</label>
+    <input id="hidV53PadTransRange" type="range" min="-48" max="48" step="1" value="0">
+    <span class="hid-v53-value" id="hidV53PadTransValue">0 st</span>
+    <button class="btn tiny" id="hidV53Plus1">+1</button>
+    <button class="btn tiny" id="hidV53Plus12">+12</button>
+    <label>Oct</label>
+    <input id="hidV53PadOctRange" type="range" min="-4" max="4" step="1" value="0" style="min-width:86px;flex:0 1 90px">
+    <span class="hid-v53-value" id="hidV53PadOctValue">0 oct</span>
+    <button class="btn tiny warn" id="hidV53Reset">RESET</button>
+  `;
+  const grid=q('#pads-grid',body);
+  if(grid) body.insertBefore(panel,grid);
+  else body.insertBefore(panel,body.firstChild);
+  q('#hidV53PadTransRange').oninput=e=>{ const idx=selectedIdx(); if(idx>=0) updatePadTranspose(idx,e.target.value); };
+  q('#hidV53PadOctRange').oninput=e=>{
+    const idx=selectedIdx(); if(idx<0) return;
+    const p=ensurePad(getPads()[idx]); p.octaveShift=Math.max(-4,Math.min(4,Math.round(Number(e.target.value)||0)));
+    setSelectedIdx(idx); applyPadSampleRates(idx);
+    try{ if(typeof applyPadLiveParams==='function') applyPadLiveParams(idx); }catch(err){}
+    renderPanelValues(); addBadges();
+  };
+  q('#hidV53Minus12').onclick=e=>{e.preventDefault();nudgePadTranspose(-12)};
+  q('#hidV53Minus1').onclick=e=>{e.preventDefault();nudgePadTranspose(-1)};
+  q('#hidV53Plus1').onclick=e=>{e.preventDefault();nudgePadTranspose(1)};
+  q('#hidV53Plus12').onclick=e=>{e.preventDefault();nudgePadTranspose(12)};
+  q('#hidV53Reset').onclick=e=>{e.preventDefault(); const idx=selectedIdx(); if(idx>=0){const p=ensurePad(getPads()[idx]);p.octaveShift=0;updatePadTranspose(idx,0);}};
+  renderPanelValues();
+  addBadges();
+}
+function patchPlaybackRates(){
+  if(window.__HID_V53_PLAYBACK_PATCHED__) return;
+  window.__HID_V53_PLAYBACK_PATCHED__=true;
+
+  const oldSampleRate=window.samplePlaybackRateForWheel;
+  const sampleRate=function(padCfg=null){
+    if(padCfg) return rateForPad(padCfg,true);
+    if(typeof oldSampleRate==='function') return oldSampleRate(padCfg);
+    const S=getS();
+    return Math.pow(2,((Number(S?.modWheel?.active)||0)/12));
+  };
+  try{ window.samplePlaybackRateForWheel=sampleRate; samplePlaybackRateForWheel=sampleRate; }catch(e){ window.samplePlaybackRateForWheel=sampleRate; }
+
+  const oldApply=window.applyPitchToActiveSamples;
+  const apply=function(){
+    const S=getS(), c=getCtx();
+    if(!S||!c) return;
+    for(const node of (S.sampler?.activeSources||[])){
+      const p=node.padCfg;
+      const r=(node.baseRate||1)*(p?rateForPad(p,true):Math.pow(2,((Number(S.modWheel?.active)||0)/12)));
+      try{ node.src.playbackRate.setTargetAtTime(r,c.currentTime,0.035); }catch(e){}
+    }
+  };
+  try{ window.applyPitchToActiveSamples=apply; applyPitchToActiveSamples=apply; }catch(e){ window.applyPitchToActiveSamples=apply; }
+
+  const oldPlay=window.playSampleBuffer;
+  if(typeof oldPlay==='function'){
+    const play=function(buffer,vel=1,padCfg=null){
+      const src=oldPlay.call(this,buffer,vel,padCfg);
+      try{
+        const S=getS();
+        if(src && padCfg && S?.sampler?.activeSources){
+          for(const node of S.sampler.activeSources){
+            if(node.src===src){
+              node.padCfg=padCfg;
+              node.baseRate=1;
+              node.wheelEnabled=padCfg.wheelEnabled!==false && padCfg.pitchBendEnabled!==false;
+              src.playbackRate.setTargetAtTime(rateForPad(padCfg,true),getCtx().currentTime,0.001);
+            }
+          }
+        }
+      }catch(e){}
+      return src;
+    };
+    try{ window.playSampleBuffer=play; playSampleBuffer=play; }catch(e){ window.playSampleBuffer=play; }
+  }
+
+  const oldLive=window.applyPadLiveParams;
+  if(typeof oldLive==='function'){
+    const live=function(idx){
+      const out=oldLive.apply(this,arguments);
+      applyPadSampleRates(idx);
+      return out;
+    };
+    try{ window.applyPadLiveParams=live; applyPadLiveParams=live; }catch(e){ window.applyPadLiveParams=live; }
+  }
+}
+function patchPadSelection(){
+  if(window.__HID_V53_SELECTION_PATCHED__) return;
+  window.__HID_V53_SELECTION_PATCHED__=true;
+  document.addEventListener('pointerdown',e=>{
+    const pad=e.target.closest?.('#pads-grid .spad,.spad');
+    if(!pad) return;
+    const all=qa('#pads-grid .spad,.spad');
+    const idx=Number(pad.dataset.idx ?? pad.dataset.dragIndex ?? all.indexOf(pad));
+    if(!Number.isFinite(idx) || idx<0) return;
+    let timer=setTimeout(()=>{
+      if(!padEmpty(getPads()[idx])){
+        setSelectedIdx(idx);
+        renderPanelValues();
+        addBadges();
+        toast53('Pad '+(idx+1)+' selected for transpose.');
+      }
+    },480);
+    const clear=()=>{clearTimeout(timer);document.removeEventListener('pointerup',clear,true);document.removeEventListener('pointercancel',clear,true);document.removeEventListener('pointermove',move,true)};
+    const move=ev=>{ if(Math.abs((ev.clientX||0)-(e.clientX||0))>12 || Math.abs((ev.clientY||0)-(e.clientY||0))>12) clear(); };
+    document.addEventListener('pointerup',clear,true);
+    document.addEventListener('pointercancel',clear,true);
+    document.addEventListener('pointermove',move,true);
+  },true);
+}
+function wrapBuildPads(){
+  if(window.__HID_V53_BUILD_WRAPPED__) return;
+  if(typeof window.buildPadsWindow!=='function') return;
+  window.__HID_V53_BUILD_WRAPPED__=true;
+  const old=window.buildPadsWindow;
+  const wrapped=function(){
+    const res=old.apply(this,arguments);
+    setTimeout(()=>{installPanel();addBadges();},0);
+    return res;
+  };
+  try{ window.buildPadsWindow=wrapped; buildPadsWindow=wrapped; }catch(e){ window.buildPadsWindow=wrapped; }
+}
+function init(){
+  patchPlaybackRates();
+  patchPadSelection();
+  wrapBuildPads();
+  installPanel();
+  addBadges();
+}
+window.HID_V53_SET_PAD_TRANSPOSE=updatePadTranspose;
+window.HID_V53_NUDGE_PAD_TRANSPOSE=nudgePadTranspose;
+window.HID_V53_RESET_PAD_TRANSPOSE=resetPadTranspose;
+window.HID_V53_APPLY_PAD_SAMPLE_RATES=applyPadSampleRates;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3000);});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+document.addEventListener('hid-v45-pads-updated',()=>setTimeout(init,80));
 })();
 </script>
 
