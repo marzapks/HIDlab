@@ -1950,6 +1950,173 @@ body.piano-kbd-disabled .bkey .bkey-sc{
 }
 </style>
 
+
+<style id="hid-v54-pad-mode-eq-css">
+#hidV54ScopeMixer{
+  margin:7px;
+  padding:8px;
+  border:1px solid rgba(0,255,213,.30);
+  background:linear-gradient(180deg,rgba(0,255,213,.06),rgba(0,0,0,.55));
+  border-radius:8px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.45),0 0 12px rgba(0,255,213,.09);
+}
+#hidV54ScopeMixer .v54-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.08em;
+  margin-bottom:6px;
+}
+#hidV54ScopeMixer .v54-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(180px,1fr));
+  gap:8px;
+}
+#hidV54ScopeMixer .v54-card{
+  border:1px solid rgba(0,255,213,.22);
+  background:rgba(0,0,0,.38);
+  padding:7px;
+  border-radius:7px;
+  min-width:0;
+}
+#hidV54ScopeMixer .v54-card.pad{
+  border-color:rgba(255,230,0,.36);
+  background:rgba(255,230,0,.045);
+}
+#hidV54ScopeMixer h4{
+  margin:0 0 5px;
+  font-family:'VT323',monospace;
+  color:var(--neon);
+  font-size:16px;
+  letter-spacing:.11em;
+  font-weight:400;
+}
+#hidV54ScopeMixer .v54-card.pad h4{color:var(--neon3)}
+#hidV54ScopeMixer .v54-note{
+  font-family:'VT323',monospace;
+  font-size:11px;
+  color:var(--dim);
+  line-height:1.28;
+  margin-bottom:5px;
+}
+#hidV54ScopeMixer .v54-row{
+  display:grid;
+  grid-template-columns:50px 1fr 44px;
+  gap:6px;
+  align-items:center;
+  margin:4px 0;
+}
+#hidV54ScopeMixer label{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  color:var(--dim);
+  letter-spacing:.08em;
+}
+#hidV54ScopeMixer .v{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  color:var(--neon3);
+  text-align:right;
+}
+.spad.hid-v54-pad-playing-clean{
+  box-shadow:0 0 18px rgba(0,255,213,.7), inset 0 0 16px rgba(0,255,213,.14)!important;
+}
+@media(max-width:860px){
+  #hidV54ScopeMixer .v54-grid{grid-template-columns:1fr}
+}
+</style>
+
+
+<style id="hid-v55-remote-mixer-css">
+#hidV55RemoteMixer{
+  margin:0 10px 10px;
+  border:1px solid rgba(255,230,0,.35);
+  background:linear-gradient(180deg,rgba(255,230,0,.055),rgba(0,0,0,.58));
+  border-radius:8px;
+  padding:10px;
+}
+#hidV55RemoteMixer h3{
+  font-family:'Press Start 2P',monospace;
+  font-size:9px;
+  color:var(--neon3);
+  text-shadow:0 0 5px var(--neon3);
+  letter-spacing:.09em;
+  margin:0 0 8px;
+}
+.hv55-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(190px,1fr));
+  gap:8px;
+}
+.hv55-card{
+  min-width:0;
+  border:1px solid rgba(0,255,213,.24);
+  background:rgba(0,0,0,.40);
+  border-radius:8px;
+  padding:8px;
+}
+.hv55-card.pad{
+  border-color:rgba(255,230,0,.38);
+  background:rgba(255,230,0,.045);
+}
+.hv55-card h4{
+  margin:0 0 5px;
+  font-family:'VT323',monospace;
+  font-size:16px;
+  color:var(--neon);
+  letter-spacing:.11em;
+  font-weight:400;
+}
+.hv55-card.pad h4{color:var(--neon3)}
+.hv55-note{
+  color:var(--dim);
+  font-family:'VT323',monospace;
+  font-size:12px;
+  line-height:1.25;
+  margin-bottom:6px;
+}
+.hv55-row{
+  display:grid;
+  grid-template-columns:52px 1fr 48px;
+  gap:6px;
+  align-items:center;
+  margin:5px 0;
+}
+.hv55-row label{
+  font-family:'VT323',monospace;
+  color:var(--dim);
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.hv55-row .v{
+  font-family:'VT323',monospace;
+  color:var(--neon3);
+  font-size:12px;
+  text-align:right;
+}
+.hv55-pad-row{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:8px;
+}
+#hidV55PadSelect{
+  min-width:120px;
+}
+.hv55-nudge{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  margin:5px 0;
+}
+@media(max-width:860px){
+  .hv55-grid{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -11781,6 +11948,17 @@ function handleMessage(msg){
   const S=(()=>{try{return STATE}catch(e){return window.STATE||null}})();
   const host=window.__HID_V52_REMOTE_HOST__=window.__HID_V52_REMOTE_HOST__||{voice:null,midi:null,poly:new Map()};
   function F(m){try{return typeof freqOf==='function'?freqOf(m):440*Math.pow(2,(m-69)/12)}catch(e){return 440*Math.pow(2,(m-69)/12)}}
+  function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+  function getPads(){let pads=S&&Array.isArray(S.pads)?S.pads:(Array.isArray(window.pads)?window.pads:[]);while(pads.length<16)pads.push(null);if(S)S.pads=pads;return pads}
+  function ensurePad(p){if(!p)return null;if(p.volume==null)p.volume=1;if(p.fxSend==null)p.fxSend=1;if(p.eqLow==null)p.eqLow=0;if(p.eqMid==null)p.eqMid=0;if(p.eqHigh==null)p.eqHigh=0;if(p.transpose==null)p.transpose=0;if(p.octaveShift==null)p.octaveShift=0;return p}
+  function ensureLive(){if(!S)return null;S.livePianoEQ=S.livePianoEQ||{eqLow:0,eqMid:0,eqHigh:0,vol:S.mod?.vol??.7};['eqLow','eqMid','eqHigh'].forEach(k=>{if(S.livePianoEQ[k]==null)S.livePianoEQ[k]=0});if(S.livePianoEQ.vol==null)S.livePianoEQ.vol=S.mod?.vol??.7;return S.livePianoEQ}
+  function refreshPadWindows(idx){
+    try{if(typeof HID_V54_APPLY_PAD_EQ==='function')HID_V54_APPLY_PAD_EQ(idx)}catch(e){}
+    try{if(typeof applyPadLiveParams==='function')applyPadLiveParams(idx)}catch(e){}
+    try{if(typeof HID_V53_APPLY_PAD_SAMPLE_RATES==='function')HID_V53_APPLY_PAD_SAMPLE_RATES(idx)}catch(e){}
+    clearTimeout(window.__hidV55PadRefreshTimer);
+    window.__hidV55PadRefreshTimer=setTimeout(()=>{try{if(typeof buildPadsWindow==='function')buildPadsWindow()}catch(e){};try{if(typeof buildFXWindow==='function')buildFXWindow()}catch(e){}},90);
+  }
   function startRemoteVoice(midi,vel=.82){
     try{
       if(typeof ensureAudioReady==='function')ensureAudioReady();
@@ -11866,12 +12044,57 @@ function handleMessage(msg){
     S.modWheel=S.modWheel||{rangeUp:2,rangeDown:2,glide:.06,active:0,target:0};
     S.modWheel.target=Math.max(-1,Math.min(1,Number(v)||0));
   }
+  function setGlobalMix(key,value){
+    if(!S||!S.fx)return;
+    const map={low:'eqLow',mid:'eqMid',high:'eqHigh',eqLow:'eqLow',eqMid:'eqMid',eqHigh:'eqHigh'};
+    if(map[key]){S.fx[map[key]]=clamp(value,-18,18);try{if(typeof applyFXState==='function')applyFXState()}catch(e){}}
+    if(key==='master'||key==='masterVol'){
+      const el=q('#master-vol');if(el){el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}))}
+    }
+  }
+  function setLiveMix(key,value){
+    if(!S)return;
+    const live=ensureLive();
+    if(['eqLow','eqMid','eqHigh','low','mid','high'].includes(key)){
+      const map={low:'eqLow',mid:'eqMid',high:'eqHigh',eqLow:'eqLow',eqMid:'eqMid',eqHigh:'eqHigh'};
+      live[map[key]]=clamp(value,-18,18);
+      try{if(typeof HID_V54_APPLY_LIVE_EQ==='function')HID_V54_APPLY_LIVE_EQ()}catch(e){}
+    }
+    if(key==='vol'||key==='volume'){
+      live.vol=clamp(value,0,1.5);
+      if(S.mod)S.mod.vol=live.vol;
+      try{if(typeof master!=='undefined'&&master)master.gain.value=live.vol}catch(e){}
+    }
+  }
+  function setPadMix(idx,key,value){
+    idx=Number(idx);if(!Number.isInteger(idx)||idx<0)return;
+    const pads=getPads();const p=ensurePad(pads[idx]);if(!p)return;
+    if(S){S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';try{S.transposeTarget='pad'}catch(e){}}
+    if(key==='volume'||key==='vol')p.volume=clamp(value,0,2);
+    if(key==='fxSend'||key==='fx')p.fxSend=clamp(value,0,1);
+    if(key==='eqLow'||key==='low')p.eqLow=clamp(value,-18,18);
+    if(key==='eqMid'||key==='mid')p.eqMid=clamp(value,-18,18);
+    if(key==='eqHigh'||key==='high')p.eqHigh=clamp(value,-18,18);
+    if(key==='transpose')p.transpose=clamp(Math.round(value),-48,48);
+    if(key==='octaveShift'||key==='octave')p.octaveShift=clamp(Math.round(value),-4,4);
+    if(key==='wheelEnabled')p.wheelEnabled=!!value;
+    if(key==='pitchBendEnabled')p.pitchBendEnabled=!!value;
+    refreshPadWindows(idx);
+  }
   try{
     if(msg.cmd==='kill'){releaseRemoteAll();if(typeof HID_MASTER_KILL_NOW==='function')HID_MASTER_KILL_NOW();else if(typeof killAll==='function')killAll();return}
     if(msg.cmd==='pad'&&typeof padTrigger==='function'){padTrigger(msg.idx);return}
     if(msg.cmd==='noteOn'){if(typeof pressNoteByDisplay==='function')pressNoteByDisplay(msg.midi);else if(typeof startVoice==='function')S?.activeNotes?.set?.(msg.midi,startVoice(msg.midi,msg.vel||.8));return}
     if(msg.cmd==='noteOff'&&typeof releaseNoteByDisplay==='function'){releaseNoteByDisplay(msg.midi);return}
-    if(msg.cmd==='master'){const el=q('#master-vol');if(el){el.value=msg.value;el.dispatchEvent(new Event('input',{bubbles:true}))}return}
+    if(msg.cmd==='master'){setGlobalMix('master',msg.value);return}
+    if(msg.cmd==='mixParam'){ if(msg.scope==='global')setGlobalMix(msg.key,msg.value); else if(msg.scope==='live'||msg.scope==='instrument'||msg.scope==='chroma')setLiveMix(msg.key,msg.value); else if(msg.scope==='pad')setPadMix(msg.padIdx,msg.key,msg.value); return}
+    if(msg.cmd==='globalMix'){setGlobalMix(msg.key,msg.value);return}
+    if(msg.cmd==='liveMix'||msg.cmd==='instrumentMix'){setLiveMix(msg.key,msg.value);return}
+    if(msg.cmd==='padMix'){setPadMix(msg.padIdx,msg.key,msg.value);return}
+    if(msg.cmd==='padTranspose'){setPadMix(msg.padIdx,'transpose',msg.transpose); if(msg.octaveShift!=null)setPadMix(msg.padIdx,'octaveShift',msg.octaveShift); return}
+    if(msg.cmd==='padVolume'){setPadMix(msg.padIdx,'volume',msg.value);return}
+    if(msg.cmd==='padFX'){setPadMix(msg.padIdx,'fxSend',msg.value);return}
+    if(msg.cmd==='selectPad'){const idx=Number(msg.padIdx);if(S&&Number.isInteger(idx)){S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';try{buildPadsWindow()}catch(e){};try{buildFXWindow()}catch(e){}}return}
     if(msg.cmd==='pitch'){setPitch(msg.value);return}
     if(msg.cmd==='pitchReset'){setPitch(0);return}
     if(msg.cmd==='pitchRange'&&S){S.modWheel=S.modWheel||{}; if(msg.up!=null)S.modWheel.rangeUp=Number(msg.up)||S.modWheel.rangeUp||2; if(msg.down!=null)S.modWheel.rangeDown=Number(msg.down)||S.modWheel.rangeDown||2; try{if(typeof buildModWheelWindow==='function')buildModWheelWindow()}catch(e){} return}
@@ -12536,6 +12759,492 @@ window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);s
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
 document.addEventListener('hid-v45-pads-updated',()=>setTimeout(init,80));
+})();
+</script>
+
+
+<!-- ===== HID V54 PAD SOLO/STACK RESTART + PAD/LIVE/MIX EQ SCOPES ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V54_PAD_MODE_EQ__) return;
+window.__HID_V54_PAD_MODE_EQ__ = true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function getC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function toast54(msg){
+  try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){}
+  let t=q('#hidV54Toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='hidV54Toast';
+    t.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10000000;background:rgba(0,0,0,.92);color:#dff;border:1px solid rgba(0,255,213,.65);padding:9px 13px;border-radius:12px;font-family:sans-serif;font-size:13px;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',1800);
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padEmpty(p){
+  return !p || !(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label);
+}
+function selectedIdx(){
+  const S=getS(), pads=getPads();
+  if(S&&Number.isInteger(S.padEditingIdx)&&S.padEditingIdx>=0&&!padEmpty(pads[S.padEditingIdx]))return S.padEditingIdx;
+  if(S&&Number.isInteger(S.padCycleIdx)&&S.padCycleIdx>=0&&!padEmpty(pads[S.padCycleIdx]))return S.padCycleIdx;
+  return pads.findIndex(p=>!padEmpty(p));
+}
+function setSelected(idx){
+  const S=getS(); if(!S)return;
+  S.padEditingIdx=idx;S.padCycleIdx=idx;S.padControlScope='pad';
+  try{S.transposeTarget='pad'}catch(e){}
+}
+function ensurePadFX(p){
+  if(!p)return null;
+  if(p.volume==null)p.volume=1;
+  if(p.fxSend==null)p.fxSend=1;
+  if(p.eqLow==null)p.eqLow=0;
+  if(p.eqMid==null)p.eqMid=0;
+  if(p.eqHigh==null)p.eqHigh=0;
+  return p;
+}
+function ensureLiveEQ(){
+  const S=getS(); if(!S)return {eqLow:0,eqMid:0,eqHigh:0};
+  S.livePianoEQ=S.livePianoEQ||{eqLow:0,eqMid:0,eqHigh:0};
+  ['eqLow','eqMid','eqHigh'].forEach(k=>{if(S.livePianoEQ[k]==null)S.livePianoEQ[k]=0});
+  return S.livePianoEQ;
+}
+function setEQGains(nodes,cfg){
+  const c=getC(); if(!c||!nodes||!cfg)return;
+  try{
+    nodes.low.gain.setTargetAtTime(clamp(cfg.eqLow||0,-18,18),c.currentTime,0.025);
+    nodes.mid.gain.setTargetAtTime(clamp(cfg.eqMid||0,-18,18),c.currentTime,0.025);
+    nodes.high.gain.setTargetAtTime(clamp(cfg.eqHigh||0,-18,18),c.currentTime,0.025);
+  }catch(e){}
+}
+function makeEQNodes(cfg){
+  const c=getC(); if(!c)return null;
+  const low=c.createBiquadFilter(), mid=c.createBiquadFilter(), high=c.createBiquadFilter();
+  low.type='lowshelf';low.frequency.value=160;
+  mid.type='peaking';mid.frequency.value=950;mid.Q.value=.9;
+  high.type='highshelf';high.frequency.value=5200;
+  low.connect(mid).connect(high);
+  setEQGains({low,mid,high},cfg);
+  return {low,mid,high,input:low,output:high};
+}
+function insertVoiceEQ(v,cfg,scope){
+  if(!v||!v.outNode||!v.pan||v.__hidV54EqScope)return;
+  const eq=makeEQNodes(cfg); if(!eq)return;
+  try{v.outNode.disconnect(v.pan)}catch(e){}
+  try{v.outNode.connect(eq.input);eq.output.connect(v.pan)}catch(e){try{v.outNode.connect(v.pan)}catch(_){}}
+  v.__hidV54Eq=eq;
+  v.__hidV54EqScope=scope;
+}
+function insertSampleEQ(node,cfg){
+  if(!node||!node.g||!node.padGain||node.__hidV54Eq)return;
+  const eq=makeEQNodes(cfg); if(!eq)return;
+  try{node.g.disconnect(node.padGain)}catch(e){}
+  try{node.g.connect(eq.input);eq.output.connect(node.padGain)}catch(e){try{node.g.connect(node.padGain)}catch(_){}}
+  node.__hidV54Eq=eq;
+}
+function applyPadEQ(idx=selectedIdx()){
+  const S=getS(), p=getPads()[idx]; if(!S||!p)return;
+  ensurePadFX(p);
+  try{
+    const vs=S.padPlayingVoices?.get?.(idx);
+    if(vs)for(const v of (vs.voices||[])){if(!v.__hidV54Eq)insertVoiceEQ(v,p,'pad');setEQGains(v.__hidV54Eq,p)}
+    const seq=S.padPlayingSequences?.get?.(idx);
+    if(seq)for(const v of (seq.allVoices||[])){if(!v.__hidV54Eq)insertVoiceEQ(v,p,'pad');setEQGains(v.__hidV54Eq,p)}
+    for(const node of (S.sampler?.activeSources||[])){
+      if(node.padCfg===p||node.padIdx===idx){if(!node.__hidV54Eq)insertSampleEQ(node,p);setEQGains(node.__hidV54Eq,p)}
+    }
+  }catch(e){}
+}
+function applyLiveEQ(){
+  const S=getS(), cfg=ensureLiveEQ(); if(!S)return;
+  try{
+    for(const v of (S.activeNotes?.values?.()||[])){
+      if(v&& !v.padCfg){
+        if(!v.__hidV54Eq)insertVoiceEQ(v,cfg,'live');
+        setEQGains(v.__hidV54Eq,cfg);
+      }
+    }
+  }catch(e){}
+}
+function stopSampleSourcesForPad(idx){
+  const S=getS(); if(!S)return;
+  const p=getPads()[idx];
+  try{
+    for(const node of Array.from(S.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p){
+        try{node.src.stop(0)}catch(e){}
+        try{node.src.disconnect()}catch(e){}
+        S.sampler.activeSources.delete(node);
+      }
+    }
+  }catch(e){}
+}
+function padIsPlaying(idx){
+  const S=getS(), p=getPads()[idx]; if(!S)return false;
+  try{
+    if(S.padPlayingVoices?.has?.(idx)||S.padPlayingSequences?.has?.(idx))return true;
+    for(const node of (S.sampler?.activeSources||[]))if(node.padIdx===idx||node.padCfg===p)return true;
+  }catch(e){}
+  return false;
+}
+function stopPadClean(idx,smooth=true){
+  stopSampleSourcesForPad(idx);
+  try{if(typeof __hidV54OldPadStop==='function')__hidV54OldPadStop(idx,smooth);else if(typeof padStop==='function')padStop(idx,smooth)}catch(e){}
+  const el=qa('#pads-grid .spad')[idx]; if(el)el.classList.remove('playing','sustained','hid-v54-pad-playing-clean');
+}
+function stopOtherPads(idx){
+  const pads=getPads();
+  for(let i=0;i<pads.length;i++)if(i!==idx)stopPadClean(i,true);
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  if(typeof HID_V45_HYDRATE_PAD==='function')return HID_V45_HYDRATE_PAD(p);
+  if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}
+  return null;
+}
+function tagLatestSampleNode(idx,p,src){
+  const S=getS(); if(!S)return;
+  try{
+    for(const node of Array.from(S.sampler?.activeSources||[])){
+      if((src&&node.src===src)||node.padCfg===p){
+        node.padIdx=idx;node.padCfg=p;node.wheelEnabled=p.wheelEnabled!==false&&p.pitchBendEnabled!==false;
+        if(!node.__hidV54Eq)insertSampleEQ(node,p);
+        setEQGains(node.__hidV54Eq,p);
+      }
+    }
+  }catch(e){}
+}
+async function triggerPadClean(idx){
+  const S=getS(), pads=getPads(); if(!S||idx<0||idx>=pads.length)return;
+  S.padCycleIdx=idx; setSelected(idx);
+  const p=pads[idx];
+  if(p&&p.disabled){toast54('Pad is off');return}
+  if(!p){try{padArmCapture(idx)}catch(e){};return}
+  ensurePadFX(p);
+  try{if(typeof recordEvent==='function')recordEvent({type:'pad',padIdx:idx})}catch(e){}
+  if(S.padSoloMode)stopOtherPads(idx);
+  // Always clean-restart the pad being tapped. This prevents muddy self-stacking.
+  stopPadClean(idx,true);
+  const el=qa('#pads-grid .spad')[idx];
+  if(el){el.classList.add('playing','hid-v54-pad-playing-clean');setTimeout(()=>el.classList.remove('playing','hid-v54-pad-playing-clean'),180)}
+  if(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl){
+    const b=await hydratePad(p);
+    if(!b){toast54('Pad audio missing');return}
+    p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;
+    try{
+      const src=playSampleBuffer(b,1,p);
+      tagLatestSampleNode(idx,p,src);
+    }catch(e){console.warn('sample pad play failed',e)}
+    return;
+  }
+  try{
+    if(typeof __hidV54OldPadPlay==='function')__hidV54OldPadPlay(idx,!!p.sustain);
+    else if(typeof padPlay==='function')padPlay(idx,!!p.sustain);
+    applyPadEQ(idx);
+  }catch(e){console.warn('pad play failed',e)}
+}
+function patchPadModes(){
+  if(window.__HID_V54_PADMODE_PATCHED__)return;
+  window.__HID_V54_PADMODE_PATCHED__=true;
+  try{window.__hidV54OldPadStop=window.padStop||padStop}catch(e){}
+  try{window.__hidV54OldPadPlay=window.padPlay||padPlay}catch(e){}
+  const stop=function(idx,smooth=true){stopSampleSourcesForPad(idx);return __hidV54OldPadStop?__hidV54OldPadStop(idx,smooth):undefined};
+  const trig=function(idx){return triggerPadClean(idx)};
+  try{window.padStop=stop;padStop=stop}catch(e){window.padStop=stop}
+  try{window.padTrigger=trig;padTrigger=trig}catch(e){window.padTrigger=trig}
+}
+function patchStartVoice(){
+  if(window.__HID_V54_START_PATCHED__)return;
+  const old=window.startVoice||((typeof startVoice==='function')?startVoice:null);
+  if(typeof old!=='function')return;
+  window.__HID_V54_START_PATCHED__=true;
+  const wrapped=function(midi,vel=.78,snap=null,opts={}){
+    const v=old.apply(this,arguments);
+    try{
+      if(v&&v.padCfg){ensurePadFX(v.padCfg);insertVoiceEQ(v,v.padCfg,'pad')}
+      else if(v&&!snap){insertVoiceEQ(v,ensureLiveEQ(),'live')}
+    }catch(e){}
+    return v;
+  };
+  try{window.startVoice=wrapped;startVoice=wrapped}catch(e){window.startVoice=wrapped}
+}
+function patchSamplePlay(){
+  if(window.__HID_V54_SAMPLE_PATCHED__)return;
+  const old=window.playSampleBuffer||((typeof playSampleBuffer==='function')?playSampleBuffer:null);
+  if(typeof old!=='function')return;
+  window.__HID_V54_SAMPLE_PATCHED__=true;
+  const wrapped=function(buffer,vel=1,padCfg=null){
+    const src=old.apply(this,arguments);
+    try{
+      if(src&&padCfg){
+        ensurePadFX(padCfg);
+        const idx=getPads().indexOf(padCfg);
+        tagLatestSampleNode(idx,padCfg,src);
+      }
+    }catch(e){}
+    return src;
+  };
+  try{window.playSampleBuffer=wrapped;playSampleBuffer=wrapped}catch(e){window.playSampleBuffer=wrapped}
+}
+function patchApplyParams(){
+  if(window.__HID_V54_APPLY_PATCHED__)return;
+  const old=window.applyPadLiveParams||((typeof applyPadLiveParams==='function')?applyPadLiveParams:null);
+  if(typeof old!=='function')return;
+  window.__HID_V54_APPLY_PATCHED__=true;
+  const wrapped=function(idx){
+    const res=old.apply(this,arguments);
+    applyPadEQ(idx);
+    return res;
+  };
+  try{window.applyPadLiveParams=wrapped;applyPadLiveParams=wrapped}catch(e){window.applyPadLiveParams=wrapped}
+}
+function db(v){return (Number(v)||0).toFixed(1)+'dB'}
+function rowHTML(prefix,key,label,min=-18,max=18,val=0){
+  return `<div class="v54-row"><label>${label}</label><input type="range" id="${prefix}-${key}" min="${min}" max="${max}" step="0.1" value="${val}"><span class="v" id="${prefix}-${key}-v">${db(val)}</span></div>`;
+}
+function renderScopeMixer(){
+  const fxBody=q('#win-fx .win-body') || (q('.window[data-w="fx"] .win-body'));
+  if(!fxBody)return;
+  let panel=q('#hidV54ScopeMixer');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='hidV54ScopeMixer';
+    fxBody.insertBefore(panel,fxBody.firstChild);
+  }
+  const S=getS(), idx=selectedIdx(), p=idx>=0?ensurePadFX(getPads()[idx]):null, live=ensureLiveEQ();
+  panel.innerHTML=`
+    <div class="v54-title">SEPARATE CONTROL SCOPES</div>
+    <div class="v54-grid">
+      <div class="v54-card">
+        <h4>OVERALL MIX</h4>
+        <div class="v54-note">Final mix bus EQ. This affects everything that feeds the app's main effects/output.</div>
+        ${rowHTML('v54mix','low','LOW',-15,15,S?.fx?.eqLow??0)}
+        ${rowHTML('v54mix','mid','MID',-15,15,S?.fx?.eqMid??0)}
+        ${rowHTML('v54mix','high','HIGH',-15,15,S?.fx?.eqHigh??0)}
+      </div>
+      <div class="v54-card">
+        <h4>LIVE PIANO</h4>
+        <div class="v54-note">Only live real-time keyboard/piano playing. Existing sampler pads keep their own settings.</div>
+        ${rowHTML('v54live','low','LOW',-18,18,live.eqLow)}
+        ${rowHTML('v54live','mid','MID',-18,18,live.eqMid)}
+        ${rowHTML('v54live','high','HIGH',-18,18,live.eqHigh)}
+      </div>
+      <div class="v54-card pad">
+        <h4>${p?'SELECTED PAD '+(idx+1):'SELECTED PAD'}</h4>
+        <div class="v54-note">${p?'Edits only '+(p.name||p.label||'this pad')+'. Long-hold a pad to select a different one.':'Long-hold/select a pad to enable individual pad controls.'}</div>
+        ${p?`
+          ${rowHTML('v54pad','low','LOW',-18,18,p.eqLow)}
+          ${rowHTML('v54pad','mid','MID',-18,18,p.eqMid)}
+          ${rowHTML('v54pad','high','HIGH',-18,18,p.eqHigh)}
+          <div class="v54-row"><label>VOL</label><input type="range" id="v54pad-vol" min="0" max="2" step="0.01" value="${p.volume??1}"><span class="v" id="v54pad-vol-v">${Math.round((p.volume??1)*100)}%</span></div>
+          <div class="v54-row"><label>FX</label><input type="range" id="v54pad-fx" min="0" max="1" step="0.01" value="${p.fxSend??1}"><span class="v" id="v54pad-fx-v">${Math.round((p.fxSend??1)*100)}%</span></div>
+        `:'<div class="v54-note">No pad selected.</div>'}
+      </div>
+    </div>`;
+  function bind(id,fn,fmt=db){
+    const el=q('#'+id,panel), out=q('#'+id+'-v',panel);
+    if(!el)return;
+    el.oninput=e=>{const v=Number(e.target.value);fn(v); if(out)out.textContent=fmt(v);};
+  }
+  bind('v54mix-low',v=>{S.fx.eqLow=v;try{applyFXState()}catch(e){}});
+  bind('v54mix-mid',v=>{S.fx.eqMid=v;try{applyFXState()}catch(e){}});
+  bind('v54mix-high',v=>{S.fx.eqHigh=v;try{applyFXState()}catch(e){}});
+  bind('v54live-low',v=>{live.eqLow=v;applyLiveEQ()});
+  bind('v54live-mid',v=>{live.eqMid=v;applyLiveEQ()});
+  bind('v54live-high',v=>{live.eqHigh=v;applyLiveEQ()});
+  if(p){
+    bind('v54pad-low',v=>{p.eqLow=v;applyPadEQ(idx)});
+    bind('v54pad-mid',v=>{p.eqMid=v;applyPadEQ(idx)});
+    bind('v54pad-high',v=>{p.eqHigh=v;applyPadEQ(idx)});
+    bind('v54pad-vol',v=>{p.volume=v;try{applyPadLiveParams(idx)}catch(e){}},v=>Math.round(v*100)+'%');
+    bind('v54pad-fx',v=>{p.fxSend=v;try{applyPadLiveParams(idx)}catch(e){}},v=>Math.round(v*100)+'%');
+  }
+}
+function wrapBuildFX(){
+  if(window.__HID_V54_FX_WRAPPED__)return;
+  const old=window.buildFXWindow||((typeof buildFXWindow==='function')?buildFXWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V54_FX_WRAPPED__=true;
+  const wrapped=function(){const res=old.apply(this,arguments);setTimeout(renderScopeMixer,0);return res};
+  try{window.buildFXWindow=wrapped;buildFXWindow=wrapped}catch(e){window.buildFXWindow=wrapped}
+}
+function wrapBuildPads(){
+  if(window.__HID_V54_PADS_WRAPPED__)return;
+  const old=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof old!=='function')return;
+  window.__HID_V54_PADS_WRAPPED__=true;
+  const wrapped=function(){const res=old.apply(this,arguments);setTimeout(()=>{renderScopeMixer();},0);return res};
+  try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+}
+function patchSoloButtonText(){
+  const b=q('#pads-solo-mode');
+  if(b&&!b.__hidV54){
+    b.__hidV54=true;
+    b.title='STACK: layer different pads while restarting the tapped pad. SOLO: stop other pads before starting the tapped pad.';
+  }
+}
+function init(){
+  patchStartVoice();
+  patchSamplePlay();
+  patchApplyParams();
+  patchPadModes();
+  wrapBuildFX();
+  wrapBuildPads();
+  renderScopeMixer();
+  patchSoloButtonText();
+}
+window.HID_V54_TRIGGER_PAD_CLEAN=triggerPadClean;
+window.HID_V54_STOP_PAD_CLEAN=stopPadClean;
+window.HID_V54_APPLY_PAD_EQ=applyPadEQ;
+window.HID_V54_APPLY_LIVE_EQ=applyLiveEQ;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3000)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+document.addEventListener('hid-v45-pads-updated',()=>setTimeout(init,80));
+})();
+</script>
+
+
+<!-- ===== HID V55 REMOTE MIXER + PAD PARAMETER CONTROLS ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V55_REMOTE_MIXER__) return;
+window.__HID_V55_REMOTE_MIXER__=true;
+
+const st={padIdx:0};
+function q(s,r=document){return r.querySelector(s)}
+function send(msg){return window.HID_REMOTE_V51_SEND?window.HID_REMOTE_V51_SEND(msg):false}
+function db(v){return (Number(v)||0).toFixed(1)+'dB'}
+function pct(v){return Math.round((Number(v)||0)*100)+'%'}
+function stxt(v){v=Math.round(Number(v)||0);return (v>0?'+':'')+v}
+function row(id,label,min,max,step,value,fmt='db'){
+  const f=fmt==='pct'?pct:fmt==='semi'?stxt:fmt==='oct'?stxt:db;
+  return `<div class="hv55-row"><label>${label}</label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"><span class="v" id="${id}v">${f(value)}</span></div>`;
+}
+function sendMix(scope,key,value,padIdx=st.padIdx){
+  send({cmd:'mixParam',scope,key,value:Number(value),padIdx});
+}
+function install(){
+  const shell=q('#hidV51Pair .hv51-shell');
+  if(!shell || q('#hidV55RemoteMixer')) return;
+  const holder=document.createElement('div');
+  holder.innerHTML=`
+    <div id="hidV55RemoteMixer">
+      <h3>REMOTE MIX / PAD CONTROL</h3>
+      <div class="hv51-help">These controls send parameter changes from the controller device to the iPad host. They mirror the normal app scopes: Overall Mix, Live Piano/Chroma instruments, and Selected Pad.</div>
+      <div class="hv55-grid">
+        <div class="hv55-card">
+          <h4>OVERALL MIX</h4>
+          <div class="hv55-note">Final mix/output EQ and master level.</div>
+          ${row('hidV55MixLow','LOW',-15,15,.1,0)}
+          ${row('hidV55MixMid','MID',-15,15,.1,0)}
+          ${row('hidV55MixHigh','HIGH',-15,15,.1,0)}
+          ${row('hidV55Master','MASTER',0,1,.01,.8,'pct')}
+        </div>
+        <div class="hv55-card">
+          <h4>LIVE PIANO / CHROMA</h4>
+          <div class="hv55-note">Applies to real-time piano keys and remote chromatic-bar instruments, not saved sampler pads.</div>
+          ${row('hidV55LiveLow','LOW',-18,18,.1,0)}
+          ${row('hidV55LiveMid','MID',-18,18,.1,0)}
+          ${row('hidV55LiveHigh','HIGH',-18,18,.1,0)}
+          ${row('hidV55LiveVol','LIVE VOL',0,1.5,.01,.7,'pct')}
+        </div>
+        <div class="hv55-card pad">
+          <h4>SELECTED PAD</h4>
+          <div class="hv55-note">Choose a pad, then adjust only that pad's volume, FX send, EQ, and transpose.</div>
+          <div class="hv55-pad-row">
+            <select id="hidV55PadSelect">${Array.from({length:16},(_,i)=>`<option value="${i}">PAD ${i+1}</option>`).join('')}</select>
+            <button class="btn tiny gold" id="hidV55SelectPad">SELECT ON HOST</button>
+          </div>
+          ${row('hidV55PadVol','VOL',0,2,.01,1,'pct')}
+          ${row('hidV55PadFX','FX',0,1,.01,1,'pct')}
+          ${row('hidV55PadLow','LOW',-18,18,.1,0)}
+          ${row('hidV55PadMid','MID',-18,18,.1,0)}
+          ${row('hidV55PadHigh','HIGH',-18,18,.1,0)}
+          ${row('hidV55PadTrans','TRANS',-48,48,1,0,'semi')}
+          ${row('hidV55PadOct','OCT',-4,4,1,0,'oct')}
+          <div class="hv55-nudge">
+            <button class="btn tiny" data-nudge="-12">−12</button>
+            <button class="btn tiny" data-nudge="-1">−1</button>
+            <button class="btn tiny" data-nudge="1">+1</button>
+            <button class="btn tiny" data-nudge="12">+12</button>
+            <button class="btn tiny warn" id="hidV55PadReset">RESET TRANS</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  shell.appendChild(holder.firstElementChild);
+  bind();
+}
+function setOut(id,txt){const el=q('#'+id+'v');if(el)el.textContent=txt}
+function bindSlider(id,fn,fmt){
+  const el=q('#'+id); if(!el)return;
+  el.addEventListener('input',e=>{
+    const v=Number(e.target.value);
+    setOut(id,fmt(v));
+    fn(v);
+  },true);
+}
+function bind(){
+  const padSel=q('#hidV55PadSelect');
+  padSel.onchange=()=>{st.padIdx=Number(padSel.value)||0;send({cmd:'selectPad',padIdx:st.padIdx});};
+  q('#hidV55SelectPad').onclick=e=>{e.preventDefault();st.padIdx=Number(padSel.value)||0;send({cmd:'selectPad',padIdx:st.padIdx});};
+  bindSlider('hidV55MixLow',v=>sendMix('global','eqLow',v),db);
+  bindSlider('hidV55MixMid',v=>sendMix('global','eqMid',v),db);
+  bindSlider('hidV55MixHigh',v=>sendMix('global','eqHigh',v),db);
+  bindSlider('hidV55Master',v=>send({cmd:'master',value:v}),pct);
+  bindSlider('hidV55LiveLow',v=>sendMix('live','eqLow',v),db);
+  bindSlider('hidV55LiveMid',v=>sendMix('live','eqMid',v),db);
+  bindSlider('hidV55LiveHigh',v=>sendMix('live','eqHigh',v),db);
+  bindSlider('hidV55LiveVol',v=>sendMix('live','vol',v),pct);
+  bindSlider('hidV55PadVol',v=>sendMix('pad','volume',v,st.padIdx),pct);
+  bindSlider('hidV55PadFX',v=>sendMix('pad','fxSend',v,st.padIdx),pct);
+  bindSlider('hidV55PadLow',v=>sendMix('pad','eqLow',v,st.padIdx),db);
+  bindSlider('hidV55PadMid',v=>sendMix('pad','eqMid',v,st.padIdx),db);
+  bindSlider('hidV55PadHigh',v=>sendMix('pad','eqHigh',v,st.padIdx),db);
+  bindSlider('hidV55PadTrans',v=>send({cmd:'padTranspose',padIdx:st.padIdx,transpose:v,octaveShift:Number(q('#hidV55PadOct').value)||0}),stxt);
+  bindSlider('hidV55PadOct',v=>send({cmd:'padTranspose',padIdx:st.padIdx,transpose:Number(q('#hidV55PadTrans').value)||0,octaveShift:v}),stxt);
+  q('#hidV55PadReset').onclick=e=>{
+    e.preventDefault();
+    q('#hidV55PadTrans').value=0;q('#hidV55PadOct').value=0;
+    setOut('hidV55PadTrans','0');setOut('hidV55PadOct','0');
+    send({cmd:'padTranspose',padIdx:st.padIdx,transpose:0,octaveShift:0});
+  };
+  document.querySelectorAll('#hidV55RemoteMixer [data-nudge]').forEach(b=>{
+    b.onclick=e=>{
+      e.preventDefault();
+      const tr=q('#hidV55PadTrans');
+      const val=Math.max(-48,Math.min(48,(Number(tr.value)||0)+Number(b.dataset.nudge)));
+      tr.value=val;setOut('hidV55PadTrans',stxt(val));
+      send({cmd:'padTranspose',padIdx:st.padIdx,transpose:val,octaveShift:Number(q('#hidV55PadOct').value)||0});
+    };
+  });
+}
+function watch(){install()}
+const obs=new MutationObserver(watch);
+obs.observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('load',()=>{setTimeout(watch,300);setTimeout(watch,1500);setTimeout(watch,3500)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(watch,200));
+document.addEventListener('pointerdown',()=>setTimeout(watch,90),true);
+window.HID_REMOTE_V55_INSTALL_MIXER=install;
 })();
 </script>
 
