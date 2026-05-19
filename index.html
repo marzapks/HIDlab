@@ -2893,6 +2893,82 @@ body.hid-v67-iphone #hidV55RemoteMixer .hv55-grid{
 }
 </style>
 
+
+<style id="hid-v75-launch-button-failsafe-css">
+/* V75: make sure the home page always has a visible Launch button. */
+#launch:not([aria-hidden="true"]) .launch-actions{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  position:relative!important;
+  z-index:2147482!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:54px!important;
+  margin-top:8px!important;
+}
+#launch:not([aria-hidden="true"]) #launch-btn,
+#launch:not([aria-hidden="true"]) .lb{
+  display:inline-flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:160px!important;
+  min-height:50px!important;
+  z-index:2147483!important;
+  position:relative!important;
+}
+#hidV75LaunchFallback{
+  position:fixed;
+  left:50%;
+  bottom:calc(28px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);
+  z-index:2147483600;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  min-width:178px;
+  min-height:54px;
+  padding:14px 26px;
+  border:2px solid var(--neon3,#ffe600);
+  background:rgba(0,0,0,.92);
+  color:var(--neon3,#ffe600);
+  box-shadow:0 0 18px rgba(255,230,0,.45), inset 0 0 12px rgba(255,230,0,.12);
+  font-family:'Press Start 2P',monospace;
+  font-size:12px;
+  letter-spacing:.12em;
+  border-radius:8px;
+  touch-action:manipulation;
+}
+body:not(.hid-entered) #hidV75LaunchFallback.show{
+  display:inline-flex!important;
+}
+body.hid-entered #hidV75LaunchFallback,
+html.hid-entered #hidV75LaunchFallback{
+  display:none!important;
+}
+@media(max-width:480px){
+  #launch:not([aria-hidden="true"]) .launch-actions{
+    margin-top:6px!important;
+    min-height:50px!important;
+  }
+  #launch:not([aria-hidden="true"]) #launch-btn,
+  #launch:not([aria-hidden="true"]) .lb{
+    min-height:48px!important;
+    min-width:150px!important;
+    font-size:13px!important;
+    padding:12px 22px!important;
+  }
+  #hidV75LaunchFallback{
+    bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    font-size:11px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -7944,6 +8020,106 @@ window.HID_V74_EXACT_SAMPLE_MODE=true;
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V75 LAUNCH BUTTON FAILSAFE ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V75_LAUNCH_FAILSAFE__) return;
+window.__HID_V75_LAUNCH_FAILSAFE__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function isEntered(){
+  return document.body.classList.contains('hid-entered') || document.documentElement.classList.contains('hid-entered');
+}
+function callLaunch(ev){
+  try{ev&&ev.preventDefault&&ev.preventDefault();ev&&ev.stopPropagation&&ev.stopPropagation();}catch(e){}
+  if(typeof window.__HID_DIRECT_ENTER==='function') return window.__HID_DIRECT_ENTER(ev);
+  const btn=q('#launch-btn');
+  if(btn && btn!==ev?.target){
+    try{btn.click();return false;}catch(e){}
+  }
+  // Last-resort visual handoff if old launcher binding is missing.
+  try{
+    const launch=q('#launch');
+    const app=q('#app');
+    if(launch){launch.style.display='none';launch.style.pointerEvents='none';launch.setAttribute('aria-hidden','true')}
+    if(app){app.style.display='flex';app.style.visibility='visible';app.style.opacity='1';app.classList.add('active');app.removeAttribute('aria-hidden')}
+    document.documentElement.classList.add('hid-entered');
+    document.body.classList.add('hid-entered');
+  }catch(e){}
+  return false;
+}
+function ensureLaunchButton(){
+  if(isEntered())return;
+  const launch=q('#launch');
+  if(!launch || getComputedStyle(launch).display==='none')return;
+
+  let actions=q('.launch-actions',launch);
+  if(!actions){
+    actions=document.createElement('div');
+    actions.className='launch-actions';
+    const center=q('.lh-center',launch)||launch;
+    center.appendChild(actions);
+  }
+
+  let btn=q('#launch-btn',launch);
+  if(!btn){
+    btn=document.createElement('button');
+    btn.className='lb';
+    btn.id='launch-btn';
+    btn.type='button';
+    btn.textContent='▶ LAUNCH';
+    actions.appendChild(btn);
+  }
+
+  btn.style.display='inline-flex';
+  btn.style.visibility='visible';
+  btn.style.opacity='1';
+  btn.style.pointerEvents='auto';
+  btn.removeAttribute('hidden');
+  btn.removeAttribute('aria-hidden');
+  btn.disabled=false;
+  btn.onclick=callLaunch;
+  ['pointerup','touchend','click'].forEach(type=>{
+    if(!btn['__hidV75_'+type]){
+      btn['__hidV75_'+type]=true;
+      btn.addEventListener(type,callLaunch,{capture:true,passive:false});
+    }
+  });
+
+  let fb=q('#hidV75LaunchFallback');
+  if(!fb){
+    fb=document.createElement('button');
+    fb.id='hidV75LaunchFallback';
+    fb.type='button';
+    fb.textContent='▶ LAUNCH';
+    document.body.appendChild(fb);
+    ['pointerup','touchend','click'].forEach(type=>fb.addEventListener(type,callLaunch,{capture:true,passive:false}));
+  }
+
+  requestAnimationFrame(()=>{
+    if(isEntered())return;
+    const r=btn.getBoundingClientRect();
+    const visible=r.width>20 && r.height>20 && r.bottom>0 && r.top<innerHeight && getComputedStyle(btn).visibility!=='hidden' && getComputedStyle(btn).display!=='none';
+    fb.classList.toggle('show',!visible);
+  });
+}
+function init(){
+  ensureLaunchButton();
+  setTimeout(ensureLaunchButton,250);
+  setTimeout(ensureLaunchButton,900);
+  setTimeout(ensureLaunchButton,1800);
+}
+window.HID_V75_ENSURE_LAUNCH_BUTTON=ensureLaunchButton;
+window.addEventListener('load',init);
+document.addEventListener('DOMContentLoaded',init);
+window.addEventListener('resize',()=>setTimeout(ensureLaunchButton,80));
+window.addEventListener('orientationchange',()=>setTimeout(ensureLaunchButton,240));
+document.addEventListener('pointerdown',()=>setTimeout(ensureLaunchButton,50),true);
 })();
 </script>
 
