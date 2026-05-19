@@ -3236,6 +3236,137 @@ body.hid-v70-fast-buttons input[type=button]{
 }
 </style>
 
+
+<style id="hid-v71-clean-pad-sound-css">
+/* V71 cleanup: hide the V70 panel and replace it with a stable, non-snapping editor */
+#win-sampler #hidV70PadSoundPanel,
+#win-sound #hidV70PadSoundPanel{
+  display:none!important;
+}
+#hidV71PadSoundPanel{
+  margin:7px;
+  padding:9px;
+  border:1px solid rgba(0,255,213,.46);
+  background:linear-gradient(180deg,rgba(0,255,213,.075),rgba(0,0,0,.60));
+  border-radius:9px;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.50),0 0 16px rgba(0,255,213,.11);
+  font-family:'VT323',monospace;
+  contain:layout paint;
+}
+#hidV71PadSoundPanel .v71-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:7px;
+}
+#hidV71PadSoundPanel .v71-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:8px;
+  color:var(--neon);
+  text-shadow:0 0 5px var(--neon);
+  letter-spacing:.08em;
+  line-height:1.35;
+}
+#hidV71PadSoundPanel .v71-target{
+  color:var(--neon3);
+  border:1px solid rgba(255,230,0,.38);
+  background:rgba(255,230,0,.045);
+  padding:3px 6px;
+  border-radius:5px;
+  font-size:13px;
+  letter-spacing:.08em;
+}
+#hidV71PadSoundPanel .v71-note{
+  color:var(--dim);
+  font-size:13px;
+  line-height:1.24;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.28);
+  padding:6px;
+  border-radius:7px;
+  margin:5px 0 8px;
+}
+#hidV71PadSoundPanel .v71-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(180px,1fr));
+  gap:8px 10px;
+}
+#hidV71PadSoundPanel .v71-row{
+  display:grid;
+  grid-template-columns:74px 1fr 56px;
+  gap:6px;
+  align-items:center;
+  margin:4px 0;
+}
+#hidV71PadSoundPanel label{
+  font-size:12px;
+  color:var(--dim);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+#hidV71PadSoundPanel .v{
+  color:var(--neon3);
+  font-size:12px;
+  text-align:right;
+}
+#hidV71PadSoundPanel .v71-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+#hidV71PadSoundPanel button.on{
+  background:rgba(0,255,213,.12)!important;
+  border-color:rgba(0,255,213,.72)!important;
+  color:var(--neon)!important;
+}
+#hidV71PadSoundPanel input[type=range]{
+  width:100%!important;
+  min-width:0!important;
+}
+.spad.hid-v71-pad-target{
+  outline:2px solid var(--neon)!important;
+  outline-offset:-2px;
+  box-shadow:0 0 22px rgba(0,255,213,.74), inset 0 0 20px rgba(0,255,213,.16)!important;
+}
+#win-sampler .win-body{
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  contain:paint!important;
+}
+#win-sampler #pads-grid{
+  grid-template-columns:repeat(4,minmax(58px,1fr))!important;
+  transform:none!important;
+  transition:none!important;
+}
+#win-sampler .spad{
+  transform:none!important;
+}
+#piano, #chroma{
+  transform:none!important;
+  transition:none!important;
+}
+.wkey,.bkey,.chroma-key{
+  transition:filter .08s ease, box-shadow .08s ease!important;
+}
+#hidV71StatusBadge{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(0,255,213,.45);
+  color:var(--neon);
+  background:rgba(0,0,0,.38);
+  border-radius:5px;
+}
+@media(max-width:780px){
+  #hidV71PadSoundPanel .v71-grid{grid-template-columns:1fr!important}
+  #win-sampler #pads-grid{grid-template-columns:repeat(4,minmax(48px,1fr))!important;gap:6px!important}
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -18717,6 +18848,530 @@ window.HID_V70_INSTALL_PAD_SOUND_PANELS=installPanels;
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V71 CLEAN SELECTED-PAD SOUND ENGINE: NO FORCED FADE/FILTER, STABLE WINDOWS ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V71_CLEAN_PAD_SOUND__) return;
+window.__HID_V71_CLEAN_PAD_SOUND__=true;
+
+const cleanSampleNodes = new Map();
+let selectedPadIdx = -1;
+let lastPianoSig = '';
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function C(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.max(a,Math.min(b,v)):a}
+function toast71(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch(e){} console.log('[V71]',msg)}
+function ensureAudio(){
+  try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function'&&!C())initAudio()}catch(e){}
+  const c=C(); try{if(c&&c.state==='suspended')c.resume()}catch(e){}
+  return c;
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function padLoaded(p){
+  return !!(p&&(p.loaded||p.kind||p.type||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.audioPath||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label||p.fileName));
+}
+function isSamplePad(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.audioPath));
+}
+function snapshotPatch(){
+  const S=getS();
+  try{if(typeof window.snapshotPatch==='function')return window.snapshotPatch()}catch(e){}
+  try{if(typeof snapshotPatch==='function')return snapshotPatch()}catch(e){}
+  return {bank:S?.bank,patchIdx:S?.patchIdx,patch:null,amp:{...(S?.amp||{})},filt:{...(S?.filt||{})},mod:{...(S?.mod||{})}};
+}
+function ensurePad(p,idx=currentPadIdx()){
+  if(!p)return null;
+  if(p.volume==null)p.volume=1;
+  if(p.fxSend==null)p.fxSend=1;
+  if(p.pan==null)p.pan=0;
+  if(p.transpose==null)p.transpose=0;
+  if(p.octaveShift==null)p.octaveShift=0;
+  if(p.wheelEnabled==null)p.wheelEnabled=true;
+  if(p.pitchBendEnabled==null)p.pitchBendEnabled=p.wheelEnabled!==false;
+  p.v71Sound=p.v71Sound||{};
+  const s=p.v71Sound;
+  if(s.attack==null)s.attack=0;          // default: NO forced fade
+  if(s.release==null)s.release=.06;
+  if(s.cutoff==null)s.cutoff=20000;      // default: neutral / open
+  if(s.resonance==null)s.resonance=.7;
+  if(s.drive==null)s.drive=0;
+  if(s.lfoRate==null)s.lfoRate=0;
+  if(s.lfoDepth==null)s.lfoDepth=0;
+  if(s.glide==null)s.glide=0;
+  if(!p.patchSnapshot)p.patchSnapshot=snapshotPatch();
+  p.patchSnapshot.amp=p.patchSnapshot.amp||{};
+  p.patchSnapshot.filt=p.patchSnapshot.filt||{};
+  p.patchSnapshot.mod=p.patchSnapshot.mod||{};
+  p.patchSnapshot.amp.a=s.attack;
+  p.patchSnapshot.amp.r=s.release;
+  p.patchSnapshot.filt.co=s.cutoff;
+  p.patchSnapshot.filt.q=s.resonance;
+  p.patchSnapshot.mod.drive=s.drive;
+  p.patchSnapshot.mod.lfoR=s.lfoRate;
+  p.patchSnapshot.mod.lfoD=s.lfoDepth;
+  p.patchSnapshot.mod.glide=s.glide;
+  p.patchSnapshot.mod.pan=p.pan;
+  p.patchSnapshot.mod.vol=p.volume;
+  return p;
+}
+function currentPadIdx(){
+  const S=getS(), pads=getPads();
+  const choices=[selectedPadIdx,S?.padEditingIdx,S?.padCycleIdx,S?.padPitchTargetIdx];
+  for(const raw of choices){
+    const idx=Number(raw);
+    if(Number.isInteger(idx)&&idx>=0&&idx<pads.length&&padLoaded(pads[idx]))return idx;
+  }
+  return pads.findIndex(padLoaded);
+}
+function selectPad(idx,quiet=false){
+  const S=getS(), pads=getPads();
+  idx=Number(idx);
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length||!padLoaded(pads[idx]))return;
+  selectedPadIdx=idx;
+  S.padEditingIdx=idx;
+  S.padCycleIdx=idx;
+  S.padControlScope='pad';
+  try{S.transposeTarget='pad'}catch(e){}
+  try{if(typeof HID_V64_SET_PITCH_TARGET==='function')HID_V64_SET_PITCH_TARGET(idx)}catch(e){}
+  ensurePad(pads[idx],idx);
+  markTarget();
+  if(!quiet)toast71('Selected Pad '+(idx+1)+' for pad sound design.');
+  installPanels(false);
+  applyPadSound(idx);
+}
+function db(v){return (Number(v)||0).toFixed(1)+'dB'}
+function pct(v){return Math.round((Number(v)||0)*100)+'%'}
+function hz(v){v=Number(v)||0;return v<1000?Math.round(v)+'Hz':(v/1000).toFixed(1)+'k'}
+function sec(v){return (Number(v)||0).toFixed(3)+'s'}
+function simple(v){return (Number(v)||0).toFixed(2)}
+function semi(v){v=Math.round(Number(v)||0);return (v>0?'+':'')+v}
+function row(id,label,min,max,step,value,fmt){
+  const f=fmt==='pct'?pct:fmt==='hz'?hz:fmt==='sec'?sec:fmt==='semi'?semi:fmt==='simple'?simple:db;
+  return `<div class="v71-row"><label>${label}</label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"><span class="v" id="${id}v">${f(value)}</span></div>`;
+}
+function curve(amount){
+  amount=clamp(amount,0,1);
+  const n=2048, out=new Float32Array(n);
+  if(amount<=.001){
+    for(let i=0;i<n;i++)out[i]=i*2/(n-1)-1;
+    return out;
+  }
+  const k=1+amount*70;
+  for(let i=0;i<n;i++){const x=i*2/(n-1)-1;out[i]=((1+k)*x)/(1+k*Math.abs(x));}
+  return out;
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  try{if(typeof HID_V45_HYDRATE_PAD==='function')return await HID_V45_HYDRATE_PAD(p)}catch(e){}
+  try{if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}}catch(e){}
+  return p.buffer||p.audioBuffer||p.sampleBuffer||null;
+}
+function sampleRate(p){
+  const S=getS();
+  const bend=(p.wheelEnabled!==false&&p.pitchBendEnabled!==false)?(Number(S?.modWheel?.active)||0):0;
+  return Math.pow(2,((Number(p.transpose)||0)+(Number(p.octaveShift)||0)*12+bend)/12);
+}
+function nodeSet(idx){
+  if(!cleanSampleNodes.has(idx))cleanSampleNodes.set(idx,new Set());
+  return cleanSampleNodes.get(idx);
+}
+function stopCleanSamplePad(idx){
+  const S=getS();
+  const set=nodeSet(idx);
+  for(const node of Array.from(set)){
+    try{node.src.stop(0)}catch(e){}
+    try{node.src.disconnect()}catch(e){}
+    try{node.g?.disconnect()}catch(e){}
+    try{node.filter?.disconnect()}catch(e){}
+    try{node.drive?.disconnect()}catch(e){}
+    try{node.pan?.disconnect()}catch(e){}
+    try{node.padGain?.disconnect()}catch(e){}
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+    set.delete(node);
+  }
+}
+function stopOtherCleanSamples(idx){
+  for(const k of Array.from(cleanSampleNodes.keys()))if(k!==idx)stopCleanSamplePad(k);
+}
+function applyNodeParams(node,p){
+  const c=C(); if(!c||!node||!p)return;
+  ensurePad(p,node.padIdx);
+  const s=p.v71Sound||{}, now=c.currentTime;
+  try{
+    if(node.filter){
+      node.filter.frequency.setTargetAtTime(clamp(s.cutoff,60,20000),now,.018);
+      node.filter.Q.setTargetAtTime(clamp(s.resonance,.1,18),now,.018);
+    }
+    if(node.drive)node.drive.curve=curve(s.drive);
+    if(node.pan)node.pan.pan.setTargetAtTime(clamp(p.pan||0,-1,1),now,.018);
+    if(node.padGain)node.padGain.gain.setTargetAtTime(clamp(p.volume??1,0,2),now,.018);
+    if(node.fxSend)node.fxSend.gain.setTargetAtTime(clamp(p.fxSend??1,0,1),now,.018);
+    if(node.src)node.src.playbackRate.setTargetAtTime(sampleRate(p),now,.02);
+  }catch(e){}
+}
+function playCleanSamplePad(idx,p,buffer){
+  const S=getS(), c=ensureAudio(); if(!S||!c||!buffer)return null;
+  ensurePad(p,idx);
+  const s=p.v71Sound||{};
+  const src=c.createBufferSource(); src.buffer=buffer;
+  try{src.playbackRate.setValueAtTime(sampleRate(p),c.currentTime)}catch(e){src.playbackRate.value=sampleRate(p)}
+  const g=c.createGain();
+  const filter=c.createBiquadFilter(); filter.type='lowpass';
+  const drive=c.createWaveShaper(); drive.oversample='2x';
+  const pan=c.createStereoPanner?c.createStereoPanner():null;
+  const padGain=c.createGain();
+  const fxSend=c.createGain();
+  const now=c.currentTime;
+  const attack=clamp(s.attack||0,0,.25);
+  if(attack>0){
+    g.gain.setValueAtTime(0,now);
+    g.gain.linearRampToValueAtTime(1,now+attack);
+  }else{
+    g.gain.setValueAtTime(1,now); // no forced fade
+  }
+  padGain.gain.value=clamp(p.volume??1,0,2);
+  fxSend.gain.value=clamp(p.fxSend??1,0,1);
+  filter.frequency.value=clamp(s.cutoff??20000,60,20000);
+  filter.Q.value=clamp(s.resonance??.7,.1,18);
+  drive.curve=curve(s.drive||0);
+  try{
+    src.connect(g).connect(filter).connect(drive);
+    if(pan){drive.connect(pan);pan.connect(padGain)}else drive.connect(padGain);
+    // One clean output path to the app bus to avoid duplicate gain/clipping.
+    padGain.connect(fxSend).connect(fxIn);
+  }catch(e){
+    try{src.connect(g).connect(fxIn)}catch(_){}
+  }
+  const node={src,g,filter,drive,pan,padGain,fxSend,padCfg:p,padIdx:idx,baseRate:1,wheelEnabled:p.wheelEnabled!==false&&p.pitchBendEnabled!==false,__hidV71Clean:true,__hidV70Declick:true,__hidV70SoundChain:{blocked:true}};
+  S.sampler=S.sampler||{}; S.sampler.activeSources=S.sampler.activeSources||new Set();
+  S.sampler.activeSources.add(node);
+  nodeSet(idx).add(node);
+  src.onended=function(){
+    try{S.sampler.activeSources.delete(node)}catch(e){}
+    nodeSet(idx).delete(node);
+    try{src.disconnect()}catch(e){}
+    try{g.disconnect()}catch(e){}
+    try{filter.disconnect()}catch(e){}
+    try{drive.disconnect()}catch(e){}
+    try{pan?.disconnect()}catch(e){}
+    try{padGain.disconnect()}catch(e){}
+    try{fxSend.disconnect()}catch(e){}
+  };
+  src.start(now);
+  applyNodeParams(node,p);
+  return src;
+}
+function padIsActive(idx){
+  if(nodeSet(idx).size)return true;
+  const S=getS();
+  try{return !!(S?.padPlayingVoices?.has?.(idx)||S?.padPlayingSequences?.has?.(idx))}catch(e){return false}
+}
+async function triggerPad(idx){
+  const S=getS(), pads=getPads(); idx=Number(idx);
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return false;
+  const p=pads[idx];
+  if(!p)return false;
+  selectPad(idx,true);
+  if(!isSamplePad(p))return false;
+  const mode=S.padPlayMode||'stack';
+  if(mode==='toggle'&&padIsActive(idx)){stopCleanSamplePad(idx);return true;}
+  if(mode==='solo')stopOtherCleanSamples(idx);
+  stopCleanSamplePad(idx);
+  const b=await hydratePad(p);
+  if(!b){toast71('Pad audio missing.');return true;}
+  p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;p.kind=p.kind||'sample';p.type=p.type||'sample';
+  playCleanSamplePad(idx,p,b);
+  return true;
+}
+function patchTriggers(){
+  if(window.__HID_V71_TRIGGERS_PATCHED__)return;
+  window.__HID_V71_TRIGGERS_PATCHED__=true;
+  const names=['HID_V65_TRIGGER_PAD','HID_V63_TRIGGER_PAD','HID_V61_TRIGGER_PAD','HID_V60_TRIGGER_PAD','HID_V59_TRIGGER_PAD','padTrigger'];
+  for(const name of names){
+    try{
+      const old=window[name]||((name==='padTrigger'&&typeof padTrigger==='function')?padTrigger:null);
+      if(typeof old==='function'&&!old.__hidV71Wrapped){
+        const wrapped=function(idx,...rest){
+          const p=getPads()[Number(idx)];
+          if(isSamplePad(p))return triggerPad(idx);
+          selectPad(idx,true);
+          return old.call(this,idx,...rest);
+        };
+        wrapped.__hidV71Wrapped=true;
+        window[name]=wrapped;
+        if(name==='padTrigger')try{padTrigger=wrapped}catch(e){}
+      }
+    }catch(e){}
+  }
+  const oldStop=window.padStop||((typeof padStop==='function')?padStop:null);
+  if(typeof oldStop==='function'&&!oldStop.__hidV71Wrapped){
+    const wrapped=function(idx,...rest){
+      stopCleanSamplePad(Number(idx));
+      return oldStop.call(this,idx,...rest);
+    };
+    wrapped.__hidV71Wrapped=true;
+    try{window.padStop=wrapped;padStop=wrapped}catch(e){window.padStop=wrapped}
+  }
+}
+function applyPadSound(idx=currentPadIdx()){
+  const p=ensurePad(getPads()[idx],idx); if(!p)return;
+  for(const node of Array.from(nodeSet(idx)))applyNodeParams(node,p);
+  const S=getS();
+  try{
+    for(const node of (S?.sampler?.activeSources||[])){
+      if(node.padIdx===idx||node.padCfg===p){
+        node.__hidV70Declick=true;
+        if(!node.__hidV71Clean)node.__hidV70SoundChain={blocked:true};
+      }
+    }
+  }catch(e){}
+  try{
+    const vs=S?.padPlayingVoices?.get?.(idx);
+    if(vs)for(const v of (vs.voices||[]))applySynthVoiceParams(v,p);
+    const seq=S?.padPlayingSequences?.get?.(idx);
+    if(seq)for(const v of (seq.allVoices||[]))applySynthVoiceParams(v,p);
+  }catch(e){}
+}
+function applySynthVoiceParams(v,p){
+  const c=C(); if(!c||!v||!p)return;
+  ensurePad(p);
+  const s=p.v71Sound||{};
+  try{
+    if(v.filt){
+      v.filt.frequency.setTargetAtTime(clamp(s.cutoff,60,18000),c.currentTime,.018);
+      v.filt.Q.setTargetAtTime(clamp(s.resonance,.1,18),c.currentTime,.018);
+    }
+    if(v.pan)v.pan.pan.setTargetAtTime(clamp(p.pan||0,-1,1),c.currentTime,.018);
+    if(v.outNode)v.outNode.gain.setTargetAtTime(clamp(p.volume??1,0,2),c.currentTime,.018);
+  }catch(e){}
+}
+function neutralizeV70ActiveNodes(){
+  const S=getS(); if(!S)return;
+  try{
+    for(const node of (S.sampler?.activeSources||[])){
+      if(!node.__hidV71Clean){
+        node.__hidV70Declick=true;
+        node.__hidV70SoundChain={blocked:true};
+      }
+    }
+  }catch(e){}
+}
+function panelHTML(){
+  const idx=currentPadIdx(), p=idx>=0?ensurePad(getPads()[idx],idx):null;
+  if(!p)return `<div id="hidV71PadSoundPanel"><div class="v71-head"><div class="v71-title">SELECTED PAD SOUND DESIGN</div></div><div class="v71-note">Select a pad first. This panel edits only the selected sampler pad.</div></div>`;
+  const s=p.v71Sound;
+  const nm=(p.name||p.label||p.fileName||p.kind||'PAD').toString().slice(0,32);
+  return `<div id="hidV71PadSoundPanel">
+    <div class="v71-head"><div class="v71-title">SELECTED PAD SOUND DESIGN · CLEAN ENGINE</div><span class="v71-target">PAD ${idx+1} · ${nm}</span></div>
+    <div class="v71-note">Default uploaded audio now plays clean with no forced fade/filter. Raise ATTACK only on the pads you want softened. Cutoff, resonance, drive, volume, FX send, and transpose apply to this selected pad.</div>
+    <div class="v71-grid">
+      ${row('v71Attack','ATTACK',0,.25,.001,s.attack,'sec')}
+      ${row('v71Release','RELEASE',0,2,.005,s.release,'sec')}
+      ${row('v71Cutoff','CUTOFF',60,20000,1,s.cutoff,'hz')}
+      ${row('v71Reso','RESO',.1,18,.1,s.resonance,'simple')}
+      ${row('v71Drive','DRIVE',0,1,.01,s.drive,'pct')}
+      ${row('v71LfoRate','LFO RT',0,20,.1,s.lfoRate,'simple')}
+      ${row('v71LfoDepth','LFO DP',0,1,.01,s.lfoDepth,'pct')}
+      ${row('v71Glide','GLIDE',0,1,.01,s.glide,'pct')}
+      ${row('v71Vol','PAD VOL',0,2,.01,p.volume,'pct')}
+      ${row('v71FX','FX SEND',0,1,.01,p.fxSend,'pct')}
+      ${row('v71Trans','TRANS',-48,48,1,p.transpose,'semi')}
+    </div>
+    <div class="v71-actions">
+      <button class="btn tiny on" id="v71TargetPad">SELECTED PAD TARGET</button>
+      <button class="btn tiny gold" id="v71CopyLive">COPY LIVE PATCH TO PAD</button>
+      <button class="btn tiny warn" id="v71ResetPadSound">RESET PAD SOUND</button>
+    </div>
+  </div>`;
+}
+function installPanelInto(body){
+  if(!body)return;
+  let panel=q('#hidV71PadSoundPanel',body);
+  if(!panel){
+    const h=document.createElement('div'); h.innerHTML=panelHTML();
+    body.insertBefore(h.firstElementChild,body.firstChild);
+  }else{
+    const active=document.activeElement;
+    if(!panel.contains(active))panel.outerHTML=panelHTML();
+  }
+  bindPanel(body);
+}
+function installPanels(force=false){
+  installPanelInto(q('#win-sampler .win-body'));
+  installPanelInto(q('#win-sound .win-body'));
+  markTarget();
+}
+function bind(id,key,fmt){
+  qa('#'+id).forEach(el=>{
+    if(el.__hidV71Bound)return;
+    el.__hidV71Bound=true;
+    el.addEventListener('input',e=>{
+      setParam(key,Number(e.target.value));
+      const out=e.target.parentElement.querySelector('.v');
+      if(out)out.textContent=fmt==='pct'?pct(e.target.value):fmt==='hz'?hz(e.target.value):fmt==='sec'?sec(e.target.value):fmt==='semi'?semi(e.target.value):fmt==='simple'?simple(e.target.value):db(e.target.value);
+    },true);
+  });
+}
+function bindPanel(root=document){
+  bind('v71Attack','attack','sec');
+  bind('v71Release','release','sec');
+  bind('v71Cutoff','cutoff','hz');
+  bind('v71Reso','resonance','simple');
+  bind('v71Drive','drive','pct');
+  bind('v71LfoRate','lfoRate','simple');
+  bind('v71LfoDepth','lfoDepth','pct');
+  bind('v71Glide','glide','pct');
+  bind('v71Vol','volume','pct');
+  bind('v71FX','fxSend','pct');
+  bind('v71Trans','transpose','semi');
+  qa('#v71TargetPad').forEach(b=>b.onclick=e=>{e.preventDefault();selectPad(currentPadIdx());});
+  qa('#v71CopyLive').forEach(b=>b.onclick=e=>{e.preventDefault();const p=getPads()[currentPadIdx()];if(p){p.patchSnapshot=snapshotPatch();ensurePad(p,currentPadIdx());applyPadSound(currentPadIdx());toast71('Live patch copied to selected pad.');}});
+  qa('#v71ResetPadSound').forEach(b=>b.onclick=e=>{e.preventDefault();const p=getPads()[currentPadIdx()];if(p){p.v71Sound={attack:0,release:.06,cutoff:20000,resonance:.7,drive:0,lfoRate:0,lfoDepth:0,glide:0};p.volume=1;p.fxSend=1;ensurePad(p,currentPadIdx());applyPadSound(currentPadIdx());installPanels(true);}});
+}
+function setParam(key,val){
+  const idx=currentPadIdx(), p=ensurePad(getPads()[idx],idx); if(!p)return;
+  const s=p.v71Sound;
+  if(key==='attack')s.attack=clamp(val,0,.25);
+  if(key==='release')s.release=clamp(val,0,2);
+  if(key==='cutoff')s.cutoff=clamp(val,60,20000);
+  if(key==='resonance')s.resonance=clamp(val,.1,18);
+  if(key==='drive')s.drive=clamp(val,0,1);
+  if(key==='lfoRate')s.lfoRate=clamp(val,0,20);
+  if(key==='lfoDepth')s.lfoDepth=clamp(val,0,1);
+  if(key==='glide')s.glide=clamp(val,0,1);
+  if(key==='volume')p.volume=clamp(val,0,2);
+  if(key==='fxSend')p.fxSend=clamp(val,0,1);
+  if(key==='transpose')p.transpose=clamp(Math.round(val),-48,48);
+  ensurePad(p,idx);
+  applyPadSound(idx);
+}
+function markTarget(){
+  qa('.spad.hid-v71-pad-target').forEach(e=>e.classList.remove('hid-v71-pad-target'));
+  const idx=currentPadIdx();
+  const el=qa('#pads-grid .spad')[idx]||qa('.spad')[idx];
+  if(el)el.classList.add('hid-v71-pad-target');
+}
+function stabilizeSamplerOnce(){
+  const grid=q('#win-sampler #pads-grid');
+  if(grid){
+    grid.style.gridTemplateColumns='repeat(4,minmax(58px,1fr))';
+    grid.style.transform='none';
+  }
+  qa('#win-sampler #hidV70PadSoundPanel,#win-sampler #hidV62PadEditor').forEach(e=>e.style.display='none');
+}
+function patchBuilders(){
+  if(window.__HID_V71_BUILDERS_PATCHED__)return;
+  window.__HID_V71_BUILDERS_PATCHED__=true;
+  const oldPads=window.buildPadsWindow||((typeof buildPadsWindow==='function')?buildPadsWindow:null);
+  if(typeof oldPads==='function'){
+    const wrapped=function(){
+      const out=oldPads.apply(this,arguments);
+      setTimeout(()=>{stabilizeSamplerOnce();installPanels(false);},0);
+      return out;
+    };
+    try{window.buildPadsWindow=wrapped;buildPadsWindow=wrapped}catch(e){window.buildPadsWindow=wrapped}
+  }
+  const oldSound=window.buildSoundDesignWindow||((typeof buildSoundDesignWindow==='function')?buildSoundDesignWindow:null);
+  if(typeof oldSound==='function'){
+    const wrapped=function(){
+      const out=oldSound.apply(this,arguments);
+      setTimeout(()=>{patchSoundButtons();installPanelInto(q('#win-sound .win-body'));},0);
+      return out;
+    };
+    try{window.buildSoundDesignWindow=wrapped;buildSoundDesignWindow=wrapped}catch(e){window.buildSoundDesignWindow=wrapped}
+  }
+}
+function patchSoundButtons(){
+  qa('#sd-pad').forEach(b=>{
+    b.disabled=false;b.classList.add('on');
+    b.onclick=e=>{e.preventDefault();e.stopPropagation();selectPad(currentPadIdx(),true);const S=getS();if(S)S.padControlScope='pad';toast71('Sound Design target: selected pad.');};
+  });
+  qa('#sd-global').forEach(b=>b.classList.remove('on'));
+}
+function installSelection(){
+  if(window.__HID_V71_SELECTION__)return;
+  window.__HID_V71_SELECTION__=true;
+  window.addEventListener('pointerdown',e=>{
+    const pad=e.target.closest?.('#pads-grid .spad,.spad');
+    if(!pad||e.target.closest('button,input,select,textarea'))return;
+    const idx=qa('#pads-grid .spad').indexOf(pad);
+    if(idx>=0)selectPad(idx,true);
+  },true);
+}
+function patchPianoBuild(){
+  if(window.__HID_V71_PIANO_PATCHED__)return;
+  const old=window.buildPiano||((typeof buildPiano==='function')?buildPiano:null);
+  if(typeof old==='function'){
+    const wrapped=function(){
+      let sig='';
+      try{sig=[PIANO_LO,PIANO_HI,getS()?.octave,getS()?.transpose,q('#piano')?.clientWidth].join(':')}catch(e){}
+      if(sig===lastPianoSig && q('#piano')?.children?.length)return;
+      lastPianoSig=sig;
+      return old.apply(this,arguments);
+    };
+    window.__HID_V71_PIANO_PATCHED__=true;
+    try{window.buildPiano=wrapped;buildPiano=wrapped}catch(e){window.buildPiano=wrapped}
+  }
+}
+function installButtonsFix(){
+  if(window.__HID_V71_BUTTON_FIX__)return;
+  window.__HID_V71_BUTTON_FIX__=true;
+  document.body.style.touchAction='manipulation';
+  document.addEventListener('pointerup',e=>{
+    const btn=e.target.closest?.('button,.btn,.launcher-btn,input[type=button]');
+    if(!btn||btn.disabled||btn.closest('#pads-grid .spad'))return;
+    btn.classList.add('hid-v71-tapped');
+    setTimeout(()=>btn.classList.remove('hid-v71-tapped'),120);
+  },true);
+}
+function installBadge(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV71StatusBadge')){
+    const b=document.createElement('span');
+    b.id='hidV71StatusBadge';
+    b.textContent='PAD SOUND: CLEAN';
+    top.appendChild(b);
+  }
+}
+function init(){
+  neutralizeV70ActiveNodes();
+  patchBuilders();
+  patchTriggers();
+  installSelection();
+  patchPianoBuild();
+  installButtonsFix();
+  installBadge();
+  stabilizeSamplerOnce();
+  installPanels(false);
+  patchSoundButtons();
+}
+window.HID_V71_SELECT_PAD=selectPad;
+window.HID_V71_TRIGGER_PAD=triggerPad;
+window.HID_V71_APPLY_PAD_SOUND=applyPadSound;
+window.HID_V71_NEUTRALIZE_V70=neutralizeV70ActiveNodes;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+setInterval(()=>{neutralizeV70ActiveNodes();},18);
+setInterval(()=>{markTarget();},300);
 })();
 </script>
 
