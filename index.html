@@ -2699,6 +2699,255 @@ body.piano-kbd-disabled #hidV62KbdBadge{
 }
 </style>
 
+
+<style id="hid-v67-iphone-safari-layout-css">
+/* ===== V67 IPHONE SAFARI RESPONSIVE LAYOUT FIX ===== */
+:root{
+  --hid-vv-h:100dvh;
+  --hid-safe-top:env(safe-area-inset-top,0px);
+  --hid-safe-bottom:env(safe-area-inset-bottom,0px);
+  --hid-safe-left:env(safe-area-inset-left,0px);
+  --hid-safe-right:env(safe-area-inset-right,0px);
+}
+body.hid-v67-iphone{
+  overflow:hidden!important;
+  height:var(--hid-vv-h)!important;
+  width:100vw!important;
+  position:fixed!important;
+  inset:0!important;
+}
+body.hid-v67-iphone #app{
+  height:var(--hid-vv-h)!important;
+  width:100vw!important;
+  inset:0!important;
+  overflow:hidden!important;
+}
+body.hid-v67-iphone .topbar{
+  padding-top:calc(6px + var(--hid-safe-top))!important;
+  padding-left:calc(6px + var(--hid-safe-left))!important;
+  padding-right:calc(6px + var(--hid-safe-right))!important;
+  gap:4px!important;
+  max-height:min(28vh,132px)!important;
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  align-items:flex-start!important;
+  align-content:flex-start!important;
+  overscroll-behavior:contain!important;
+}
+body.hid-v67-iphone .topbar .brand{
+  flex:1 0 100%!important;
+  font-size:8px!important;
+  line-height:1.35!important;
+  padding:0 0 4px!important;
+  margin:0!important;
+  border-right:0!important;
+  border-bottom:1px solid rgba(0,255,213,.22)!important;
+}
+body.hid-v67-iphone .topbar .btn,
+body.hid-v67-iphone .topbar .kill-btn,
+body.hid-v67-iphone .topbar .launcher-btn,
+body.hid-v67-iphone .topbar button,
+body.hid-v67-iphone .topbar span[id^="hidV"]{
+  font-size:10px!important;
+  padding:3px 5px!important;
+  min-height:26px!important;
+  max-width:46vw!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  letter-spacing:.04em!important;
+}
+body.hid-v67-iphone .topbar .field{
+  padding:2px 5px!important;
+  gap:4px!important;
+  max-width:46vw!important;
+  min-height:26px!important;
+}
+body.hid-v67-iphone .topbar .field label{font-size:10px!important}
+body.hid-v67-iphone .topbar input[type=range]{width:72px!important;max-width:28vw!important}
+body.hid-v67-iphone .topbar select{
+  min-width:72px!important;
+  max-width:42vw!important;
+  font-size:11px!important;
+}
+body.hid-v67-iphone .desktop{
+  min-height:112px!important;
+  overflow:hidden!important;
+  touch-action:none!important;
+}
+body.hid-v67-iphone .desktop::before{background-size:24px 24px,72px 72px,72px 72px!important;opacity:.55!important}
+body.hid-v67-iphone .window{
+  min-width:0!important;
+  min-height:96px!important;
+  max-width:calc(100vw - 14px - var(--hid-safe-left) - var(--hid-safe-right))!important;
+  max-height:calc(var(--hid-v67-desktop-h, 48vh) - 10px)!important;
+  border-radius:8px!important;
+  backdrop-filter:blur(4px)!important;
+  -webkit-backdrop-filter:blur(4px)!important;
+}
+body.hid-v67-iphone .window:not(.hidden){
+  display:flex!important;
+}
+body.hid-v67-iphone .win-title{
+  min-height:34px!important;
+  padding:7px 8px!important;
+  gap:6px!important;
+  position:relative!important;
+  z-index:5!important;
+  touch-action:none!important;
+}
+body.hid-v67-iphone .win-title-text{
+  font-size:7px!important;
+  line-height:1.35!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  max-width:calc(100vw - 104px)!important;
+}
+body.hid-v67-iphone .win-actions{
+  gap:5px!important;
+  margin-left:auto!important;
+}
+body.hid-v67-iphone .win-btn{
+  min-width:30px!important;
+  min-height:27px!important;
+  font-size:14px!important;
+  padding:2px 6px!important;
+}
+body.hid-v67-iphone .win-body{
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-x pan-y!important;
+  padding:7px!important;
+  min-height:0!important;
+  overscroll-behavior:contain!important;
+}
+body.hid-v67-iphone .win-body::after{opacity:.22!important}
+body.hid-v67-iphone .win-resize{
+  width:32px!important;
+  height:32px!important;
+  right:0!important;
+  bottom:0!important;
+  opacity:.85!important;
+  touch-action:none!important;
+}
+body.hid-v67-iphone .btn,
+body.hid-v67-iphone .launcher-btn{
+  font-size:12px!important;
+  padding:5px 8px!important;
+}
+body.hid-v67-iphone .btn.tiny{
+  font-size:11px!important;
+  padding:4px 6px!important;
+}
+body.hid-v67-iphone .field{
+  min-width:0!important;
+}
+body.hid-v67-iphone .field input[type=range],
+body.hid-v67-iphone input[type=range]{
+  max-width:100%!important;
+}
+body.hid-v67-iphone .piano-bar{
+  padding-bottom:var(--hid-safe-bottom)!important;
+  max-height:46vh!important;
+  overflow:hidden!important;
+}
+body.hid-v67-iphone .pb-row1{
+  padding:4px 6px!important;
+  gap:4px!important;
+  max-height:74px!important;
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+body.hid-v67-iphone .pb-row1 .field{
+  padding:2px 5px!important;
+}
+body.hid-v67-iphone .pb-row1 .field select{
+  min-width:88px!important;
+  max-width:46vw!important;
+  font-size:11px!important;
+}
+body.hid-v67-iphone .patch-arrow{
+  width:24px!important;
+  min-width:24px!important;
+}
+body.hid-v67-iphone .pb-row2{
+  padding:4px 6px!important;
+  gap:4px!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-width:none!important;
+}
+body.hid-v67-iphone .pb-row2::-webkit-scrollbar{display:none!important}
+body.hid-v67-iphone .launcher-btn{
+  flex:0 0 auto!important;
+  font-size:11px!important;
+  padding:5px 8px!important;
+}
+body.hid-v67-iphone .piano-controls{
+  padding:4px 6px!important;
+  gap:4px!important;
+  max-height:68px!important;
+  overflow:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+body.hid-v67-iphone .piano-controls .lbl{
+  font-size:10px!important;
+}
+body.hid-v67-iphone .piano-wrap{
+  min-height:104px!important;
+  height:clamp(104px,22vh,150px)!important;
+  flex:0 0 clamp(104px,22vh,150px)!important;
+}
+body.hid-v67-iphone .wkey-sc,
+body.hid-v67-iphone .bkey-sc{
+  font-size:9px!important;
+}
+body.hid-v67-iphone .wkey-nm,
+body.hid-v67-iphone .bkey-nm{
+  font-size:8px!important;
+}
+body.hid-v67-iphone .wkey{
+  padding-bottom:4px!important;
+}
+body.hid-v67-iphone .bkey{
+  height:58%!important;
+  padding-bottom:3px!important;
+}
+body.hid-v67-iphone #hidV65ShortcutGuide,
+body.hid-v67-iphone #hidV51Pair,
+body.hid-v67-iphone #hidV50Pair{
+  inset:calc(8px + var(--hid-safe-top)) calc(7px + var(--hid-safe-right)) calc(8px + var(--hid-safe-bottom)) calc(7px + var(--hid-safe-left))!important;
+  max-width:none!important;
+  max-height:none!important;
+  width:auto!important;
+  height:auto!important;
+}
+body.hid-v67-iphone #hidV65ShortcutGuide .v65-body,
+body.hid-v67-iphone .hv51-grid,
+body.hid-v67-iphone .hv50-grid,
+body.hid-v67-iphone .hv55-grid,
+body.hid-v67-iphone #hidV52RemotePerformance .hv52-row{
+  grid-template-columns:1fr!important;
+}
+body.hid-v67-iphone textarea,
+body.hid-v67-iphone input,
+body.hid-v67-iphone select{
+  font-size:16px!important; /* prevents iPhone Safari zoom on focus */
+}
+body.hid-v67-iphone .spad{
+  min-height:64px!important;
+}
+body.hid-v67-iphone #pads-grid{
+  gap:6px!important;
+}
+body.hid-v67-iphone #hidV62PadEditor .v62-grid,
+body.hid-v67-iphone #hidV54ScopeMixer .v54-grid,
+body.hid-v67-iphone #hidV55RemoteMixer .hv55-grid{
+  grid-template-columns:1fr!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -16794,6 +17043,199 @@ window.HID_V66_PROTECT_ACTIVE_SAMPLES=protectActiveSamples;
 window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,80),true);
+})();
+</script>
+
+
+<!-- ===== HID V67 IPHONE SAFARI WINDOW + UI LAYOUT MANAGER ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V67_IPHONE_LAYOUT__) return;
+window.__HID_V67_IPHONE_LAYOUT__=true;
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function isiPhoneLike(){
+  const ua=navigator.userAgent||'';
+  const ios=/iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1&&Math.min(screen.width,screen.height)<=480);
+  return ios || (window.innerWidth<=480 && navigator.maxTouchPoints>0);
+}
+function vh(){
+  return (window.visualViewport&&window.visualViewport.height)||window.innerHeight||document.documentElement.clientHeight||667;
+}
+function vw(){
+  return (window.visualViewport&&window.visualViewport.width)||window.innerWidth||document.documentElement.clientWidth||375;
+}
+function desktopRect(){
+  const d=q('#desktop');
+  return d?d.getBoundingClientRect():{left:0,top:0,width:vw(),height:vh()*0.48};
+}
+function applyClass(){
+  document.body.classList.toggle('hid-v67-iphone',isiPhoneLike());
+  document.documentElement.style.setProperty('--hid-vv-h',vh()+'px');
+  const dr=desktopRect();
+  document.documentElement.style.setProperty('--hid-v67-desktop-h',Math.max(112,dr.height)+'px');
+}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+function clampWindow(win,preferTop=false){
+  if(!isiPhoneLike()||!win||win.classList.contains('hidden'))return;
+  const d=q('#desktop');
+  if(!d)return;
+  const dr=d.getBoundingClientRect();
+  const margin=7;
+  const maxW=Math.max(260,dr.width-margin*2);
+  const maxH=Math.max(118,dr.height-margin*2);
+  let w=Math.min(win.offsetWidth||maxW,maxW);
+  let h=Math.min(win.offsetHeight||maxH,maxH);
+  if(!Number.isFinite(w)||w<250)w=maxW;
+  if(!Number.isFinite(h)||h<110)h=Math.min(maxH,Math.max(160,dr.height*.72));
+  w=clamp(w,Math.min(250,maxW),maxW);
+  h=clamp(h,108,maxH);
+  let x=parseFloat(win.style.left||'0');
+  let y=parseFloat(win.style.top||'0');
+  if(!Number.isFinite(x))x=margin;
+  if(!Number.isFinite(y))y=margin;
+  if(preferTop||x<0||x+w>dr.width||y<0||y+34>dr.height){
+    x=margin;
+    y=margin;
+  }else{
+    x=clamp(x,margin,Math.max(margin,dr.width-w-margin));
+    y=clamp(y,margin,Math.max(margin,dr.height-38));
+  }
+  // if the window bottom is outside the visible desktop, shrink height first, then clamp y.
+  if(y+h>dr.height-margin)h=Math.max(108,dr.height-y-margin);
+  win.style.left=x+'px';
+  win.style.top=y+'px';
+  win.style.width=w+'px';
+  win.style.height=h+'px';
+  win.style.maxHeight=maxH+'px';
+  win.style.maxWidth=maxW+'px';
+  const body=win.querySelector('.win-body');
+  if(body){
+    const title=win.querySelector('.win-title');
+    const titleH=title?title.getBoundingClientRect().height:34;
+    body.style.maxHeight=Math.max(62,h-titleH-8)+'px';
+    body.style.overflow='auto';
+    body.style.webkitOverflowScrolling='touch';
+  }
+}
+function clampAll(preferTop=false){
+  applyClass();
+  if(!isiPhoneLike())return;
+  qa('.window').forEach(w=>clampWindow(w,preferTop));
+}
+function patchWindowFunctions(){
+  if(window.__HID_V67_WINDOW_PATCHED__)return;
+  window.__HID_V67_WINDOW_PATCHED__=true;
+  try{
+    const oldToggle=window.toggleWindow||((typeof toggleWindow==='function')?toggleWindow:null);
+    if(typeof oldToggle==='function'&&!oldToggle.__hidV67Wrapped){
+      const wrapped=function(id,force){
+        const out=oldToggle.apply(this,arguments);
+        setTimeout(()=>clampWindow(q('#win-'+id),true),0);
+        setTimeout(()=>clampAll(false),80);
+        return out;
+      };
+      wrapped.__hidV67Wrapped=true;
+      window.toggleWindow=wrapped;
+      try{toggleWindow=wrapped}catch(e){}
+    }
+  }catch(e){}
+  try{
+    const oldMake=window.makeWindow||((typeof makeWindow==='function')?makeWindow:null);
+    if(typeof oldMake==='function'&&!oldMake.__hidV67Wrapped){
+      const wrapped=function(id,title,bodyHTML,opts){
+        const out=oldMake.apply(this,arguments);
+        setTimeout(()=>clampWindow(q('#win-'+id),true),0);
+        return out;
+      };
+      wrapped.__hidV67Wrapped=true;
+      window.makeWindow=wrapped;
+      try{makeWindow=wrapped}catch(e){}
+    }
+  }catch(e){}
+}
+function enhanceTouchScrolling(){
+  if(window.__HID_V67_SCROLL_PATCHED__)return;
+  window.__HID_V67_SCROLL_PATCHED__=true;
+  document.addEventListener('touchmove',e=>{
+    if(!isiPhoneLike())return;
+    // Allow scrolling inside panels/rows, prevent page rubber-band elsewhere.
+    if(e.target.closest('.win-body,.topbar,.pb-row1,.pb-row2,.piano-controls,#hidV65ShortcutGuide,#hidV51Pair,#hidV50Pair,textarea,select,input')){
+      return;
+    }
+    e.preventDefault();
+  },{passive:false,capture:true});
+}
+function compactOpenWindows(){
+  if(!isiPhoneLike())return;
+  const visible=qa('.window:not(.hidden)');
+  visible.forEach((w,i)=>{
+    clampWindow(w,i===visible.length-1);
+    // Stagger only slightly so title bars are reachable if more than one window is open.
+    if(visible.length>1 && i<visible.length-1){
+      const top=7+i*36;
+      w.style.top=top+'px';
+      w.style.height=Math.max(104,Math.min(w.offsetHeight,desktopRect().height-top-7))+'px';
+    }
+  });
+}
+function installMobileButton(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV67FitBtn')){
+    const b=document.createElement('button');
+    b.id='hidV67FitBtn';
+    b.className='btn tiny gold';
+    b.textContent='FIT iPHONE';
+    b.title='Refit all windows to iPhone screen';
+    b.onclick=e=>{e.preventDefault();clampAll(true);compactOpenWindows();};
+    top.appendChild(b);
+  }
+}
+function patchLauncherClicks(){
+  if(window.__HID_V67_LAUNCHER_PATCHED__)return;
+  window.__HID_V67_LAUNCHER_PATCHED__=true;
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest('.launcher-btn,[data-w],.topbar button,.pb-row2 button');
+    if(!btn)return;
+    setTimeout(()=>{applyClass();compactOpenWindows();},90);
+    setTimeout(()=>{compactOpenWindows();},260);
+  },true);
+}
+function stabilizePiano(){
+  if(!isiPhoneLike())return;
+  const host=q('.piano-host')||q('.piano-bar');
+  if(host){
+    host.style.minHeight='0';
+  }
+  const wrap=q('.piano-wrap');
+  if(wrap){
+    const h=clamp(Math.round(vh()*0.21),104,150);
+    wrap.style.flex='0 0 '+h+'px';
+    wrap.style.height=h+'px';
+  }
+  try{if(typeof buildPiano==='function')buildPiano()}catch(e){}
+}
+function init(){
+  applyClass();
+  patchWindowFunctions();
+  enhanceTouchScrolling();
+  installMobileButton();
+  patchLauncherClicks();
+  setTimeout(()=>{clampAll(true);stabilizePiano();},150);
+  setTimeout(()=>{compactOpenWindows();stabilizePiano();},700);
+}
+window.HID_V67_REFIT_IPHONE=function(){clampAll(true);compactOpenWindows();stabilizePiano();};
+window.addEventListener('resize',()=>setTimeout(init,80));
+window.addEventListener('orientationchange',()=>setTimeout(init,260));
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>setTimeout(init,80));
+  window.visualViewport.addEventListener('scroll',()=>setTimeout(clampAll,80));
+}
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(()=>{applyClass();},60),true);
 })();
 </script>
 
