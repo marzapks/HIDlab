@@ -3524,6 +3524,12 @@ html.hid-entered #hidV76LaunchFallback{
 }
 </style>
 
+
+<style id="hid-v78-protected-exact-sample-css">
+#hidV78ProtectedExactBadge{font-family:'VT323',monospace;font-size:12px;letter-spacing:.08em;padding:3px 6px;border:1px solid rgba(0,255,213,.48);color:var(--neon);background:rgba(0,0,0,.40);border-radius:5px}
+.spad.hid-v78-exact-playing{outline:2px solid var(--neon)!important;outline-offset:-2px;box-shadow:0 0 22px rgba(0,255,213,.72), inset 0 0 20px rgba(0,255,213,.16)!important}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -20328,6 +20334,61 @@ window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);s
 document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
 document.addEventListener('pointerdown',()=>setTimeout(init,60),true);
 setInterval(neutralizeLegacyActiveSources,120);
+})();
+</script>
+
+
+<!-- ===== HID V78 PROTECTED EXACT SAMPLE PLAYBACK: PRIVATE NODES, NO LEGACY AUTO-STOP ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V78_PROTECTED_EXACT_SAMPLE__)return;
+window.__HID_V78_PROTECTED_EXACT_SAMPLE__=true;
+
+const exact=new Map();
+const protectedUntil=new Map();
+let down=null;
+
+const NEW_PAD_CODES={Digit8:0,Digit9:1,Digit0:2,KeyI:3,KeyO:4,KeyP:5,KeyK:6,KeyL:7,Semicolon:8,Comma:9,Period:10,Slash:11};
+const OLD_PAD_CODES={Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4,Digit6:5,Digit7:6,Digit8:7,Digit9:8,Digit0:9,Numpad1:0,Numpad2:1,Numpad3:2,Numpad4:3,Numpad5:4,Numpad6:5,Numpad7:6,Numpad8:7,Numpad9:8,Numpad0:9};
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function S(){try{return STATE}catch(e){return window.STATE||null}}
+function AC(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){}return window.ctx||window.audioCtx||null}
+function ensureAudio(){try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function'&&!AC())initAudio()}catch(e){}const c=AC();try{if(c&&c.state==='suspended')c.resume()}catch(e){}return c}
+function pads(){const st=S();let p=st&&Array.isArray(st.pads)?st.pads:null;if(!p&&Array.isArray(window.pads))p=window.pads;if(!p){p=[];if(st)st.pads=p;window.pads=p}while(p.length<16)p.push(null);return p}
+function isSample(p){return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.audioPath||p.fileData||p.fileDataURL))}
+function padCfgIdx(p){return p?pads().indexOf(p):-1}
+async function hydrate(p){if(!p)return null;const b=p.buffer||p.audioBuffer||p.sampleBuffer;if(b)return b;try{if(typeof HID_V45_HYDRATE_PAD==='function')return await HID_V45_HYDRATE_PAD(p)}catch(e){}try{if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}}catch(e){}return p.buffer||p.audioBuffer||p.sampleBuffer||null}
+function setFor(idx){idx=Number(idx);if(!exact.has(idx))exact.set(idx,new Set());return exact.get(idx)}
+function mark(idx,on){const el=qa('#pads-grid .spad')[idx]||qa('.spad')[idx];if(el)el.classList.toggle('hid-v78-exact-playing',!!on)}
+function setSelected(idx){const st=S();if(!st)return;st.padEditingIdx=idx;st.padCycleIdx=idx;st.padControlScope='pad';try{if(typeof HID_V64_SET_PITCH_TARGET==='function')HID_V64_SET_PITCH_TARGET(idx)}catch(e){}}
+function stopExact(idx,force=false){idx=Number(idx);if(!force&&protectedUntil.get(idx)>performance.now())return;const set=setFor(idx);for(const node of Array.from(set)){try{node.src.stop(0)}catch(e){}try{node.src.disconnect()}catch(e){}set.delete(node)}mark(idx,false)}
+function stopExactForce(idx){idx=Number(idx);const set=setFor(idx);for(const node of Array.from(set)){try{node.src.stop(0)}catch(e){}try{node.src.disconnect()}catch(e){}set.delete(node)}mark(idx,false)}
+function stopOthers(idx){pads().forEach((p,i)=>{if(i!==idx&&isSample(p))stopExactForce(i)})}
+function active(idx){return setFor(Number(idx)).size>0}
+function play(idx,p,b){const c=ensureAudio();if(!c||!b)return null;const src=c.createBufferSource();src.buffer=b;src.connect(c.destination);const node={src,padIdx:idx,padCfg:p,__hidV78Exact:true};setFor(idx).add(node);mark(idx,true);protectedUntil.set(idx,performance.now()+500);src.onended=function(){setFor(idx).delete(node);try{src.disconnect()}catch(e){}if(!active(idx))mark(idx,false)};src.start(c.currentTime,0);return src}
+async function trigger(idx){idx=Number(idx);const st=S(),p=pads()[idx];if(!st||!Number.isInteger(idx)||idx<0||!isSample(p))return false;setSelected(idx);const mode=st.padPlayMode||'stack';if(mode==='toggle'&&active(idx)){stopExactForce(idx);return true}if(mode==='solo')stopOthers(idx);stopExactForce(idx);const b=await hydrate(p);if(!b){try{if(typeof toast==='function')toast('Pad audio missing.')}catch(e){}return true}p.buffer=b;p.audioBuffer=b;p.sampleBuffer=b;p.loaded=true;p.kind=p.kind||'sample';p.type=p.type||'sample';play(idx,p,b);return true}
+function silent(){const c=ensureAudio();if(!c)return {stop(){},disconnect(){},playbackRate:{value:1,setValueAtTime(){},cancelScheduledValues(){}}};const src=c.createBufferSource();src.buffer=c.createBuffer(1,1,c.sampleRate);try{src.start(c.currentTime)}catch(e){}return src}
+function patchPlaySampleBuffer(){if(window.__HID_V78_PLAY_SAMPLE_BUFFER__)return;window.__HID_V78_PLAY_SAMPLE_BUFFER__=true;const old=window.playSampleBuffer||((typeof playSampleBuffer==='function')?playSampleBuffer:null);if(typeof old==='function'){const wrapped=function(buffer,vel=1,padCfg=null){if(isSample(padCfg)){const idx=padCfgIdx(padCfg);if(idx>=0&&!active(idx))trigger(idx);return silent()}return old.apply(this,arguments)};wrapped.__hidV78Wrapped=true;try{window.playSampleBuffer=wrapped;playSampleBuffer=wrapped}catch(e){window.playSampleBuffer=wrapped}}}
+function patchRouters(){if(window.__HID_V78_ROUTERS__)return;window.__HID_V78_ROUTERS__=true;const names=['HID_V77_TRIGGER_PAD','HID_V73_TRIGGER_PAD','HID_V72_TRIGGER_PAD','HID_V71_TRIGGER_PAD','HID_V65_TRIGGER_PAD','HID_V63_TRIGGER_PAD','HID_V61_TRIGGER_PAD','HID_V60_TRIGGER_PAD','HID_V59_TRIGGER_PAD','padTrigger'];names.forEach(name=>{try{const old=window[name]||((name==='padTrigger'&&typeof padTrigger==='function')?padTrigger:null);if(typeof old==='function'&&!old.__hidV78Wrapped){const wrapped=function(idx,...rest){const p=pads()[Number(idx)];if(isSample(p))return trigger(idx);return old.call(this,idx,...rest)};wrapped.__hidV78Wrapped=true;window[name]=wrapped;if(name==='padTrigger')try{padTrigger=wrapped}catch(e){}}}catch(e){}});const oldStop=window.padStop||((typeof padStop==='function')?padStop:null);if(typeof oldStop==='function'&&!oldStop.__hidV78Wrapped){const wrapped=function(idx,...rest){const p=pads()[Number(idx)];if(isSample(p)){stopExact(Number(idx),false);return}return oldStop.call(this,idx,...rest)};wrapped.__hidV78Wrapped=true;try{window.padStop=wrapped;padStop=wrapped}catch(e){window.padStop=wrapped}}}
+function padIdxFromTarget(t){const pad=t?.closest?.('#pads-grid .spad,.spad');if(!pad)return -1;let idx=qa('#pads-grid .spad').indexOf(pad);if(idx<0)idx=qa('.spad').indexOf(pad);return idx}
+function isCtrl(t){return !!t?.closest?.('button,input,select,textarea,.spad-wheel,.spad-off,.spad-mini,.spad-x,.spad-menu,[data-no-pad-trigger]')}
+function installPointer(){if(window.__HID_V78_POINTER__)return;window.__HID_V78_POINTER__=true;window.addEventListener('pointerdown',e=>{const idx=padIdxFromTarget(e.target);if(idx<0||isCtrl(e.target)||!isSample(pads()[idx]))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();down={idx,id:e.pointerId,x:e.clientX,y:e.clientY,moved:false,long:false};down.timer=setTimeout(()=>{if(down&&down.idx===idx){down.long=true;setSelected(idx)}},560)},true);window.addEventListener('pointermove',e=>{if(!down||down.id!==e.pointerId)return;if(Math.abs(e.clientX-down.x)>14||Math.abs(e.clientY-down.y)>14)down.moved=true},true);window.addEventListener('pointerup',e=>{if(!down||down.id!==e.pointerId)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();clearTimeout(down.timer);const d=down;down=null;if(!d.moved&&!d.long)trigger(d.idx)},true);window.addEventListener('pointercancel',e=>{if(down&&down.id===e.pointerId){clearTimeout(down.timer);down=null}},true);window.addEventListener('click',e=>{const idx=padIdxFromTarget(e.target);if(idx>=0&&isSample(pads()[idx])&&!isCtrl(e.target)){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}},true)}
+function livePianoOn(){const st=S();return !st||st.keyboardPiano!==false}
+function keyIdx(e){if(!livePianoOn()&&e.code in NEW_PAD_CODES)return NEW_PAD_CODES[e.code];if(e.code in OLD_PAD_CODES)return OLD_PAD_CODES[e.code];return -1}
+function installKeyboard(){if(window.__HID_V78_KEYS__)return;window.__HID_V78_KEYS__=true;window.addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;if(e.ctrlKey||e.metaKey||e.altKey)return;const idx=keyIdx(e);if(idx<0||!isSample(pads()[idx]))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();if(!e.repeat)trigger(idx)},true)}
+function removeLegacyActiveSampleSources(){const st=S();if(!st?.sampler?.activeSources)return;try{for(const node of Array.from(st.sampler.activeSources)){const idx=Number.isInteger(node.padIdx)?node.padIdx:padCfgIdx(node.padCfg);if(idx>=0&&isSample(pads()[idx])){try{node.src?.stop?.(0)}catch(e){}try{node.src?.disconnect?.()}catch(e){}try{node.g?.disconnect?.()}catch(e){}try{node.gain?.disconnect?.()}catch(e){}try{node.padGain?.disconnect?.()}catch(e){}st.sampler.activeSources.delete(node)}}}catch(e){}}
+function badge(){const top=q('.topbar')||q('.pb-row1');if(top&&!q('#hidV78ProtectedExactBadge')){const b=document.createElement('span');b.id='hidV78ProtectedExactBadge';b.textContent='V78 PROTECTED EXACT';top.appendChild(b)}}
+function init(){patchPlaySampleBuffer();patchRouters();installPointer();installKeyboard();removeLegacyActiveSampleSources();badge()}
+window.HID_V78_TRIGGER_PAD=trigger;
+window.HID_V78_STOP_PAD=stopExactForce;
+window.HID_V78_EXACT_SAMPLE_MODE=true;
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,60),true);
+setInterval(removeLegacyActiveSampleSources,180);
 })();
 </script>
 
