@@ -3505,6 +3505,25 @@ html.hid-entered #hidV76LaunchFallback{
 }
 </style>
 
+
+<style id="hid-v77-single-owner-exact-sample-css">
+#hidV77ExactOwnerBadge{
+  font-family:'VT323',monospace;
+  font-size:12px;
+  letter-spacing:.08em;
+  padding:3px 6px;
+  border:1px solid rgba(255,230,0,.48);
+  color:var(--neon3);
+  background:rgba(0,0,0,.40);
+  border-radius:5px;
+}
+.spad.hid-v77-exact-target{
+  outline:2px solid var(--neon3)!important;
+  outline-offset:-2px;
+  box-shadow:0 0 22px rgba(255,230,0,.72), inset 0 0 20px rgba(255,230,0,.16)!important;
+}
+</style>
+
 </head>
 <body>
 <div class="scanlines"></div><div class="vignette"></div>
@@ -19938,6 +19957,377 @@ document.addEventListener('DOMContentLoaded',init);
 window.addEventListener('resize',()=>setTimeout(ensureLaunchButton,80));
 window.addEventListener('orientationchange',()=>setTimeout(ensureLaunchButton,240));
 document.addEventListener('pointerdown',()=>setTimeout(ensureLaunchButton,50),true);
+})();
+</script>
+
+
+<!-- ===== HID V77 SINGLE-OWNER EXACT SAMPLE PLAYBACK ===== -->
+<script>
+(function(){
+'use strict';
+if(window.__HID_V77_SINGLE_OWNER_EXACT_SAMPLE__) return;
+window.__HID_V77_SINGLE_OWNER_EXACT_SAMPLE__=true;
+
+const exactNodes = new Map();
+let down = null;
+let recentExact = {idx:-1,t:0};
+
+const NEW_PAD_CODES = {
+  Digit8:0, Digit9:1, Digit0:2,
+  KeyI:3, KeyO:4, KeyP:5,
+  KeyK:6, KeyL:7, Semicolon:8,
+  Comma:9, Period:10, Slash:11
+};
+const OLD_PAD_CODES = {
+  Digit1:0, Digit2:1, Digit3:2, Digit4:3, Digit5:4,
+  Digit6:5, Digit7:6, Digit8:7, Digit9:8, Digit0:9,
+  Numpad1:0, Numpad2:1, Numpad3:2, Numpad4:3, Numpad5:4,
+  Numpad6:5, Numpad7:6, Numpad8:7, Numpad9:8, Numpad0:9
+};
+
+function q(s,r=document){return r.querySelector(s)}
+function qa(s,r=document){return Array.from(r.querySelectorAll(s))}
+function getS(){try{return STATE}catch(e){return window.STATE||null}}
+function cctx(){try{if(typeof ctx!=='undefined'&&ctx)return ctx}catch(e){} return window.ctx||window.audioCtx||null}
+function ensureAudio(){
+  try{if(typeof ensureAudioReady==='function')ensureAudioReady();else if(typeof initAudio==='function'&&!cctx())initAudio()}catch(e){}
+  const c=cctx();
+  try{if(c&&c.state==='suspended')c.resume()}catch(e){}
+  return c;
+}
+function getPads(){
+  const S=getS();
+  let pads=S&&Array.isArray(S.pads)?S.pads:null;
+  if(!pads&&Array.isArray(window.pads))pads=window.pads;
+  if(!pads){pads=[];if(S)S.pads=pads;window.pads=pads}
+  while(pads.length<16)pads.push(null);
+  return pads;
+}
+function isSamplePad(p){
+  return !!(p&&(p.kind==='sample'||p.type==='sample'||p.buffer||p.audioBuffer||p.sampleBuffer||p.dataURL||p.audioDataUrl||p.audioDataURL||p.audioPath||p.fileData||p.fileDataURL));
+}
+function padLoaded(p){
+  return !!(p&&(p.loaded||isSamplePad(p)||p.events||p.notes||p.chord||p.patchSnapshot||p.name||p.label||p.fileName));
+}
+async function hydratePad(p){
+  if(!p)return null;
+  const b=p.buffer||p.audioBuffer||p.sampleBuffer;
+  if(b)return b;
+  try{if(typeof HID_V45_HYDRATE_PAD==='function')return await HID_V45_HYDRATE_PAD(p)}catch(e){}
+  try{if(typeof HID_V43_HYDRATE_PADS==='function'){await HID_V43_HYDRATE_PADS();return p.buffer||p.audioBuffer||p.sampleBuffer}}catch(e){}
+  return p.buffer||p.audioBuffer||p.sampleBuffer||null;
+}
+function idxFromPadCfg(p){
+  if(!p)return -1;
+  return getPads().indexOf(p);
+}
+function markTarget(idx){
+  qa('.spad.hid-v77-exact-target').forEach(el=>el.classList.remove('hid-v77-exact-target'));
+  const el=qa('#pads-grid .spad')[idx]||qa('.spad')[idx];
+  if(el)el.classList.add('hid-v77-exact-target');
+}
+function setSelected(idx){
+  const S=getS();
+  if(!S)return;
+  S.padEditingIdx=idx;
+  S.padCycleIdx=idx;
+  S.padControlScope='pad';
+  try{if(typeof HID_V64_SET_PITCH_TARGET==='function')HID_V64_SET_PITCH_TARGET(idx)}catch(e){}
+  markTarget(idx);
+}
+function setFor(idx){
+  if(!exactNodes.has(idx))exactNodes.set(idx,new Set());
+  return exactNodes.get(idx);
+}
+function disconnectNode(node){
+  try{node.src?.stop?.(0)}catch(e){}
+  try{node.src?.disconnect?.()}catch(e){}
+  try{node.gain?.disconnect?.()}catch(e){}
+  try{node.g?.disconnect?.()}catch(e){}
+  try{node.filter?.disconnect?.()}catch(e){}
+  try{node.drive?.disconnect?.()}catch(e){}
+  try{node.padGain?.disconnect?.()}catch(e){}
+  try{node.fxSend?.disconnect?.()}catch(e){}
+  try{node.drySend?.disconnect?.()}catch(e){}
+}
+function stopExactPad(idx){
+  idx=Number(idx);
+  const S=getS();
+  for(const node of Array.from(setFor(idx))){
+    disconnectNode(node);
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+    setFor(idx).delete(node);
+  }
+}
+function stopLegacySamplePad(idx,p){
+  const S=getS();
+  if(!S?.sampler?.activeSources)return;
+  try{
+    for(const node of Array.from(S.sampler.activeSources)){
+      const nodeIdx = Number.isInteger(node.padIdx) ? node.padIdx : idxFromPadCfg(node.padCfg);
+      if(nodeIdx===idx || (p&&node.padCfg===p)){
+        if(node.__hidV77Exact)continue;
+        disconnectNode(node);
+        try{S.sampler.activeSources.delete(node)}catch(e){}
+      }
+    }
+  }catch(e){}
+}
+function stopSamplePad(idx,p){
+  stopExactPad(idx);
+  stopLegacySamplePad(idx,p);
+}
+function stopOtherSamplePads(idx){
+  const pads=getPads();
+  for(let i=0;i<pads.length;i++){
+    if(i!==idx && isSamplePad(pads[i]))stopSamplePad(i,pads[i]);
+  }
+}
+function exactPadActive(idx){
+  return setFor(idx).size>0;
+}
+function playExact(idx,p,buffer){
+  const c=ensureAudio();
+  if(!c||!buffer)return null;
+
+  // IMPORTANT: exact uploaded audio path only.
+  // AudioBufferSourceNode -> AudioDestinationNode.
+  // No gain, fade, de-click, filter, drive, limiter, compressor, FX send, pitch bend, or playback-rate change.
+  const src=c.createBufferSource();
+  src.buffer=buffer;
+  src.connect(c.destination);
+
+  const node={src,padIdx:idx,padCfg:p,__hidV77Exact:true,wheelEnabled:false};
+  setFor(idx).add(node);
+  const S=getS();
+  if(S){
+    S.sampler=S.sampler||{};
+    S.sampler.activeSources=S.sampler.activeSources||new Set();
+    S.sampler.activeSources.add(node);
+  }
+  src.onended=function(){
+    setFor(idx).delete(node);
+    try{S?.sampler?.activeSources?.delete?.(node)}catch(e){}
+    try{src.disconnect()}catch(e){}
+  };
+  src.start(c.currentTime,0);
+  return src;
+}
+async function triggerExact(idx){
+  idx=Number(idx);
+  const S=getS(), pads=getPads();
+  if(!S||!Number.isInteger(idx)||idx<0||idx>=pads.length)return false;
+  const p=pads[idx];
+  if(!isSamplePad(p))return false;
+
+  setSelected(idx);
+  recentExact={idx,t:performance.now()};
+
+  const mode=S.padPlayMode||'stack';
+  if(mode==='toggle'&&exactPadActive(idx)){
+    stopSamplePad(idx,p);
+    return true;
+  }
+  if(mode==='solo')stopOtherSamplePads(idx);
+
+  // Prevent self-stacking and remove all older processed playback paths for this pad.
+  stopSamplePad(idx,p);
+
+  const b=await hydratePad(p);
+  if(!b){
+    try{if(typeof toast==='function')toast('Pad audio missing.')}catch(e){}
+    return true;
+  }
+  p.buffer=b;
+  p.audioBuffer=b;
+  p.sampleBuffer=b;
+  p.loaded=true;
+  p.kind=p.kind||'sample';
+  p.type=p.type||'sample';
+
+  playExact(idx,p,b);
+  return true;
+}
+function silentSource(){
+  const c=ensureAudio();
+  if(!c)return {stop(){},disconnect(){},playbackRate:{setValueAtTime(){},cancelScheduledValues(){},value:1}};
+  const src=c.createBufferSource();
+  src.buffer=c.createBuffer(1,1,c.sampleRate);
+  try{src.start(c.currentTime)}catch(e){}
+  return src;
+}
+function patchPlaySampleBuffer(){
+  if(window.__HID_V77_PLAY_SAMPLE_BUFFER_PATCHED__)return;
+  window.__HID_V77_PLAY_SAMPLE_BUFFER_PATCHED__=true;
+  const old=window.playSampleBuffer||((typeof playSampleBuffer==='function')?playSampleBuffer:null);
+  if(typeof old==='function'){
+    const wrapped=function(buffer,vel=1,padCfg=null){
+      if(isSamplePad(padCfg)){
+        const idx=idxFromPadCfg(padCfg);
+        const now=performance.now();
+        // If the exact path just triggered this pad, block the duplicate legacy sound.
+        // If an old engine reaches this first, redirect to the exact path and still block this call.
+        if(idx>=0 && !(recentExact.idx===idx && now-recentExact.t<350)){
+          triggerExact(idx);
+        }
+        return silentSource();
+      }
+      return old.apply(this,arguments);
+    };
+    wrapped.__hidV77Wrapped=true;
+    try{window.playSampleBuffer=wrapped;playSampleBuffer=wrapped}catch(e){window.playSampleBuffer=wrapped}
+  }
+}
+function patchRouters(){
+  if(window.__HID_V77_ROUTERS_PATCHED__)return;
+  window.__HID_V77_ROUTERS_PATCHED__=true;
+  const names=['HID_V73_TRIGGER_PAD','HID_V72_TRIGGER_PAD','HID_V71_TRIGGER_PAD','HID_V65_TRIGGER_PAD','HID_V63_TRIGGER_PAD','HID_V61_TRIGGER_PAD','HID_V60_TRIGGER_PAD','HID_V59_TRIGGER_PAD','padTrigger'];
+  names.forEach(name=>{
+    try{
+      const old=window[name]||((name==='padTrigger'&&typeof padTrigger==='function')?padTrigger:null);
+      if(typeof old==='function'&&!old.__hidV77Wrapped){
+        const wrapped=function(idx,...rest){
+          const p=getPads()[Number(idx)];
+          if(isSamplePad(p))return triggerExact(idx);
+          return old.call(this,idx,...rest);
+        };
+        wrapped.__hidV77Wrapped=true;
+        window[name]=wrapped;
+        if(name==='padTrigger')try{padTrigger=wrapped}catch(e){}
+      }
+    }catch(e){}
+  });
+
+  const oldStop=window.padStop||((typeof padStop==='function')?padStop:null);
+  if(typeof oldStop==='function'&&!oldStop.__hidV77Wrapped){
+    const wrapped=function(idx,...rest){
+      const p=getPads()[Number(idx)];
+      if(isSamplePad(p))stopSamplePad(Number(idx),p);
+      return oldStop.call(this,idx,...rest);
+    };
+    wrapped.__hidV77Wrapped=true;
+    try{window.padStop=wrapped;padStop=wrapped}catch(e){window.padStop=wrapped}
+  }
+
+  ['killAll','HID_MASTER_KILL_NOW','masterKill','panicStop'].forEach(name=>{
+    try{
+      const old=window[name]||globalThis[name];
+      if(typeof old==='function'&&!old.__hidV77Wrapped){
+        const wrapped=function(...args){
+          getPads().forEach((p,i)=>{if(isSamplePad(p))stopSamplePad(i,p)});
+          return old.apply(this,args);
+        };
+        wrapped.__hidV77Wrapped=true;
+        window[name]=wrapped;
+        try{globalThis[name]=wrapped}catch(e){}
+      }
+    }catch(e){}
+  });
+}
+function padIdxFromTarget(t){
+  const pad=t?.closest?.('#pads-grid .spad,.spad');
+  if(!pad)return -1;
+  let idx=qa('#pads-grid .spad').indexOf(pad);
+  if(idx<0)idx=qa('.spad').indexOf(pad);
+  return idx;
+}
+function isPadControl(t){
+  return !!t?.closest?.('button,input,select,textarea,.spad-wheel,.spad-off,.spad-mini,.spad-x,.spad-menu,[data-no-pad-trigger]');
+}
+function installPointerCapture(){
+  if(window.__HID_V77_POINTER_CAPTURE__)return;
+  window.__HID_V77_POINTER_CAPTURE__=true;
+  window.addEventListener('pointerdown',e=>{
+    const idx=padIdxFromTarget(e.target);
+    if(idx<0||isPadControl(e.target))return;
+    const p=getPads()[idx];
+    if(!isSamplePad(p))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    down={idx,id:e.pointerId,x:e.clientX,y:e.clientY,long:false,moved:false,t:performance.now()};
+    down.timer=setTimeout(()=>{if(down&&down.idx===idx){down.long=true;setSelected(idx)}},560);
+  },true);
+  window.addEventListener('pointermove',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    if(Math.abs(e.clientX-down.x)>14||Math.abs(e.clientY-down.y)>14)down.moved=true;
+  },true);
+  window.addEventListener('pointerup',e=>{
+    if(!down||down.id!==e.pointerId)return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    clearTimeout(down.timer);
+    const d=down;down=null;
+    if(!d.moved&&!d.long)triggerExact(d.idx);
+  },true);
+  window.addEventListener('pointercancel',e=>{if(down&&down.id===e.pointerId){clearTimeout(down.timer);down=null}},true);
+  window.addEventListener('click',e=>{
+    const idx=padIdxFromTarget(e.target);
+    if(idx<0||isPadControl(e.target))return;
+    const p=getPads()[idx];
+    if(!isSamplePad(p))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  },true);
+}
+function livePianoOn(){
+  const S=getS();
+  return !S || S.keyboardPiano!==false;
+}
+function keyPadIdx(e){
+  if(!livePianoOn() && e.code in NEW_PAD_CODES)return NEW_PAD_CODES[e.code];
+  if(e.code in OLD_PAD_CODES)return OLD_PAD_CODES[e.code];
+  return -1;
+}
+function installKeyboardCapture(){
+  if(window.__HID_V77_KEY_CAPTURE__)return;
+  window.__HID_V77_KEY_CAPTURE__=true;
+  window.addEventListener('keydown',e=>{
+    if(e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    const idx=keyPadIdx(e);
+    if(idx<0)return;
+    const p=getPads()[idx];
+    if(!isSamplePad(p))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    if(!e.repeat)triggerExact(idx);
+  },true);
+}
+function neutralizeLegacyActiveSources(){
+  const S=getS();
+  if(!S?.sampler?.activeSources)return;
+  try{
+    for(const node of Array.from(S.sampler.activeSources)){
+      if(node.__hidV77Exact)continue;
+      const idx=Number.isInteger(node.padIdx)?node.padIdx:idxFromPadCfg(node.padCfg);
+      if(idx>=0 && isSamplePad(getPads()[idx])){
+        disconnectNode(node);
+        S.sampler.activeSources.delete(node);
+      }
+    }
+  }catch(e){}
+}
+function installBadge(){
+  const top=q('.topbar')||q('.pb-row1');
+  if(top&&!q('#hidV77ExactOwnerBadge')){
+    const b=document.createElement('span');
+    b.id='hidV77ExactOwnerBadge';
+    b.textContent='V77 SINGLE EXACT SAMPLE';
+    top.appendChild(b);
+  }
+}
+function init(){
+  patchPlaySampleBuffer();
+  patchRouters();
+  installPointerCapture();
+  installKeyboardCapture();
+  neutralizeLegacyActiveSources();
+  installBadge();
+}
+window.HID_V77_TRIGGER_PAD=triggerExact;
+window.HID_V77_STOP_PAD=stopSamplePad;
+window.HID_V77_EXACT_SAMPLE_MODE=true;
+
+window.addEventListener('load',()=>{setTimeout(init,250);setTimeout(init,1200);setTimeout(init,3200)});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(init,200));
+document.addEventListener('pointerdown',()=>setTimeout(init,60),true);
+setInterval(neutralizeLegacyActiveSources,120);
 })();
 </script>
 
